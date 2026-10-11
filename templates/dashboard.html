@@ -1545,7 +1545,7 @@
                 <span class="hero-badge">Cashless Treatment</span>
             </div>
             <div class="hero-btn-row">
-                <a href="{% url 'scheme_awareness' %}?type=central&q=Ayushman" class="hero-btn primary">{% trans "Explore Central Scheme" %} ➜</a>
+                <a href="{% url 'scheme_awareness' %}?type=Central&q=Ayushman" class="hero-btn primary">{% trans "Explore Central Scheme" %} ➜</a>
                 <a href="{% url 'apply_assistance' %}" class="hero-btn outline">{% trans "Apply Assistance" %}</a>
             </div>
         </div>
@@ -1568,7 +1568,7 @@
                 <span class="hero-badge">Priority Families</span>
             </div>
             <div class="hero-btn-row">
-                <a href="{% url 'scheme_awareness' %}?type=central&q=Awas" class="hero-btn primary">{% trans "View Central Schemes" %} ➜</a>
+                <a href="{% url 'scheme_awareness' %}?type=Central&q=Awas" class="hero-btn primary">{% trans "View Central Schemes" %} ➜</a>
                 <a href="{% url 'recommend' %}" class="hero-btn outline">{% trans "AI Recommend" %}</a>
             </div>
         </div>
@@ -1670,7 +1670,7 @@
             </div>
         </a>
 
-        <a href="{% url 'scheme_awareness' %}?type=central" class="kpi-link">
+        <a href="{% url 'scheme_awareness' %}?type=Central" class="kpi-link">
             <div class="kpi-card success clickable">
                 <span class="kpi-icon">🏛️</span>
                 <div class="kpi-label">{% trans "Central Schemes" %}</div>
@@ -1709,7 +1709,7 @@
     <div class="scheme-stats">
         <h3>💡 {% trans "Scheme Overview" %}</h3>
         <div class="stat-grid">
-            <a href="{% url 'scheme_awareness' %}?type=central" class="stat-link">
+            <a href="{% url 'scheme_awareness' %}?type=Central" class="stat-link">
                 <div class="stat-item">
                     <div class="stat-number">{{ central_schemes }}</div>
                     <div class="stat-label">{% trans "Central Government Schemes" %}</div>
@@ -1723,11 +1723,11 @@
             </a>
             <div class="stat-item">
                 <div class="stat-number">{{ approved_apps }}</div>
-                <div class="stat-label">✅ Approved Applications</div>
+                <div class="stat-label">✅ {% trans "Approved Applications" %}</div>
             </div>
             <div class="stat-item">
                 <div class="stat-number">{{ pending_apps }}</div>
-                <div class="stat-label">⏳ Pending Applications</div>
+                <div class="stat-label">⏳ {% trans "Pending Applications" %}</div>
             </div>
         </div>
     </div>
@@ -1748,7 +1748,7 @@
                 </select>
                 <input type="text" id="stateSearch" placeholder="🔍 {% trans 'Search states...' %}" class="search-input">
                 <div class="header-stats">
-                    <span class="total-states">{{ schemes_by_state|length }}/36 States/UTs Covered</span>
+                    <span class="total-states">{{ schemes_by_state|length }}/36 {% trans "States/UTs Covered" %}</span>
                 </div>
             </div>
         </div>
@@ -1788,7 +1788,7 @@
                     <div class="progress-bar">
                         <div class="progress-fill" data-percentage="{{ state.percentage }}"></div>
                     </div>
-                    <div class="progress-text">{{ state.percentage }}% of max</div>
+                    <div class="progress-text">{{ state.percentage }}% {% trans "of maximum" %}</div>
                 </div>
                 <div class="state-actions">
                     <button class="action-btn" data-state="{{ state.state }}">
@@ -1899,6 +1899,35 @@
 
 <!-- SCRIPTS -->
 <script>
+    const dashboardI18n = {
+        noData: '{% trans "No Data" %}',
+        unknown: '{% trans "Unknown" %}',
+        applications: '{% trans "Applications" %}',
+        schemes: '{% trans "Schemes" %}',
+        schemesAvailable: '{% trans "Schemes Available" %}',
+        schemesPerState: '{% trans "Schemes per State" %}',
+        schemeDetails: '{% trans "Scheme Details" %}',
+        totalSchemes: '{% trans "Total Schemes" %}',
+        coverageLevel: '{% trans "Coverage Level" %}',
+        ofMaximum: '{% trans "of maximum" %}',
+        governmentLevel: '{% trans "Government Level" %}',
+        centralAndState: '{% trans "Central & State" %}',
+        viewAllSchemes: '{% trans "View All Schemes" %}',
+        loadingSchemes: '{% trans "Loading schemes for" %}',
+        noSchemesForState: '{% trans "No schemes are currently available for" %}',
+        noSchemesFound: '{% trans "No schemes found or invalid state." %}',
+        noDescription: '{% trans "No description available." %}',
+        department: '{% trans "Department" %}',
+        type: '{% trans "Type" %}',
+        officialWebsite: '{% trans "Official Website" %}',
+        officialUnavailable: '{% trans "Official website unavailable" %}',
+        applyNow: '{% trans "Apply Now" %}',
+        unavailableSuffix: '{% trans "(not available)" %}',
+        loadError: '{% trans "Unable to load schemes. Please try again." %}',
+        statesShown: '{% trans "States/UTs Shown" %}',
+        statesCovered: '{% trans "States/UTs Covered" %}',
+    };
+
     // Parse data from context
     let statusData = JSON.parse('{{ status_data|escapejs }}');
     let stateData = JSON.parse('{{ state_data|escapejs }}');
@@ -1921,16 +1950,16 @@
 
     // Ensure valid chart data to avoid empty render issues
     if (!statusData || statusData.length === 0) {
-        statusData = [{ status: 'No Data', count: 1 }];
+        statusData = [{ status: dashboardI18n.noData, count: 1 }];
     }
     if (!stateData || stateData.length === 0) {
-        stateData = [{ state: 'No Data', count: 1 }];
+        stateData = [{ state: dashboardI18n.noData, count: 1 }];
     }
     if (!schemesStateData || schemesStateData.length === 0) {
-        schemesStateData = [{ state: 'No Data', count: 1 }];
+        schemesStateData = [{ state: dashboardI18n.noData, count: 1 }];
     }
     if (!deptData || deptData.length === 0) {
-        deptData = [{ department: 'No Data', count: 1 }];
+        deptData = [{ department: dashboardI18n.noData, count: 1 }];
     }
 
     // STATUS CHART
@@ -1967,9 +1996,9 @@
         new Chart(stateCtx, {
             type: 'bar',
             data: {
-                labels: stateData.map(item => item.state || 'Unknown'),
+                labels: stateData.map(item => item.state || dashboardI18n.unknown),
                 datasets: [{
-                    label: 'Applications',
+                    label: dashboardI18n.applications,
                     data: stateData.map(item => item.count),
                     backgroundColor: '#2d5a8c',
                     borderColor: '#1a365d',
@@ -1999,7 +2028,7 @@
             data: {
                 labels: deptData.map(item => item.department),
                 datasets: [{
-                    label: 'Schemes',
+                    label: dashboardI18n.schemes,
                     data: deptData.map(item => item.count),
                     backgroundColor: '#17a2b8',
                     borderColor: '#0c5460',
@@ -2027,7 +2056,7 @@
             data: {
                 labels: schemesStateData.slice(0, 10).map(item => item.state),
                 datasets: [{
-                    label: 'Schemes Available',
+                    label: dashboardI18n.schemesAvailable,
                     data: schemesStateData.slice(0, 10).map(item => item.count),
                     backgroundColor: '#28a745',
                     borderColor: '#155724',
@@ -2055,7 +2084,7 @@
             data: {
                 labels: schemesStateData.slice(0, 12).map(item => item.state),
                 datasets: [{
-                    label: 'Schemes per State',
+                    label: dashboardI18n.schemesPerState,
                     data: schemesStateData.slice(0, 12).map(item => item.count),
                     fill: true,
                     borderColor: '#0077b6',
@@ -2087,7 +2116,7 @@
 
     // Interactive functions
     function showStateDetails(stateName, schemeCount, percentage) {
-        document.getElementById('modalTitle').textContent = `📍 ${stateName} - Scheme Details`;
+        document.getElementById('modalTitle').textContent = `📍 ${stateName} - ${dashboardI18n.schemeDetails}`;
         document.getElementById('modalBody').innerHTML = `
             <div style="text-align: center; margin-bottom: 20px;">
                 <div style="font-size: 48px; margin-bottom: 10px;">🇮🇳</div>
@@ -2095,20 +2124,20 @@
             </div>
             <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                    <span style="font-weight: 600;">Total Schemes:</span>
+                    <span style="font-weight: 600;">${dashboardI18n.totalSchemes}:</span>
                     <span style="color: #2d5a8c; font-weight: 700;">${schemeCount}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                    <span style="font-weight: 600;">Coverage Level:</span>
-                    <span style="color: #28a745; font-weight: 700;">${percentage}% of maximum</span>
+                    <span style="font-weight: 600;">${dashboardI18n.coverageLevel}:</span>
+                    <span style="color: #28a745; font-weight: 700;">${percentage}% ${dashboardI18n.ofMaximum}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between;">
-                    <span style="font-weight: 600;">Government Level:</span>
-                    <span style="color: #17a2b8; font-weight: 700;">Central & State</span>
+                    <span style="font-weight: 600;">${dashboardI18n.governmentLevel}:</span>
+                    <span style="color: #17a2b8; font-weight: 700;">${dashboardI18n.centralAndState}</span>
                 </div>
             </div>
             <p style="color: #6c757d; font-size: 14px;">
-                Click "View All Schemes" to explore detailed information about all agricultural schemes available in ${stateName}, including eligibility criteria, benefits, and application procedures.
+                ${dashboardI18n.viewAllSchemes} — ${stateName}
             </p>
         `;
         document.getElementById('stateModal').style.display = 'block';
@@ -2160,8 +2189,8 @@
         const detailTitle = document.getElementById('detail-state-name');
         const schemeList = document.getElementById('state-scheme-list');
 
-        detailTitle.textContent = `📋 ${stateName} - All Available Schemes`;
-        schemeList.innerHTML = '<p>Loading schemes for ' + stateName + '...</p>';
+        detailTitle.textContent = `📋 ${stateName} - ${dashboardI18n.viewAllSchemes}`;
+        schemeList.innerHTML = `<p>${dashboardI18n.loadingSchemes} ${stateName}...</p>`;
         detailPanel.style.display = 'block';
 
         const apiUrl = '/api/state-schemes/' + encodeURIComponent(stateName.replace(/\s+/g, '-')) + '/';
@@ -2169,13 +2198,13 @@
         fetch(apiUrl)
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('No schemes found or invalid state');
+                    throw new Error(dashboardI18n.noSchemesFound);
                 }
                 return response.json();
             })
             .then(data => {
                 if (!data.schemes || data.schemes.length === 0) {
-                    schemeList.innerHTML = '<p>No schemes currently available for ' + stateName + '.</p>';
+                    schemeList.innerHTML = `<p>${dashboardI18n.noSchemesForState} ${stateName}.</p>`;
                     return;
                 }
 
@@ -2186,19 +2215,19 @@
                     return `
                         <div class="state-scheme-item">
                             <h5>${s.scheme_name}</h5>
-                            <small>Department: ${s.department} • Type: ${s.scheme_type}</small>
-                            <p>${s.description || 'No description available.'}</p>
+                            <small>${dashboardI18n.department}: ${s.department} • ${dashboardI18n.type}: ${s.scheme_type}</small>
+                            <p>${s.description || dashboardI18n.noDescription}</p>
                             <div style="margin-top:5px;">
-                                ${officialUrl ? `<a href="${officialUrl}" target="_blank" rel="noopener">Official Website</a>` : '<span style="color:#dc3545; font-weight:600;">Official Website (not available)</span>'}
+                                ${officialUrl ? `<a href="${officialUrl}" target="_blank" rel="noopener">${dashboardI18n.officialWebsite}</a>` : `<span style="color:#dc3545; font-weight:600;">${dashboardI18n.officialUnavailable}</span>`}
                                 ·
-                                ${applyUrl ? `<a href="${applyUrl}" target="_blank" rel="noopener">Apply Now</a>` : '<span style="color:#dc3545; font-weight:600;">Apply Now (not available)</span>'}
+                                ${applyUrl ? `<a href="${applyUrl}" target="_blank" rel="noopener">${dashboardI18n.applyNow}</a>` : `<span style="color:#dc3545; font-weight:600;">${dashboardI18n.applyNow} ${dashboardI18n.unavailableSuffix}</span>`}
                             </div>
                         </div>
                     `;
                 }).join('');
             })
             .catch(err => {
-                schemeList.innerHTML = '<p>Error loading schemes: ' + err.message + '</p>';
+                schemeList.innerHTML = `<p>${dashboardI18n.loadError}</p>`;
             });
     }
 
@@ -2284,9 +2313,9 @@
         const totalCards = stateCards.length;
         const headerStats = document.querySelector('.total-states');
         if (searchTerm) {
-            headerStats.textContent = `${visibleCards.length}/${totalCards} States/UTs Shown`;
+            headerStats.textContent = `${visibleCards.length}/${totalCards} ${dashboardI18n.statesShown}`;
         } else {
-            headerStats.textContent = `${totalCards}/36 States/UTs Covered`;
+            headerStats.textContent = `${totalCards}/36 ${dashboardI18n.statesCovered}`;
         }
     });
 

@@ -1,14 +1,17 @@
-{% load static %}
+{% load static i18n %}
+{% get_current_language as LANGUAGE_CODE %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Explore Government Schemes Across India</title>
+  <link rel="icon" href="data:," />
+  <title>{% trans "Explore Government Schemes Across India" %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="{% static 'css/language-switcher.css' %}" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
     body { font-family: 'Inter', sans-serif; background: #020617; color: #e2e8f0; }
@@ -41,33 +44,39 @@
     @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 </head>
-<body class="relative overflow-x-hidden">
+<body class="relative overflow-x-hidden"
+      data-overview-url="{% url 'india_map_overview_api' %}"
+      data-state-api-url="{% url 'state_schemes_api' state_name='__state__' %}"
+      data-state-dashboard-url="{% url 'state_dashboard' state_name='__state__' %}">
   <div class="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.12),_transparent_33%),radial-gradient(circle_at_25%_40%,_rgba(56,189,248,0.14),_transparent_25%),linear-gradient(180deg,_rgba(4,8,27,0.95),_rgba(7,9,30,0.98))]"></div>
   <div class="floating-blob w-72 h-72 left-1/4 top-10 bg-cyan-400/20"></div>
   <div class="floating-blob w-80 h-80 right-20 top-44 bg-emerald-400/18"></div>
   <div class="floating-blob w-64 h-64 left-10 bottom-24 bg-sky-500/15"></div>
 
   <div class="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div class="mb-4 flex justify-end">
+      {% include "partials/language_selector.html" %}
+    </div>
     <header class="mb-10 grid gap-8 rounded-[2rem] border border-white/10 bg-slate-950/75 p-8 shadow-2xl shadow-cyan-500/10 backdrop-blur-xl">
       <div class="space-y-6">
         <div class="inline-flex items-center gap-3 rounded-full bg-slate-900/70 px-4 py-2 text-sm text-cyan-200 ring-1 ring-cyan-500/20">
           <span class="h-2 w-2 rounded-full bg-cyan-300 animate-pulse"></span>
-          AI-powered public welfare analytics
+          {% trans "AI-powered public welfare analytics" %}
         </div>
         <div class="max-w-3xl space-y-4">
-          <h1 class="text-4xl font-semibold tracking-tight text-white sm:text-5xl">Explore Government Schemes Across India</h1>
-          <p class="text-lg leading-8 text-slate-300">Interactive AI-powered dashboard for discovering central and state welfare schemes with modern analytics and voice-enabled insights.</p>
+          <h1 class="text-4xl font-semibold tracking-tight text-white sm:text-5xl">{% trans "Explore Government Schemes Across India" %}</h1>
+          <p class="text-lg leading-8 text-slate-300">{% trans "Interactive AI-powered dashboard for discovering central and state welfare schemes with modern analytics and voice-enabled insights." %}</p>
         </div>
       </div>
       <div class="grid gap-4 sm:grid-cols-2">
         <div class="glass-card rounded-[1.75rem] p-6 text-slate-200 shadow-xl shadow-cyan-500/10">
-          <p class="text-sm uppercase tracking-[0.28em] text-slate-400">Platform status</p>
-          <p class="mt-3 text-2xl font-semibold text-white">Live India scheme explorer</p>
+          <p class="text-sm uppercase tracking-[0.28em] text-slate-400">{% trans "Platform status" %}</p>
+          <p class="mt-3 text-2xl font-semibold text-white">{% trans "Live India scheme explorer" %}</p>
         </div>
         <div class="glass-card rounded-[1.75rem] p-6 text-slate-200 shadow-xl shadow-emerald-500/8">
-          <p class="text-sm uppercase tracking-[0.28em] text-slate-400">Audio support</p>
-          <p class="mt-3 text-2xl font-semibold text-white">10 Indian languages</p>
-          <p class="mt-2 text-sm leading-6 text-slate-300">Natural voice narration for farmers and rural users.</p>
+          <p class="text-sm uppercase tracking-[0.28em] text-slate-400">{% trans "Audio support" %}</p>
+          <p class="mt-3 text-2xl font-semibold text-white">{% trans "4 languages" %}</p>
+          <p class="mt-2 text-sm leading-6 text-slate-300">{% trans "English, Hindi, Marathi, and Telugu voice assistance is available on each scheme card." %}</p>
         </div>
       </div>
     </header>
@@ -78,11 +87,11 @@
           <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(34,211,238,0.18),_transparent_24%),radial-gradient(circle_at_bottom_right,_rgba(132,204,22,0.18),_transparent_28%)]"></div>
           <div class="relative z-10 flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p class="text-sm uppercase tracking-[0.32em] text-slate-400">National Map View</p>
-              <h2 class="mt-2 text-3xl font-semibold text-white">India scheme terrain</h2>
-              <p class="mt-3 max-w-xl text-sm leading-6 text-slate-300">Hover states to preview analytics, click to open detailed schemes with voice narration.</p>
+              <p class="text-sm uppercase tracking-[0.32em] text-slate-400">{% trans "National Map View" %}</p>
+              <h2 class="mt-2 text-3xl font-semibold text-white">{% trans "India scheme terrain" %}</h2>
+              <p class="mt-3 max-w-xl text-sm leading-6 text-slate-300">{% trans "Hover states to preview analytics, click to open detailed schemes with voice narration." %}</p>
             </div>
-            <div class="rounded-3xl border border-white/10 bg-slate-900/75 px-4 py-3 text-sm text-slate-200">Hover for insights • Click for details</div>
+            <div class="rounded-3xl border border-white/10 bg-slate-900/75 px-4 py-3 text-sm text-slate-200">{% trans "Hover for insights • Click for details" %}</div>
           </div>
           <div id="india-map" class="mt-8 h-[620px] min-h-[520px]"></div>
           <div id="state-tooltip" class="state-tooltip"></div>
@@ -90,21 +99,21 @@
 
         <section class="grid gap-6 xl:grid-cols-[1fr_1fr]">
           <div class="glass-card rounded-[2rem] p-6 shadow-xl shadow-cyan-500/10">
-            <p class="text-xs uppercase tracking-[0.32em] text-slate-400">Selected region</p>
+            <p class="text-xs uppercase tracking-[0.32em] text-slate-400">{% trans "Selected region" %}</p>
             <h3 id="selected-state-name" class="mt-3 text-3xl font-semibold text-white">India</h3>
-            <p id="selected-state-subtitle" class="mt-2 text-sm text-slate-400">Choose a state to view scheme intelligence and details.</p>
+            <p id="selected-state-subtitle" class="mt-2 text-sm text-slate-400">{% trans "Choose a state to view scheme intelligence and details." %}</p>
           </div>
           <div class="grid gap-4 sm:grid-cols-3">
             <div class="glass-card rounded-[1.75rem] p-5 text-center text-slate-200">
-              <p class="text-xs uppercase tracking-[0.32em] text-slate-400">Total schemes</p>
+              <p class="text-xs uppercase tracking-[0.32em] text-slate-400">{% trans "Total schemes" %}</p>
               <p id="scheme-count" class="mt-4 text-3xl font-semibold text-white">0</p>
             </div>
             <div class="glass-card rounded-[1.75rem] p-5 text-center text-slate-200">
-              <p class="text-xs uppercase tracking-[0.32em] text-slate-400">Central schemes</p>
+              <p class="text-xs uppercase tracking-[0.32em] text-slate-400">{% trans "Central schemes" %}</p>
               <p id="central-scheme-count" class="mt-4 text-3xl font-semibold text-white">0</p>
             </div>
             <div class="glass-card rounded-[1.75rem] p-5 text-center text-slate-200">
-              <p class="text-xs uppercase tracking-[0.32em] text-slate-400">State schemes</p>
+              <p class="text-xs uppercase tracking-[0.32em] text-slate-400">{% trans "State schemes" %}</p>
               <p id="state-scheme-count" class="mt-4 text-3xl font-semibold text-white">0</p>
             </div>
           </div>
@@ -113,102 +122,58 @@
 
       <aside class="space-y-6">
         <div class="glass-card rounded-[2rem] p-6 shadow-xl shadow-slate-950/20">
-          <p class="text-sm uppercase tracking-[0.32em] text-slate-400">Voice control</p>
-          <h3 class="mt-3 text-xl font-semibold text-white">Speech-enabled discovery</h3>
-          <p class="mt-3 text-sm leading-6 text-slate-300">Select your preferred language and tap Listen on a scheme card to hear the benefits aloud.</p>
-          <div class="mt-6 space-y-4">
-            <label class="block text-xs uppercase tracking-[0.32em] text-slate-400">Audio language</label>
-            <select id="audio-language" class="w-full rounded-3xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20">
-              <option value="English">English</option>
-              <option value="Hindi">Hindi</option>
-              <option value="Telugu">Telugu</option>
-              <option value="Tamil">Tamil</option>
-              <option value="Kannada">Kannada</option>
-              <option value="Marathi">Marathi</option>
-              <option value="Bengali">Bengali</option>
-              <option value="Malayalam">Malayalam</option>
-              <option value="Gujarati">Gujarati</option>
-              <option value="Punjabi">Punjabi</option>
-            </select>
-          </div>
+          <p class="text-sm uppercase tracking-[0.32em] text-slate-400">{% trans "Voice assistance" %}</p>
+          <h3 class="mt-3 text-xl font-semibold text-white">{% trans "Speech-enabled discovery" %}</h3>
+          <p class="mt-3 text-sm leading-6 text-slate-300">{% trans "Choose a state on the map to open its scheme list, then select a language and press Listen on the specific scheme." %}</p>
+          <p class="mt-4 text-xs leading-5 text-slate-400">{% trans "When requested, only the selected scheme’s public name, description, eligibility, and document details are sent to free online translation and speech services. No account or application data is sent. Verify eligibility with the official scheme source." %}</p>
         </div>
         <div class="glass-card rounded-[2rem] p-6 shadow-xl shadow-emerald-500/10">
-          <p class="text-sm uppercase tracking-[0.32em] text-slate-400">Live scheme feed</p>
-          <h3 class="mt-3 text-xl font-semibold text-white">Always up to date</h3>
-          <p class="mt-3 text-sm leading-6 text-slate-300">Data is loaded from the backend for every state, showing central and local welfare schemes in one place.</p>
+          <p class="text-sm uppercase tracking-[0.32em] text-slate-400">{% trans "Live scheme feed" %}</p>
+          <h3 class="mt-3 text-xl font-semibold text-white">{% trans "Always up to date" %}</h3>
+          <p class="mt-3 text-sm leading-6 text-slate-300">{% trans "Data is loaded from the backend for every state, showing central and local welfare schemes in one place." %}</p>
         </div>
       </aside>
     </main>
-
-    <div id="audio-panel" class="audio-panel glass-card rounded-[2rem] border border-white/10 bg-slate-950/95 p-5 shadow-2xl shadow-cyan-500/20 backdrop-blur-xl">
-      <div class="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p class="text-xs uppercase tracking-[0.32em] text-slate-400">Natural voice assistant</p>
-          <h3 class="mt-2 text-xl font-semibold text-white">Listen to scheme details</h3>
-        </div>
-        <div id="audio-badge" class="neon-badge rounded-full px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.28em]">Ready</div>
-      </div>
-      <div class="mt-5 space-y-4">
-        <div class="audio-wave flex items-end justify-center gap-2">
-          <span class="wave-bar"></span>
-          <span class="wave-bar"></span>
-          <span class="wave-bar"></span>
-          <span class="wave-bar"></span>
-          <span class="wave-bar"></span>
-        </div>
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <button id="audio-play" type="button" class="audio-button rounded-full bg-cyan-500 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400">Play</button>
-          <button id="audio-pause" type="button" class="audio-button rounded-full border border-slate-800 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:border-cyan-400">Pause</button>
-          <button id="audio-stop" type="button" class="audio-button rounded-full border border-slate-800 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:border-emerald-400">Stop</button>
-          <div id="audio-spinner" class="audio-spinner hidden"></div>
-        </div>
-        <div class="grid gap-2">
-          <label for="audio-volume" class="text-xs uppercase tracking-[0.32em] text-slate-400">Volume</label>
-          <input id="audio-volume" type="range" min="0" max="1" step="0.05" value="0.92" class="h-2 w-full cursor-pointer rounded-full bg-slate-800 accent-cyan-400" />
-        </div>
-        <p id="audio-status" class="text-sm text-slate-300">Tap Listen on any card to play the natural Indian voice version.</p>
-      </div>
-    </div>
 
     <section class="mt-10 grid gap-6 xl:grid-cols-[0.85fr_0.45fr]">
       <div class="glass-card rounded-[2rem] p-6 shadow-2xl shadow-slate-950/10">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p class="text-sm uppercase tracking-[0.32em] text-slate-400">India analytics</p>
-            <h2 class="mt-2 text-3xl font-semibold text-white">Election-style state scorecard</h2>
-            <p class="mt-3 text-sm leading-6 text-slate-300">Real-time scheme distribution, top performing states and category intelligence.</p>
+            <p class="text-sm uppercase tracking-[0.32em] text-slate-400">{% trans "India analytics" %}</p>
+            <h2 class="mt-2 text-3xl font-semibold text-white">{% trans "Election-style state scorecard" %}</h2>
+            <p class="mt-3 text-sm leading-6 text-slate-300">{% trans "Real-time scheme distribution, top performing states and category intelligence." %}</p>
           </div>
           <div class="grid gap-3 sm:grid-cols-3">
             <div class="rounded-[1.75rem] border border-white/10 bg-slate-900/80 p-4 text-center">
-              <p class="text-xs uppercase tracking-[0.28em] text-slate-400">Active states</p>
+              <p class="text-xs uppercase tracking-[0.28em] text-slate-400">{% trans "Active states" %}</p>
               <p id="active-state-count" class="mt-3 text-2xl font-semibold text-white">0</p>
             </div>
             <div class="rounded-[1.75rem] border border-white/10 bg-slate-900/80 p-4 text-center">
-              <p class="text-xs uppercase tracking-[0.28em] text-slate-400">Top state</p>
+              <p class="text-xs uppercase tracking-[0.28em] text-slate-400">{% trans "Top state" %}</p>
               <p id="top-state-name" class="mt-3 text-2xl font-semibold text-white">—</p>
             </div>
             <div class="rounded-[1.75rem] border border-white/10 bg-slate-900/80 p-4 text-center">
-              <p class="text-xs uppercase tracking-[0.28em] text-slate-400">Top category</p>
+              <p class="text-xs uppercase tracking-[0.28em] text-slate-400">{% trans "Top category" %}</p>
               <p id="top-category-name" class="mt-3 text-2xl font-semibold text-white">—</p>
             </div>
           </div>
         </div>
         <div class="mt-8 grid gap-6 lg:grid-cols-2">
           <div class="rounded-[1.75rem] border border-white/10 bg-slate-950/80 p-5">
-            <p class="text-sm uppercase tracking-[0.28em] text-slate-400">Scheme mix</p>
+            <p class="text-sm uppercase tracking-[0.28em] text-slate-400">{% trans "Scheme mix" %}</p>
             <div class="chart-container">
               <canvas id="categoryChart"></canvas>
             </div>
           </div>
           <div class="grid gap-6">
             <div class="rounded-[1.75rem] border border-white/10 bg-slate-950/80 p-5">
-              <p class="text-sm uppercase tracking-[0.28em] text-slate-400">Scheme balance</p>
+              <p class="text-sm uppercase tracking-[0.28em] text-slate-400">{% trans "Scheme balance" %}</p>
               <div class="chart-container">
                 <canvas id="centralBarChart"></canvas>
               </div>
             </div>
             <div class="rounded-[1.75rem] border border-white/10 bg-slate-950/80 p-5">
-              <p class="text-sm uppercase tracking-[0.28em] text-slate-400">State leaders</p>
+              <p class="text-sm uppercase tracking-[0.28em] text-slate-400">{% trans "State leaders" %}</p>
               <div class="chart-container">
                 <canvas id="topStatesChart"></canvas>
               </div>
@@ -223,6 +188,20 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
+    const mapI18n = {
+      schemes: '{% trans "Schemes" %}',
+      totalSchemes: '{% trans "Total Schemes" %}',
+      centralSchemes: '{% trans "Central Schemes" %}',
+      stateSchemes: '{% trans "State Schemes" %}',
+      central: '{% trans "Central" %}',
+      state: '{% trans "State" %}',
+      unavailable: '{% trans "Unavailable" %}',
+      stateInsight: '{% trans "State insight" %}',
+      viewingSchemes: '{% trans "Viewing welfare schemes for {state}." %}',
+      chooseState: '{% trans "Choose a state to view scheme intelligence and details." %}',
+      mapUnavailable: '{% trans "Unable to render the India map." %}',
+    };
+
     document.addEventListener('DOMContentLoaded', function() {
       const stateNameElement = document.getElementById('selected-state-name');
       const stateSubtitle = document.getElementById('selected-state-subtitle');
@@ -231,16 +210,7 @@
       const stateSchemeCountEl = document.getElementById('state-scheme-count');
       const panelStatus = document.getElementById('panel-status');
 
-      const audioLanguage = document.getElementById('audio-language');
       const stateTooltip = document.getElementById('state-tooltip');
-      const audioPlayBtn = document.getElementById('audio-play');
-      const audioPauseBtn = document.getElementById('audio-pause');
-      const audioStopBtn = document.getElementById('audio-stop');
-      const audioVolume = document.getElementById('audio-volume');
-      const audioStatus = document.getElementById('audio-status');
-      const audioWaveBars = document.querySelectorAll('.wave-bar');
-      const audioSpinner = document.getElementById('audio-spinner');
-      const audioBadge = document.getElementById('audio-badge');
       const activeStateCountEl = document.getElementById('active-state-count');
       const topStateNameEl = document.getElementById('top-state-name');
       const topCategoryNameEl = document.getElementById('top-category-name');
@@ -291,12 +261,12 @@
           data: {
             labels: data.labels,
             datasets: [{
-              label: 'Central Schemes',
+              label: mapI18n.centralSchemes,
               data: data.central,
               backgroundColor: '#3b82f6',
               borderWidth: 0,
             }, {
-              label: 'State Schemes',
+              label: mapI18n.stateSchemes,
               data: data.state,
               backgroundColor: '#10b981',
               borderWidth: 0,
@@ -361,213 +331,42 @@
 
       const loadOverviewAnalytics = async () => {
         try {
-          const response = await fetch('/api/india-map-overview/');
+          const response = await fetch(document.body.dataset.overviewUrl);
+          if (!response.ok) throw new Error(`Overview request failed: ${response.status}`);
           const data = await response.json();
           
-          activeStateCountEl.textContent = data.active_states;
-          topStateNameEl.textContent = data.top_state;
-          topCategoryNameEl.textContent = data.top_category;
+          activeStateCountEl.textContent = data.active_states ?? 0;
+          topStateNameEl.textContent = data.top_state || '—';
+          topCategoryNameEl.textContent = data.top_category || '—';
+          setSummary('India', data.total_schemes, data.central_schemes, data.state_schemes);
           
-          updateCategoryChart(data.category_distribution);
-          updateCentralBarChart(data.scheme_balance);
-          updateTopStatesChart(data.top_states);
+          const categories = data.category_counts || {};
+          updateCategoryChart({
+            labels: Object.keys(categories),
+            values: Object.values(categories)
+          });
+          updateCentralBarChart({
+            labels: ['Schemes'],
+            central: [data.central_schemes || 0],
+            state: [data.state_schemes || 0]
+          });
+          updateTopStatesChart({
+            labels: (data.top_states || []).map((state) => state.state),
+            values: (data.top_states || []).map((state) => state.count)
+          });
         } catch (error) {
           console.error('Failed to load overview analytics:', error);
+          activeStateCountEl.textContent = '—';
+          topStateNameEl.textContent = mapI18n.unavailable;
+          topCategoryNameEl.textContent = mapI18n.unavailable;
         }
       };
-
-      const languageSettings = {
-        English: { code: 'en', name: 'English' },
-        Hindi: { code: 'hi', name: 'Hindi' },
-        Telugu: { code: 'te', name: 'Telugu' },
-        Tamil: { code: 'ta', name: 'Tamil' },
-        Kannada: { code: 'kn', name: 'Kannada' },
-        Marathi: { code: 'mr', name: 'Marathi' },
-        Bengali: { code: 'bn', name: 'Bengali' },
-        Malayalam: { code: 'ml', name: 'Malayalam' },
-        Gujarati: { code: 'gu', name: 'Gujarati' },
-        Punjabi: { code: 'pa', name: 'Punjabi' }
-      };
-
-      const audioState = {
-        activeScheme: null,
-        isPlaying: false,
-        currentAudio: null,
-        volume: Number(audioVolume.value),
-        currentText: '',
-        currentLanguage: 'English'
-      };
-
-      const setAudioStatus = (message, busy = false) => {
-        audioStatus.textContent = message;
-        audioSpinner.classList.toggle('hidden', !busy);
-        audioWaveBars.forEach((bar) => bar.classList.toggle('active', audioState.isPlaying));
-      };
-
-      const setAudioBadge = (text) => {
-        audioBadge.textContent = text;
-      };
-
-      const getLanguageConfig = (language) => languageSettings[language] || languageSettings.English;
-      const selectedLanguage = () => audioLanguage.value || 'English';
-
-      const updateVolume = () => {
-        audioState.volume = Number(audioVolume.value);
-        if (audioState.currentAudio) audioState.currentAudio.volume = audioState.volume;
-      };
-
-      const sanitizeField = (value) => (value ? value.toString().trim() : 'Not specified.');
-      
-      const buildSpeechText = (scheme) => {
-        const name = sanitizeField(scheme.name);
-        const description = sanitizeField(scheme.description === 'None' ? '' : scheme.description) || 'No description.';
-        const eligibility = sanitizeField(scheme.eligibility);
-        const documents = sanitizeField(scheme.documents_required);
-        const benefits = sanitizeField(scheme.benefits || scheme.outcome || 'Support for eligible applicants.');
-        return `${name}. ${description}. Eligibility: ${eligibility}. Documents: ${documents}. Benefits: ${benefits}.`;
-      };
-
-      const useWebSpeechAPI = (text, language) => {
-        const langCode = getLanguageConfig(language).code;
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = langCode;
-        utterance.rate = 0.95;
-        utterance.pitch = 1.0;
-        utterance.volume = audioState.volume;
-
-        utterance.onstart = () => {
-          audioState.isPlaying = true;
-          setAudioWaveState(true);
-          setAudioBadge('Speaking');
-        };
-
-        utterance.onend = () => {
-          audioState.isPlaying = false;
-          setAudioWaveState(false);
-          setAudioBadge('Ready');
-          setAudioStatus('Playback finished.');
-        };
-
-        utterance.onerror = (event) => {
-          audioState.isPlaying = false;
-          setAudioWaveState(false);
-          setAudioBadge('Error');
-          setAudioStatus(`Audio error: ${event.error}`);
-        };
-
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(utterance);
-      };
-
-      const playGoogleTTS = (text, language) => {
-        const { code } = getLanguageConfig(language);
-        const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${code}&client=tw-ob&q=${encodeURIComponent(text)}`;
-        
-        if (audioState.currentAudio) {
-          audioState.currentAudio.pause();
-          audioState.currentAudio = null;
-        }
-        
-        const audio = new Audio(ttsUrl);
-        audio.volume = audioState.volume;
-        audioState.currentAudio = audio;
-        audioState.isPlaying = true;
-
-        audio.addEventListener('playing', () => {
-          setAudioBadge('Speaking');
-          setAudioWaveState(true);
-        }, { once: true });
-        
-        audio.addEventListener('ended', () => {
-          audioState.isPlaying = false;
-          setAudioWaveState(false);
-          setAudioBadge('Ready');
-          setAudioStatus('Playback finished.');
-        }, { once: true });
-        
-        audio.addEventListener('error', () => {
-          audioState.isPlaying = false;
-          setAudioWaveState(false);
-          setAudioStatus('Google TTS unavailable. Using Web Speech API...');
-          useWebSpeechAPI(text, language);
-        }, { once: true });
-        
-        audio.play().catch(() => {
-          setAudioStatus('Google TTS unavailable. Using Web Speech API...');
-          useWebSpeechAPI(text, language);
-        });
-      };
-
-      const setAudioWaveState = (active) => {
-        audioWaveBars.forEach((bar) => bar.classList.toggle('active', active));
-      };
-
-      const stopAudio = () => {
-        if (audioState.currentAudio) {
-          audioState.currentAudio.pause();
-          audioState.currentAudio.currentTime = 0;
-          audioState.currentAudio = null;
-        }
-        audioState.isPlaying = false;
-        setAudioWaveState(false);
-        setAudioBadge('Ready');
-        setAudioStatus('Audio stopped.');
-      };
-
-      const pauseAudio = () => {
-        if (audioState.currentAudio && !audioState.currentAudio.paused) {
-          audioState.currentAudio.pause();
-          audioState.isPlaying = false;
-          setAudioWaveState(false);
-          setAudioStatus('Paused. Press Play to resume.');
-        }
-      };
-
-      const resumeAudio = () => {
-        if (audioState.currentAudio && audioState.currentAudio.paused) {
-          audioState.currentAudio.play();
-          audioState.isPlaying = true;
-          setAudioWaveState(true);
-          setAudioStatus('Resuming playback...');
-        }
-      };
-
-      const speakScheme = (scheme) => {
-        if (!scheme || !scheme.name) return;
-        
-        stopAudio();
-        const language = selectedLanguage();
-        const text = buildSpeechText(scheme);
-        
-        setAudioBadge('Generating');
-        setAudioStatus(`Generating audio in ${language}...`, true);
-        
-        setTimeout(() => {
-          playGoogleTTS(text, language);
-        }, 300);
-      };
-
-      audioPlayBtn.addEventListener('click', () => {
-        if (audioState.isPlaying) {
-          setAudioStatus('Already playing.');
-          return;
-        }
-        resumeAudio();
-      });
-
-      audioPauseBtn.addEventListener('click', pauseAudio);
-      audioStopBtn.addEventListener('click', stopAudio);
-      audioVolume.addEventListener('input', updateVolume);
-      audioLanguage.addEventListener('change', () => {
-        setAudioBadge('Ready');
-        setAudioStatus(`Language set to ${selectedLanguage()}.`);
-      });
-
-      window.speakScheme = speakScheme;
 
       const setSummary = (name, total, central, state) => {
         stateNameElement.textContent = name || 'India';
-        stateSubtitle.textContent = name ? `Viewing welfare schemes for ${name}.` : 'Choose a state to view scheme intelligence and details.';
+        stateSubtitle.textContent = name
+          ? mapI18n.viewingSchemes.replace('{state}', name)
+          : mapI18n.chooseState;
         schemeCountEl.textContent = total;
         centralSchemeCountEl.textContent = central;
         stateSchemeCountEl.textContent = state;
@@ -595,12 +394,12 @@
       const showTooltip = (state, total, central, stateCount) => {
         stateTooltip.innerHTML = `
           <div class="space-y-2">
-            <p class="text-sm uppercase tracking-[0.32em] text-slate-400">State insight</p>
+            <p class="text-sm uppercase tracking-[0.32em] text-slate-400">${mapI18n.stateInsight}</p>
             <h4 class="text-lg font-semibold text-white">${state}</h4>
             <div class="space-y-1 text-sm text-slate-300">
-              <p><span class="font-semibold text-white">Total Schemes:</span> ${total}</p>
-              <p><span class="font-semibold text-white">Central:</span> ${central}</p>
-              <p><span class="font-semibold text-white">State:</span> ${stateCount}</p>
+              <p><span class="font-semibold text-white">${mapI18n.totalSchemes}:</span> ${total}</p>
+              <p><span class="font-semibold text-white">${mapI18n.central}:</span> ${central}</p>
+              <p><span class="font-semibold text-white">${mapI18n.state}:</span> ${stateCount}</p>
             </div>
           </div>
         `;
@@ -616,11 +415,12 @@
         if (!name) return { total: 0, central: 0, state: 0 };
         if (stateMetricsCache[name]) return stateMetricsCache[name];
         try {
-          const response = await fetch(`/api/state-schemes/${encodeURIComponent(name)}/`);
+          const url = document.body.dataset.stateApiUrl.replace('__state__', encodeURIComponent(name));
+          const response = await fetch(url);
           if (!response.ok) throw new Error('Metrics unavailable');
           const schemes = await response.json();
-          const central = schemes.filter((item) => (item.category || '').toLowerCase() === 'central').length;
-          const stateOnly = schemes.filter((item) => (item.category || '').toLowerCase() !== 'central').length;
+          const central = schemes.filter((item) => (item.scheme_type || '').toLowerCase() === 'central').length;
+          const stateOnly = schemes.filter((item) => (item.scheme_type || '').toLowerCase() !== 'central').length;
           const metrics = { total: schemes.length, central, state: stateOnly };
           stateMetricsCache[name] = metrics;
           return metrics;
@@ -630,8 +430,8 @@
       };
 
       const fetchStateSchemes = async (name) => {
-        // Redirect to state dashboard instead of loading schemes here
-        window.location.href = `/state-dashboard/${encodeURIComponent(name)}/`;
+        const url = document.body.dataset.stateDashboardUrl.replace('__state__', encodeURIComponent(name));
+        window.location.href = url;
       };
 
       const map = L.map('india-map', {
@@ -643,11 +443,6 @@
         scrollWheelZoom: false,
         doubleClickZoom: true,
       });
-
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap',
-        maxZoom: 18,
-      }).addTo(map);
 
       const activeStyle = {
         color: '#34d399',
@@ -675,7 +470,9 @@
       let activeLayer = null;
       const loadGeoJson = async () => {
         const response = await fetch('{% static "india_states.geojson" %}');
+        if (!response.ok) throw new Error(`GeoJSON request failed: ${response.status}`);
         const data = await response.json();
+        if (!data.features || !data.features.length) throw new Error('India state GeoJSON contains no features.');
         const layer = L.geoJSON(data, {
           style: defaultStyle,
           onEachFeature: (feature, layer) => {
@@ -714,11 +511,12 @@
       stateTooltip.addEventListener('mouseleave', hideTooltip);
       loadOverviewAnalytics();
       loadGeoJson().catch(() => {
-        schemeCards.innerHTML = `<div class="glass-card rounded-[2rem] p-8 text-center text-slate-300">Unable to render the India map.</div>`;
+        schemeCards.innerHTML = `<div class="glass-card rounded-[2rem] p-8 text-center text-slate-300">${mapI18n.mapUnavailable}</div>`;
       });
 
       setSummary('India', 0, 0, 0);
     });
   </script>
+  <script src="{% static 'js/language-switcher.js' %}"></script>
 </body>
 </html>

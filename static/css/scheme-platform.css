@@ -1374,6 +1374,182 @@ body.sp-body {
   font-size: 14px;
 }
 
+.sp-map-section { padding: 28px; }
+
+.sp-map-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.sp-map-eyebrow {
+  color: #67e8f9;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.sp-map-heading {
+  color: var(--text-light);
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.sp-map-copy {
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+  margin-top: 8px;
+}
+
+.sp-map-chip {
+  flex: 0 0 auto;
+  padding: 9px 13px;
+  border: 1px solid rgba(103,232,249,0.22);
+  border-radius: 999px;
+  background: rgba(6,182,212,0.1);
+  color: #a5f3fc;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sp-map-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 1fr);
+  gap: 20px;
+}
+
+.sp-map-panel {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  background: rgba(8,18,38,0.72);
+  box-shadow: var(--shadow-card);
+}
+
+.sp-map-panel-heading { margin-bottom: 18px; }
+
+.sp-map-panel-title {
+  color: var(--text-light);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.sp-map-canvas-wrap {
+  overflow: hidden;
+  border: 1px solid rgba(148,163,184,0.16);
+  border-radius: var(--radius-md);
+  background: linear-gradient(160deg, rgba(8,145,178,0.12), rgba(15,30,58,0.5));
+}
+
+#india-map {
+  width: 100%;
+  height: 390px;
+  border-radius: inherit;
+  background: rgba(15,30,58,0.45);
+}
+
+.sp-map-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 460px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.sp-map-empty {
+  padding: 28px 16px;
+  border: 1px dashed rgba(148,163,184,0.28);
+  border-radius: var(--radius-md);
+  background: rgba(255,255,255,0.025);
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+.sp-map-error { color: #fca5a5; }
+
+.sp-map-card {
+  padding: 15px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius-md);
+  background: rgba(255,255,255,0.045);
+  transition: var(--transition);
+}
+
+.sp-map-card:hover {
+  border-color: rgba(103,232,249,0.3);
+  background: rgba(255,255,255,0.075);
+}
+
+.sp-map-card-category {
+  display: inline-flex;
+  padding: 4px 9px;
+  border: 1px solid rgba(45,212,191,0.25);
+  border-radius: 999px;
+  background: rgba(20,184,166,0.12);
+  color: #99f6e4;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.sp-map-card-title {
+  margin-top: 10px;
+  color: var(--text-light);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.sp-map-card-description {
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.sp-map-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.sp-map-card-details,
+.sp-map-card-apply {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid rgba(148,163,184,0.22);
+  border-radius: var(--radius-sm);
+  color: var(--text-light);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.sp-map-card-details { background: rgba(255,255,255,0.04); }
+.sp-map-card-details:hover { background: rgba(255,255,255,0.1); }
+
+.sp-map-card-apply {
+  border-color: rgba(16,185,129,0.4);
+  background: rgba(16,185,129,0.16);
+  color: #a7f3d0;
+}
+
+.sp-map-card-apply:hover { background: rgba(16,185,129,0.28); }
+
 /* =====================================================
    LOGIN PAGE OVERLAY / REDIRECT CARD
    ===================================================== */
@@ -1537,6 +1713,10 @@ body.sp-body {
   .sp-detail-section { padding: 20px; }
   .sp-detail-apply-row { flex-direction: column; }
   .sp-btn-apply-lg, .sp-btn-website { width: 100%; justify-content: center; }
+  .sp-map-section { padding: 20px; }
+  .sp-map-grid { grid-template-columns: 1fr; }
+  .sp-map-header { flex-direction: column; }
+  #india-map { height: 320px; }
 }
 
 @media (max-width: 480px) {

@@ -1,0 +1,31 @@
+.site-language-selector {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.site-language-label {
+  color: inherit;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.site-language-select {
+  max-width: 175px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: 0.5rem;
+  background: rgba(15, 23, 42, 0.85);
+  color: #f8fafc;
+  padding: 0.45rem 0.6rem;
+}
+
+.site-language-select:focus-visible {
+  outline: 2px solid #22d3ee;
+  outline-offset: 2px;
+}
+
+.scheme-translation-status {
+  margin: 0.5rem 0;
+  color: #fbbf24;
+  font-size: 0.8rem;
+}

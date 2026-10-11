@@ -1,15 +1,18 @@
-{% load static %}
+{% load static i18n %}
+{% get_current_language as LANGUAGE_CODE %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="data:," />
   <title>{{ state_name }} Analytics Dashboard - SmartAssist</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="{% static 'css/language-switcher.css' %}" />
   <style>
     body { font-family: 'Inter', sans-serif; background: #020617; color: #e2e8f0; }
     .glass-card { background: rgba(15, 23, 42, 0.72); backdrop-filter: blur(18px); border: 1px solid rgba(255,255,255,0.08); }
@@ -41,7 +44,16 @@
     @media (max-width: 768px) { .chart-container { height: 250px; } }
   </style>
 </head>
-<body class="relative overflow-x-hidden">
+<body class="relative overflow-x-hidden"
+      data-apply-base="{% url 'apply_assistance' %}"
+      data-login-url="{% url 'login' %}"
+      data-language-code="{{ LANGUAGE_CODE }}"
+      data-scheme-translation-url="{% url 'scheme_translation_api' %}"
+      data-translation-failure-message="{% trans 'Scheme details remain in English because translation is unavailable.' %}"
+      data-authenticated="{{ user.is_authenticated|lower }}"
+      data-speech-base-url="{% url 'scheme_voice_audio' scheme_id=0 %}"
+      data-state-analytics-url="{% url 'india_map_state_analytics_api' state_name='__state__' %}"
+      data-state-schemes-url="{% url 'schemes_api' state_name='__state__' %}">
   <div class="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.12),_transparent_33%),radial-gradient(circle_at_25%_40%,_rgba(56,189,248,0.14),_transparent_25%),linear-gradient(180deg,_rgba(4,8,27,0.95),_rgba(7,9,30,0.98))]"></div>
   <div class="floating-blob w-72 h-72 left-1/4 top-10 bg-cyan-400/20"></div>
   <div class="floating-blob w-80 h-80 right-20 top-44 bg-emerald-400/18"></div>
@@ -50,32 +62,35 @@
   <div class="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
     <!-- Header -->
     <header class="mb-10 grid gap-8 rounded-[2rem] border border-white/10 bg-slate-950/75 p-8 shadow-2xl shadow-cyan-500/10 backdrop-blur-xl">
+      <div class="flex justify-end">
+        {% include "partials/language_selector.html" %}
+      </div>
       <div class="space-y-6">
         <div class="inline-flex items-center gap-3 rounded-full bg-slate-900/70 px-4 py-2 text-sm text-cyan-200 ring-1 ring-cyan-500/20">
           <span class="h-2 w-2 rounded-full bg-cyan-300 animate-pulse"></span>
-          AI-powered state analytics
+          {% trans "AI-powered state analytics" %}
         </div>
         <div class="max-w-3xl space-y-4">
-          <h1 class="text-4xl font-semibold tracking-tight text-white sm:text-5xl">{{ state_name }} Analytics Dashboard</h1>
-          <p class="text-lg leading-8 text-slate-300">Comprehensive government scheme intelligence and beneficiary analytics for {{ state_name }}.</p>
+          <h1 class="text-4xl font-semibold tracking-tight text-white sm:text-5xl">{% blocktrans with state=state_name %}{{ state }} Analytics Dashboard{% endblocktrans %}</h1>
+          <p class="text-lg leading-8 text-slate-300">{% blocktrans with state=state_name %}Comprehensive government scheme intelligence and beneficiary analytics for {{ state }}.{% endblocktrans %}</p>
         </div>
       </div>
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div class="glass-card rounded-[1.75rem] p-6 text-slate-200 shadow-xl shadow-cyan-500/10">
-          <p class="text-sm uppercase tracking-[0.28em] text-slate-400">Total Schemes</p>
+          <p class="text-sm uppercase tracking-[0.28em] text-slate-400">{% trans "Total Schemes" %}</p>
           <p id="total-schemes" class="mt-3 text-3xl font-semibold text-white stat-counter">0</p>
         </div>
         <div class="glass-card rounded-[1.75rem] p-6 text-slate-200 shadow-xl shadow-emerald-500/8">
-          <p class="text-sm uppercase tracking-[0.28em] text-slate-400">Central Schemes</p>
+          <p class="text-sm uppercase tracking-[0.28em] text-slate-400">{% trans "Central Schemes" %}</p>
           <p id="central-schemes" class="mt-3 text-3xl font-semibold text-white stat-counter">0</p>
         </div>
         <div class="glass-card rounded-[1.75rem] p-6 text-slate-200 shadow-xl shadow-blue-500/8">
-          <p class="text-sm uppercase tracking-[0.28em] text-slate-400">State Schemes</p>
+          <p class="text-sm uppercase tracking-[0.28em] text-slate-400">{% trans "State Schemes" %}</p>
           <p id="state-schemes" class="mt-3 text-3xl font-semibold text-white stat-counter">0</p>
         </div>
         <div class="glass-card rounded-[1.75rem] p-6 text-slate-200 shadow-xl shadow-purple-500/8">
-          <p class="text-sm uppercase tracking-[0.28em] text-slate-400">Top Category</p>
-          <p id="top-category" class="mt-3 text-xl font-semibold text-white">Loading...</p>
+          <p class="text-sm uppercase tracking-[0.28em] text-slate-400">{% trans "Top Category" %}</p>
+          <p id="top-category" class="mt-3 text-xl font-semibold text-white">{% trans "Loading..." %}</p>
         </div>
       </div>
     </header>
@@ -83,13 +98,13 @@
     <!-- Charts Section -->
     <section class="mb-10 grid gap-8 lg:grid-cols-2">
       <div class="glass-card rounded-[2rem] p-6 shadow-2xl shadow-slate-950/20">
-        <h3 class="text-xl font-semibold text-white mb-6">Scheme Category Distribution</h3>
+        <h3 class="text-xl font-semibold text-white mb-6">{% trans "Scheme Category Distribution" %}</h3>
         <div class="chart-container">
           <canvas id="categoryChart"></canvas>
         </div>
       </div>
       <div class="glass-card rounded-[2rem] p-6 shadow-2xl shadow-slate-950/20">
-        <h3 class="text-xl font-semibold text-white mb-6">Central vs State Schemes</h3>
+        <h3 class="text-xl font-semibold text-white mb-6">{% trans "Central vs State Schemes" %}</h3>
         <div class="chart-container">
           <canvas id="centralBarChart"></canvas>
         </div>
@@ -100,10 +115,10 @@
     <section class="mb-10">
       <div class="flex items-center justify-between gap-4 rounded-[2rem] border border-white/10 bg-slate-950/80 p-6 shadow-2xl shadow-cyan-500/10">
         <div>
-          <p class="text-sm uppercase tracking-[0.32em] text-slate-400">Available Schemes</p>
-          <h2 class="mt-2 text-3xl font-semibold text-white">Government Programs in {{ state_name }}</h2>
+          <p class="text-sm uppercase tracking-[0.32em] text-slate-400">{% trans "Available Schemes" %}</p>
+          <h2 class="mt-2 text-3xl font-semibold text-white">{% blocktrans with state=state_name %}Government Programs in {{ state }}{% endblocktrans %}</h2>
         </div>
-        <p id="scheme-count-text" class="text-sm text-slate-400">Loading schemes...</p>
+        <p id="scheme-count-text" class="text-sm text-slate-400">{% trans "Loading schemes..." %}</p>
       </div>
       <div id="scheme-cards" class="mt-8 grid gap-6 xl:grid-cols-2"></div>
     </section>
@@ -113,10 +128,11 @@
   <div id="audio-panel" class="audio-panel glass-card rounded-[2rem] border border-white/10 bg-slate-950/95 p-5 shadow-2xl shadow-cyan-500/20 backdrop-blur-xl">
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div>
-        <p class="text-xs uppercase tracking-[0.32em] text-slate-400">Natural voice assistant</p>
-        <h3 class="mt-2 text-xl font-semibold text-white">Listen to scheme details</h3>
+        <p class="text-xs uppercase tracking-[0.32em] text-slate-400">{% trans "Natural voice assistant" %}</p>
+        <h3 class="mt-2 text-xl font-semibold text-white">{% trans "Listen to scheme details" %}</h3>
+        <p class="mt-2 text-xs text-slate-400">{% trans "When requested, only the selected scheme’s public name, description, eligibility, and document details are sent to free online translation and speech services. No account or application data is sent. Verify eligibility with the official scheme source." %}</p>
       </div>
-      <div id="audio-badge" class="neon-badge rounded-full px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.28em]">Ready</div>
+      <div id="audio-badge" class="neon-badge rounded-full px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.28em]">{% trans "Ready" %}</div>
     </div>
     <div class="mt-5 space-y-4">
       <div class="audio-wave flex items-end justify-center gap-2">
@@ -127,21 +143,57 @@
         <span class="wave-bar"></span>
       </div>
       <div class="flex flex-wrap items-center justify-between gap-3">
-        <button id="audio-play" type="button" class="audio-button rounded-full bg-cyan-500 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400">Play</button>
-        <button id="audio-pause" type="button" class="audio-button rounded-full border border-slate-800 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:border-cyan-400">Pause</button>
-        <button id="audio-stop" type="button" class="audio-button rounded-full border border-slate-800 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:border-emerald-400">Stop</button>
+        <button id="audio-play" type="button" class="audio-button rounded-full bg-cyan-500 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400">{% trans "Play" %}</button>
+        <button id="audio-pause" type="button" class="audio-button rounded-full border border-slate-800 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:border-cyan-400">{% trans "Pause" %}</button>
+        <button id="audio-stop" type="button" class="audio-button rounded-full border border-slate-800 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:border-emerald-400">{% trans "Stop" %}</button>
         <div id="audio-spinner" class="audio-spinner hidden"></div>
       </div>
       <div class="grid gap-2">
-        <label for="audio-volume" class="text-xs uppercase tracking-[0.32em] text-slate-400">Volume</label>
+        <label for="audio-volume" class="text-xs uppercase tracking-[0.32em] text-slate-400">{% trans "Volume" %}</label>
         <input id="audio-volume" type="range" min="0" max="1" step="0.05" value="0.92" class="h-2 w-full cursor-pointer rounded-full bg-slate-800 accent-cyan-400" />
       </div>
-      <p id="audio-status" class="text-sm text-slate-300">Tap Listen on any card to play the natural Indian voice version.</p>
+      <p id="audio-status" class="text-sm text-slate-300">{% trans "Tap Listen on any card to play the natural Indian voice version." %}</p>
     </div>
   </div>
 
+  <script src="{% static 'js/scheme-voice.js' %}"></script>
+  <script src="{% static 'js/language-switcher.js' %}"></script>
+  <script src="{% static 'js/scheme-localization.js' %}"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
+      const text = {
+        languages: {
+          en: '{% trans "English" %}',
+          hi: '{% trans "Hindi" %}',
+          mr: '{% trans "Marathi" %}',
+          te: '{% trans "Telugu" %}',
+        },
+        preparing: '{% trans "Preparing audio in {language}..." %}',
+        finished: '{% trans "Finished speaking" %}',
+        speaking: '{% trans "Speaking" %}',
+        ready: '{% trans "Ready" %}',
+        unavailable: '{% trans "Unavailable" %}',
+        translating: '{% trans "Translating" %}',
+        paused: '{% trans "Paused. Press Play to resume." %}',
+        alreadyPlaying: '{% trans "Audio is already playing." %}',
+        resuming: '{% trans "Resuming playback..." %}',
+        stopped: '{% trans "Audio stopped." %}',
+        chooseScheme: '{% trans "Choose a language and press Listen on a scheme card to start audio." %}',
+        noSchemes: '{% trans "No schemes available for this state." %}',
+        benefits: '{% trans "Benefits" %}',
+        eligibility: '{% trans "Eligibility" %}',
+        documents: '{% trans "Documents" %}',
+        notSpecified: '{% trans "Not specified." %}',
+        noDescription: '{% trans "No description provided." %}',
+        general: '{% trans "General" %}',
+        applyNow: '{% trans "Apply Now" %}',
+        officialSite: '{% trans "Official Site" %}',
+        officialUnavailable: '{% trans "Official website unavailable" %}',
+        listen: '{% trans "Listen" %}',
+        listenLanguage: '{% trans "Listen Language" %}',
+        schemesAvailable: '{% trans "{count} schemes available" %}',
+        loadError: '{% trans "Error loading data" %}',
+      };
       const stateName = '{{ state_name }}';
       const totalSchemesEl = document.getElementById('total-schemes');
       const centralSchemesEl = document.getElementById('central-schemes');
@@ -152,7 +204,6 @@
       const categoryChartCtx = document.getElementById('categoryChart').getContext('2d');
       const centralBarChartCtx = document.getElementById('centralBarChart').getContext('2d');
 
-      const audioLanguage = document.getElementById('audio-language') || { value: 'English' };
       const audioPlayBtn = document.getElementById('audio-play');
       const audioPauseBtn = document.getElementById('audio-pause');
       const audioStopBtn = document.getElementById('audio-stop');
@@ -167,26 +218,12 @@
       let schemesData = [];
       let analyticsData = null;
 
-      const languageSettings = {
-        English: { code: 'en', name: 'English' },
-        Hindi: { code: 'hi', name: 'Hindi' },
-        Telugu: { code: 'te', name: 'Telugu' },
-        Tamil: { code: 'ta', name: 'Tamil' },
-        Kannada: { code: 'kn', name: 'Kannada' },
-        Marathi: { code: 'mr', name: 'Marathi' },
-        Bengali: { code: 'bn', name: 'Bengali' },
-        Malayalam: { code: 'ml', name: 'Malayalam' },
-        Gujarati: { code: 'gu', name: 'Gujarati' },
-        Punjabi: { code: 'pa', name: 'Punjabi' }
-      };
-
       const audioState = {
         activeScheme: null,
+        activeLanguage: 'en',
         isPlaying: false,
-        currentAudio: null,
+        isPaused: false,
         volume: Number(audioVolume.value),
-        currentText: '',
-        currentLanguage: 'English'
       };
 
       const setAudioStatus = (message, busy = false) => {
@@ -199,229 +236,62 @@
         audioBadge.textContent = text;
       };
 
-      const getLanguageConfig = (language) => languageSettings[language] || languageSettings.English;
-      const selectedLanguage = () => audioLanguage.value || 'English';
-
       const updateVolume = () => {
         audioState.volume = Number(audioVolume.value);
-        if (audioState.currentAudio) audioState.currentAudio.volume = audioState.volume;
-      };
-
-      const sanitizeField = (value) => (value ? value.toString().trim() : '');
-
-      const buildNaturalSpeechText = (scheme) => {
-        const name = sanitizeField(scheme.name) || 'Scheme';
-        const description = sanitizeField(scheme.description) || '';
-        const eligibility = sanitizeField(scheme.eligibility) || 'Check official website for eligibility criteria.';
-        const documents = sanitizeField(scheme.documents_required) || 'Check official website for document requirements.';
-        const benefits = sanitizeField(scheme.benefits || scheme.outcome || '') || 'Provides financial or non-financial support to eligible applicants.';
-        
-        let text = `This is ${name}. `;
-        if (description) text += `${description}. `;
-        text += `Eligibility: ${eligibility}. `;
-        text += `Required Documents: ${documents}. `;
-        text += `Benefits: ${benefits}. `;
-        if (scheme.official_website) {
-          text += `To apply, visit the official government website. `;
-        } else {
-          text += `For more details, visit the official scheme portal or contact your local government office.`;
-        }
-        
-        return text;
+        window.SmartAssistVoice?.setVolume(audioState.volume);
       };
 
       const stopAllAudio = () => {
-        if (audioState.currentAudio) {
-          audioState.currentAudio.pause();
-          audioState.currentAudio.currentTime = 0;
-          audioState.currentAudio = null;
-        }
-        if (window.speechSynthesis) {
-          window.speechSynthesis.cancel();
-        }
+        window.SmartAssistVoice?.stop();
         audioState.isPlaying = false;
+        audioState.isPaused = false;
         setAudioWaveState(false);
       };
 
-      const languageTTSCodeMap = {
-        English: 'en',
-        Hindi: 'hi',
-        Marathi: 'mr',
-        Telugu: 'te',
-        Tamil: 'ta',
-        Kannada: 'kn',
-        Malayalam: 'ml',
-        Bengali: 'bn',
-        Gujarati: 'gu',
-        Punjabi: 'pa'
-      };
-
-      const getTTSCode = (language) => languageTTSCodeMap[language] || 'en';
-
-      const playGoogleTTS = (text, language, buttonElement, schemeName) => {
-        const code = getTTSCode(language);
-        const proxyUrl = `/tts-proxy/?lang=${code}&text=${encodeURIComponent(text)}`;
-
-        if (audioState.currentAudio) {
-          audioState.currentAudio.pause();
-          audioState.currentAudio = null;
-        }
-
-        const audio = new Audio(proxyUrl);
-        audio.volume = audioState.volume;
-        audioState.currentAudio = audio;
-        audioState.isPlaying = true;
-
-        audio.addEventListener('playing', () => {
-          setAudioWaveState(true);
-          setAudioBadge('Speaking');
-          setAudioStatus(`Speaking "${schemeName}" in ${language}...`);
-        }, { once: true });
-
-        audio.addEventListener('ended', () => {
-          audioState.isPlaying = false;
-          setAudioWaveState(false);
-          setAudioBadge('Ready');
-          setAudioStatus(`Finished speaking "${schemeName}".`);
-          if (buttonElement) {
-            buttonElement.disabled = false;
-            const loadingSpan = buttonElement.querySelector('.audio-loading');
-            if (loadingSpan) loadingSpan.classList.add('hidden');
-          }
-        }, { once: true });
-
-        audio.addEventListener('error', () => {
-          audioState.isPlaying = false;
-          setAudioWaveState(false);
-          setAudioBadge('Error');
-          setAudioStatus('Google TTS failed. Please try again.');
-          if (buttonElement) {
-            buttonElement.disabled = false;
-            const loadingSpan = buttonElement.querySelector('.audio-loading');
-            if (loadingSpan) loadingSpan.classList.add('hidden');
-          }
-        }, { once: true });
-
-        audio.play().catch((error) => {
-          audioState.isPlaying = false;
-          setAudioWaveState(false);
-          setAudioBadge('Error');
-          setAudioStatus('Audio playback failed. Please try again.');
-          console.warn('Google TTS playback failed:', error);
-          if (buttonElement) {
-            buttonElement.disabled = false;
-            const loadingSpan = buttonElement.querySelector('.audio-loading');
-            if (loadingSpan) loadingSpan.classList.add('hidden');
-          }
-        });
-      };
-
-      const waitForVoices = () => new Promise((resolve) => {
-        const voices = window.speechSynthesis.getVoices();
-        if (voices.length) return resolve(voices);
-
-        const handleVoicesChanged = () => {
-          const updatedVoices = window.speechSynthesis.getVoices();
-          if (updatedVoices.length) {
-            window.speechSynthesis.removeEventListener('voiceschanged', handleVoicesChanged);
-            resolve(updatedVoices);
-          }
-        };
-
-        window.speechSynthesis.addEventListener('voiceschanged', handleVoicesChanged);
-        setTimeout(() => {
-          window.speechSynthesis.removeEventListener('voiceschanged', handleVoicesChanged);
-          resolve(window.speechSynthesis.getVoices());
-        }, 1200);
-      });
-
-      const getBrowserVoice = (language) => {
-        const voices = window.speechSynthesis.getVoices() || [];
-        const langCode = getLanguageConfig(language).code.toLowerCase();
-        const exact = voices.find((voice) => voice.lang.toLowerCase().startsWith(langCode));
-        if (exact) return exact;
-        const nameMatch = voices.find((voice) => voice.name.toLowerCase().includes(language.toLowerCase()));
-        if (nameMatch) return nameMatch;
-        return voices.find((voice) => voice.lang.toLowerCase().startsWith('en')) || voices[0] || null;
-      };
-
-      const speakWithBrowserSpeech = async (text, language, buttonElement, schemeName) => {
-        const voices = await waitForVoices();
-        if (!voices.length) {
-          return playGoogleTTS(text, language, buttonElement, schemeName);
-        }
-        const utterance = new SpeechSynthesisUtterance(text);
-        const voice = getBrowserVoice(language);
-        if (voice) utterance.voice = voice;
-        utterance.lang = voice?.lang || getLanguageConfig(language).code;
-        utterance.rate = 0.95;
-        utterance.pitch = 1.0;
-        utterance.volume = audioState.volume;
-
-        utterance.onstart = () => {
-          audioState.isPlaying = true;
-          setAudioWaveState(true);
-          setAudioBadge('Speaking');
-          setAudioStatus(`Speaking "${schemeName}" in ${language}...`);
-          if (buttonElement) {
-            const loadingSpan = buttonElement.querySelector('.audio-loading');
-            if (loadingSpan) loadingSpan.classList.remove('hidden');
-          }
-        };
-
-        utterance.onend = () => {
-          audioState.isPlaying = false;
-          setAudioWaveState(false);
-          setAudioBadge('Ready');
-          setAudioStatus(`Finished speaking "${schemeName}".`);
-          if (buttonElement) {
-            buttonElement.disabled = false;
-            const loadingSpan = buttonElement.querySelector('.audio-loading');
-            if (loadingSpan) loadingSpan.classList.add('hidden');
-          }
-        };
-
-        utterance.onerror = () => {
-          audioState.isPlaying = false;
-          setAudioWaveState(false);
-          setAudioBadge('Error');
-          setAudioStatus('Browser speech failed. Falling back to Google TTS.');
-          playGoogleTTS(text, language, buttonElement, schemeName);
-        };
-
-        try {
-          window.speechSynthesis.cancel();
-          window.speechSynthesis.speak(utterance);
-        } catch (error) {
-          const loadingSpan = buttonElement?.querySelector('.audio-loading');
-          console.warn('Browser speech failed, using Google TTS:', error);
-          playGoogleTTS(text, language, buttonElement, schemeName);
-        }
-      };
-
-      const speakSchemeWithLanguage = async (scheme, language, buttonElement) => {
-        if (!scheme || !scheme.name) return;
+      const speakSchemeWithLanguage = async (scheme, languageCode, buttonElement) => {
+        if (!scheme || !scheme.name || !scheme.id) return;
 
         stopAllAudio();
-        const text = buildNaturalSpeechText(scheme);
+        audioState.activeScheme = scheme;
+        audioState.activeLanguage = languageCode;
 
         const loadingSpan = buttonElement?.querySelector('.audio-loading');
         if (loadingSpan) loadingSpan.classList.remove('hidden');
         if (buttonElement) buttonElement.disabled = true;
 
-        setAudioStatus(`Preparing audio in ${language}...`, true);
-        setAudioBadge('Speaking');
+        const languageName = text.languages[languageCode];
+        setAudioStatus(text.preparing.replace('{language}', languageName), true);
+        setAudioBadge(text.speaking);
         setAudioWaveState(true);
 
-        if (typeof window.speechSynthesis !== 'undefined') {
-          await speakWithBrowserSpeech(text, language, buttonElement, scheme.name);
-        } else {
-          playGoogleTTS(text, language, buttonElement, scheme.name);
+        try {
+          const played = await window.SmartAssistVoice.speak(scheme.id, languageCode, {
+            volume: audioState.volume,
+            onStatus: (message) => {
+              audioState.isPlaying = true;
+              audioState.isPaused = false;
+              setAudioWaveState(true);
+              setAudioStatus(
+                message,
+                message.startsWith(text.translating) || message.startsWith(text.preparing.split('{language}')[0])
+              );
+            }
+          });
+          if (!played) return;
+          setAudioStatus(`${text.finished} "${scheme.name}".`);
+          setAudioBadge(text.ready);
+        } catch (error) {
+          setAudioStatus(error.message);
+          setAudioBadge(text.unavailable);
+        } finally {
+          audioState.isPlaying = false;
+          audioState.isPaused = false;
+          setAudioWaveState(false);
+          if (buttonElement) {
+            buttonElement.disabled = false;
+            buttonElement.querySelector('.audio-loading')?.classList.add('hidden');
+          }
         }
-      };
-
-      const buildSpeechText = (scheme) => {
-        return buildNaturalSpeechText(scheme);
       };
 
       const setAudioWaveState = (active) => {
@@ -429,52 +299,43 @@
       };
 
       const stopAudio = () => {
-        if (audioState.currentAudio) {
-          audioState.currentAudio.pause();
-          audioState.currentAudio.currentTime = 0;
-          audioState.currentAudio = null;
-        }
-        if (window.speechSynthesis) {
-          window.speechSynthesis.cancel();
-        }
+        window.SmartAssistVoice?.stop();
         audioState.isPlaying = false;
+        audioState.isPaused = false;
         setAudioWaveState(false);
-        setAudioBadge('Ready');
-        setAudioStatus('Audio stopped.');
+        setAudioBadge(text.ready);
+        setAudioStatus(text.stopped);
       };
 
       const pauseAudio = () => {
-        if (audioState.currentAudio && !audioState.currentAudio.paused) {
-          audioState.currentAudio.pause();
+        window.SmartAssistVoice?.pause();
+        if (audioState.isPlaying) {
           audioState.isPlaying = false;
+          audioState.isPaused = true;
           setAudioWaveState(false);
-          setAudioStatus('Paused. Press Play to resume.');
-          return;
-        }
-        if (window.speechSynthesis && window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
-          window.speechSynthesis.pause();
-          audioState.isPlaying = false;
-          setAudioWaveState(false);
-          setAudioStatus('Paused. Press Play to resume.');
-          return;
+          setAudioStatus(text.paused);
         }
       };
 
       const resumeAudio = () => {
-        if (audioState.currentAudio && audioState.currentAudio.paused) {
-          audioState.currentAudio.play();
-          audioState.isPlaying = true;
-          setAudioWaveState(true);
-          setAudioStatus('Resuming playback...');
+        if (audioState.isPlaying) {
+          setAudioStatus(text.alreadyPlaying);
           return;
         }
-        if (window.speechSynthesis && window.speechSynthesis.paused) {
-          window.speechSynthesis.resume();
-          audioState.isPlaying = true;
-          setAudioWaveState(true);
-          setAudioStatus('Resuming playback...');
+        if (audioState.isPaused) {
+          window.SmartAssistVoice?.resume().then(() => {
+            audioState.isPaused = false;
+            audioState.isPlaying = true;
+            setAudioWaveState(true);
+            setAudioStatus(text.resuming);
+          }).catch((error) => setAudioStatus(error.message));
           return;
         }
+        if (audioState.activeScheme) {
+          speakSchemeWithLanguage(audioState.activeScheme, audioState.activeLanguage, null);
+          return;
+        }
+        setAudioStatus(text.chooseScheme);
       };
 
       const animateCounter = (element, target) => {
@@ -551,7 +412,7 @@
 
       const renderSchemeCards = (schemes) => {
         if (!schemes || !schemes.length) {
-          schemeCardsEl.innerHTML = '<div class="glass-card rounded-[2rem] p-8 text-center text-slate-300">No schemes available for this state.</div>';
+          schemeCardsEl.innerHTML = `<div class="glass-card rounded-[2rem] p-8 text-center text-slate-300">${text.noSchemes}</div>`;
           return;
         }
 
@@ -562,55 +423,50 @@
           card.innerHTML = `
             <div class="flex flex-col gap-4">
               <div class="flex flex-wrap items-start justify-between gap-4">
-                <span class="neon-badge rounded-full px-3 py-2 text-xs font-semibold uppercase tracking-[0.24em]">${scheme.category || 'General'}</span>
+                <span class="neon-badge rounded-full px-3 py-2 text-xs font-semibold uppercase tracking-[0.24em]">${scheme.category || text.general}</span>
                 <span class="text-sm text-slate-400">${scheme.state || stateName}</span>
               </div>
               <div>
-                <h3 class="text-xl font-semibold text-white">${scheme.name}</h3>
-                <p class="mt-3 text-sm leading-6 text-slate-300">${scheme.description || 'No description provided.'}</p>
+                <h3 class="text-xl font-semibold text-white" data-scheme-field="scheme_name">${scheme.name}</h3>
+                <p class="mt-3 text-sm leading-6 text-slate-300" data-scheme-field="description">${scheme.description || text.noDescription}</p>
               </div>
               <div class="grid gap-4 sm:grid-cols-2">
                 <div class="rounded-3xl border border-white/10 bg-slate-900/80 p-4 text-sm text-slate-300">
-                  <p class="font-semibold text-white">Eligibility</p>
-                  <p class="mt-2">${scheme.eligibility || 'Not specified.'}</p>
+                  <p class="font-semibold text-white">${text.eligibility}</p>
+                  <p class="mt-2" data-scheme-field="eligibility">${scheme.eligibility || text.notSpecified}</p>
                 </div>
                 <div class="rounded-3xl border border-white/10 bg-slate-900/80 p-4 text-sm text-slate-300">
-                  <p class="font-semibold text-white">Documents</p>
-                  <p class="mt-2">${scheme.documents_required || 'Not specified.'}</p>
+                  <p class="font-semibold text-white">${text.documents}</p>
+                  <p class="mt-2" data-scheme-field="documents_required">${scheme.documents_required || text.notSpecified}</p>
                 </div>
               </div>
               <div class="rounded-3xl border border-white/10 bg-slate-900/80 p-4 text-sm text-slate-300">
-                <p class="font-semibold text-white">Benefits</p>
+                <p class="font-semibold text-white">${text.benefits}</p>
                 <p class="mt-2">${scheme.benefits || scheme.outcome || 'Provides support to eligible applicants.'}</p>
               </div>
+              <p class="text-xs text-amber-200" data-translation-status role="status" hidden></p>
               <div class="flex flex-col gap-4 pt-3">
                 <div class="grid gap-3 sm:grid-cols-2 items-end">
                   <div class="flex flex-col gap-2">
-                    <label class="text-xs uppercase tracking-[0.28em] text-slate-400 font-semibold">Listen Language</label>
-                    <select class="language-select w-full rounded-lg border border-white/20 bg-slate-900/60 px-3 py-2.5 text-sm text-slate-200 transition hover:border-cyan-400/50 focus:border-cyan-400 focus:outline-none" data-index="${index}">
-                      <option value="English">English</option>
-                      <option value="Hindi">Hindi</option>
-                      <option value="Marathi">Marathi</option>
-                      <option value="Telugu">Telugu</option>
-                      <option value="Tamil">Tamil</option>
-                      <option value="Kannada">Kannada</option>
-                      <option value="Malayalam">Malayalam</option>
-                      <option value="Bengali">Bengali</option>
-                      <option value="Gujarati">Gujarati</option>
-                      <option value="Punjabi">Punjabi</option>
+                    <label class="text-xs uppercase tracking-[0.28em] text-slate-400 font-semibold">${text.listenLanguage}</label>
+                    <select class="language-select w-full rounded-lg border border-white/20 bg-slate-900/60 px-3 py-2.5 text-sm text-slate-200 transition hover:border-cyan-400/50 focus:border-cyan-400 focus:outline-none" data-index="${index}" data-voice-language>
+                      <option value="en" ${document.body.dataset.languageCode === 'en' ? 'selected' : ''}>${text.languages.en}</option>
+                      <option value="hi" ${document.body.dataset.languageCode === 'hi' ? 'selected' : ''}>${text.languages.hi}</option>
+                      <option value="mr" ${document.body.dataset.languageCode === 'mr' ? 'selected' : ''}>${text.languages.mr}</option>
+                      <option value="te" ${document.body.dataset.languageCode === 'te' ? 'selected' : ''}>${text.languages.te}</option>
                     </select>
                   </div>
-                  <button type="button" class="listen-button w-full rounded-lg bg-gradient-to-r from-cyan-500 to-cyan-600 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:from-cyan-400 hover:to-cyan-500 active:scale-95 flex items-center justify-center gap-2" data-index="${index}" data-scheme-id="${index}">
+                  <button type="button" class="listen-button w-full rounded-lg bg-gradient-to-r from-cyan-500 to-cyan-600 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:from-cyan-400 hover:to-cyan-500 active:scale-95 flex items-center justify-center gap-2" data-index="${index}" data-scheme-id="${scheme.id}">
                     <span class="text-lg">🔊</span>
-                    <span>Listen</span>
+                    <span>${text.listen}</span>
                     <span class="audio-loading hidden">
                       <span class="inline-block w-3 h-3 rounded-full bg-slate-950 animate-pulse"></span>
                     </span>
                   </button>
                 </div>
                 <div class="flex flex-wrap gap-3 items-center pt-2">
-                  <a href="${scheme.apply_link || scheme.official_website || '#'}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-lg bg-emerald-500/20 border border-emerald-500/40 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-500/30">Apply Now</a>
-                  ${scheme.official_website ? `<a href="${scheme.official_website}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-lg border border-slate-600 bg-slate-900/60 px-4 py-2.5 text-sm font-semibold text-slate-300 transition hover:border-slate-500">Official Site</a>` : ''}
+                  <a href="${document.body.dataset.authenticated === 'true' ? `${document.body.dataset.applyBase}?scheme_id=${scheme.id}` : `${document.body.dataset.loginUrl}?next=${encodeURIComponent(`${document.body.dataset.applyBase}?scheme_id=${scheme.id}`)}`}" class="inline-flex items-center justify-center rounded-lg bg-emerald-500/20 border border-emerald-500/40 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-500/30">${text.applyNow}</a>
+                  ${scheme.official_website ? `<a href="${scheme.official_website}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-lg border border-slate-600 bg-slate-900/60 px-4 py-2.5 text-sm font-semibold text-slate-300 transition hover:border-slate-500">${text.officialSite}</a>` : `<span class="text-sm text-slate-400" aria-disabled="true">${text.officialUnavailable}</span>`}
                 </div>
               </div>
             </div>
@@ -618,6 +474,10 @@
 
           const listenBtn = card.querySelector('.listen-button');
           const langSelect = card.querySelector('.language-select');
+          card.dataset.schemeId = scheme.id;
+          card.dataset.schemeTranslationCard = '';
+          card.dataset.translationFields = 'scheme_name,description,eligibility,documents_required';
+          window.SmartAssistLocalization?.observe(card);
           
           listenBtn.addEventListener('click', (event) => {
             event.preventDefault();
@@ -633,7 +493,8 @@
       const loadStateData = async () => {
         try {
           // Load analytics
-          const analyticsResponse = await fetch(`/api/india-map/state/${encodeURIComponent(stateName)}/`);
+          const analyticsUrl = document.body.dataset.stateAnalyticsUrl.replace('__state__', encodeURIComponent(stateName));
+          const analyticsResponse = await fetch(analyticsUrl);
           if (analyticsResponse.ok) {
             analyticsData = await analyticsResponse.json();
             animateCounter(totalSchemesEl, analyticsData.total_schemes || 0);
@@ -644,15 +505,17 @@
           }
 
           // Load schemes
-          const schemesResponse = await fetch(`/api/state-schemes/${encodeURIComponent(stateName)}/`);
+          const schemesUrl = document.body.dataset.stateSchemesUrl.replace('__state__', encodeURIComponent(stateName));
+          const schemesResponse = await fetch(schemesUrl);
+          if (!schemesResponse.ok) throw new Error(`Schemes request failed: ${schemesResponse.status}`);
           if (schemesResponse.ok) {
             schemesData = await schemesResponse.json();
-            schemeCountTextEl.textContent = `${schemesData.length} schemes available`;
+            schemeCountTextEl.textContent = text.schemesAvailable.replace('{count}', schemesData.length);
             renderSchemeCards(schemesData);
           }
         } catch (error) {
           console.error('Error loading state data:', error);
-          schemeCountTextEl.textContent = 'Error loading data';
+          schemeCountTextEl.textContent = text.loadError;
         }
       };
 

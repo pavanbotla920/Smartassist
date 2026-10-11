@@ -17,12 +17,13 @@ from farmers.views import (
     india_map_state_analytics_api,
     india_map_schemes,
     state_dashboard,
+    scheme_voice_audio,
+    scheme_translation_api,
     register,
     profile,
     home,
     scheme_awareness,
     scheme_detail,
-    tts_proxy,
     apply_for_assistance,
     application_status,
     admin_dashboard,
@@ -88,10 +89,11 @@ urlpatterns += i18n_patterns(
     # API endpoints
     path('api/state-schemes/<str:state_name>/', schemes_by_state_api, name='state_schemes_api'),
     path('api/schemes/<str:state_name>/', state_schemes_public_api, name='schemes_api'),
+    path('api/schemes/<int:scheme_id>/speech/', scheme_voice_audio, name='scheme_voice_audio'),
+    path('api/scheme-translation/', scheme_translation_api, name='scheme_translation_api'),
     path('api/india-map/overview/', india_map_overview_api, name='india_map_overview_api'),
     path('api/india-map/state/<str:state_name>/', india_map_state_analytics_api, name='india_map_state_analytics_api'),
     path('india-map/', india_map_schemes, name='india_map_schemes'),
-    path('tts-proxy/', tts_proxy, name='tts_proxy'),
     path('state-dashboard/<str:state_name>/', state_dashboard, name='state_dashboard'),
 
     prefix_default_language=False

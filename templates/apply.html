@@ -11,17 +11,44 @@
                 <div class="card-header bg-primary text-white">
                     <h3 class="card-title mb-0">
                         <i class="fas fa-clipboard-list"></i>
-                        {% trans "Apply for Government Scheme Assistance" %}
+                        {% if scheme %}
+                            {% blocktrans with scheme_name=scheme.scheme_name %}Request help applying for {{ scheme_name }}{% endblocktrans %}
+                        {% else %}
+                            {% trans "Apply for Government Scheme Assistance" %}
+                        {% endif %}
                     </h3>
                 </div>
                 <div class="card-body">
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle"></i>
-                        {% trans "Fill in your basic details below. Our volunteers will review your information and apply for suitable government schemes on your behalf. You will be notified of the progress." %}
+                        {% if scheme %}
+                            {% blocktrans with scheme_name=scheme.scheme_name %}Fill in your details to request help with {{ scheme_name }}. Our volunteers will review your request and contact you about the next steps.{% endblocktrans %}
+                        {% else %}
+                            {% trans "Fill in your basic details below. Our volunteers will review your information and apply for suitable government schemes on your behalf. You will be notified of the progress." %}
+                        {% endif %}
                     </div>
+                    {% if scheme %}
+                        <section class="rounded border bg-light p-3 mb-4" aria-label="{% trans 'Selected scheme details' %}">
+                            <h4 class="h6">{{ scheme.scheme_name }}</h4>
+                            <p class="mb-1"><strong>{% trans "Type" %}:</strong> {{ scheme.scheme_type|default:_("Not specified") }}</p>
+                            <p class="mb-1"><strong>{% trans "State" %}:</strong> {{ scheme.state|default:_("Not specified") }}</p>
+                            <p class="mb-1"><strong>{% trans "Eligibility" %}:</strong> {{ scheme.eligibility|default:_("Check the official website for details.") }}</p>
+                            <p class="mb-0"><strong>{% trans "Required documents" %}:</strong> {{ scheme.documents_required|default:_("Check the official website for details.") }}</p>
+                        </section>
+                    {% endif %}
+
+                    {% if form.errors %}
+                        <div class="alert alert-danger" role="alert">
+                            <p class="mb-1"><strong>{% trans "Please correct the following errors:" %}</strong></p>
+                            {{ form.errors }}
+                        </div>
+                    {% endif %}
 
                     <form method="post" class="needs-validation" novalidate>
                         {% csrf_token %}
+                        {% if scheme %}
+                            <input type="hidden" name="scheme_id" value="{{ scheme.id }}">
+                        {% endif %}
 
                         <div class="row">
                             <div class="col-md-6 mb-3">

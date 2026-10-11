@@ -11,22 +11,25 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="{% static 'css/scheme-platform.css' %}" />
+  <link rel="stylesheet" href="{% static 'css/language-switcher.css' %}" />
 </head>
 <body
   class="sp-body"
   data-authenticated="{{ user.is_authenticated|lower }}"
   data-login-url="{% url 'login' %}"
-  data-apply-base="/{{ LANGUAGE_CODE }}/apply/"
+  data-apply-base="{% url 'apply_assistance' %}"
+  data-scheme-translation-url="{% url 'scheme_translation_api' %}"
+  data-translation-failure-message="{% trans 'Scheme details remain in English because translation is unavailable.' %}"
 >
 
 <!-- Animated background -->
 <div class="sp-bg" aria-hidden="true"></div>
 
 <!-- ===================== NAVBAR ===================== -->
-<nav class="sp-navbar" role="navigation" aria-label="Main navigation">
+<nav class="sp-navbar" role="navigation" aria-label="{% trans 'Main navigation' %}">
 
   <!-- Brand -->
-  <a href="{% url 'home' %}" class="sp-navbar-brand" aria-label="SmartAssist Home">
+  <a href="{% url 'home' %}" class="sp-navbar-brand" aria-label="{% trans 'SmartAssist Home' %}">
     <div class="sp-nav-logo-icon" aria-hidden="true">🏛️</div>
     <div class="sp-nav-logo-text">
       <span class="brand-name">SmartAssist</span>
@@ -45,7 +48,7 @@
   <!-- Actions -->
   <div class="sp-nav-actions">
     {% if user.is_authenticated %}
-      <a href="{% url 'profile' %}" class="sp-user-chip" aria-label="Your profile">
+      <a href="{% url 'profile' %}" class="sp-user-chip" aria-label="{% trans 'Your profile' %}">
         <div class="user-avatar">{{ user.username|first|upper }}</div>
         {{ user.username }}
       </a>
@@ -59,36 +62,17 @@
       </a>
     {% endif %}
 
-    <!-- Language switcher -->
-    <div class="sp-lang-switcher" id="sp-lang-switcher">
-      <button class="sp-lang-btn" id="sp-lang-toggle" aria-label="Switch language" aria-expanded="false">🌐 {% get_current_language as LANGUAGE_CODE %}{{ LANGUAGE_CODE|upper }}</button>
-      <div class="sp-lang-dropdown" id="sp-lang-dropdown" role="listbox">
-        <a href="{% url 'set_language' %}?lang=en&next={{ request.get_full_path|urlencode }}"  class="sp-lang-item {% if LANGUAGE_CODE == 'en' %}active{% endif %}">English</a>
-        <a href="{% url 'set_language' %}?lang=hi&next={{ request.get_full_path|urlencode }}"  class="sp-lang-item {% if LANGUAGE_CODE == 'hi' %}active{% endif %}">हिंदी</a>
-        <a href="{% url 'set_language' %}?lang=mr&next={{ request.get_full_path|urlencode }}"  class="sp-lang-item {% if LANGUAGE_CODE == 'mr' %}active{% endif %}">मराठी</a>
-        <a href="{% url 'set_language' %}?lang=gu&next={{ request.get_full_path|urlencode }}"  class="sp-lang-item {% if LANGUAGE_CODE == 'gu' %}active{% endif %}">ગુજરાતી</a>
-        <a href="{% url 'set_language' %}?lang=bn&next={{ request.get_full_path|urlencode }}"  class="sp-lang-item {% if LANGUAGE_CODE == 'bn' %}active{% endif %}">বাংলা</a>
-        <a href="{% url 'set_language' %}?lang=ta&next={{ request.get_full_path|urlencode }}"  class="sp-lang-item {% if LANGUAGE_CODE == 'ta' %}active{% endif %}">தமிழ்</a>
-        <a href="{% url 'set_language' %}?lang=te&next={{ request.get_full_path|urlencode }}"  class="sp-lang-item {% if LANGUAGE_CODE == 'te' %}active{% endif %}">తెలుగు</a>
-        <a href="{% url 'set_language' %}?lang=kn&next={{ request.get_full_path|urlencode }}"  class="sp-lang-item {% if LANGUAGE_CODE == 'kn' %}active{% endif %}">ಕನ್ನಡ</a>
-        <a href="{% url 'set_language' %}?lang=ml&next={{ request.get_full_path|urlencode }}"  class="sp-lang-item {% if LANGUAGE_CODE == 'ml' %}active{% endif %}">മലയാളം</a>
-        <a href="{% url 'set_language' %}?lang=pa&next={{ request.get_full_path|urlencode }}"  class="sp-lang-item {% if LANGUAGE_CODE == 'pa' %}active{% endif %}">ਪੰਜਾਬੀ</a>
-        <a href="{% url 'set_language' %}?lang=ur&next={{ request.get_full_path|urlencode }}"  class="sp-lang-item {% if LANGUAGE_CODE == 'ur' %}active{% endif %}">اردو</a>
-        <a href="{% url 'set_language' %}?lang=or&next={{ request.get_full_path|urlencode }}"  class="sp-lang-item {% if LANGUAGE_CODE == 'or' %}active{% endif %}">ଓଡ଼ିଆ</a>
-        <a href="{% url 'set_language' %}?lang=as&next={{ request.get_full_path|urlencode }}"  class="sp-lang-item {% if LANGUAGE_CODE == 'as' %}active{% endif %}">অসমীয়া</a>
-        <a href="{% url 'set_language' %}?lang=ne&next={{ request.get_full_path|urlencode }}"  class="sp-lang-item {% if LANGUAGE_CODE == 'ne' %}active{% endif %}">नेपाली</a>
-      </div>
-    </div>
+    {% include "partials/language_selector.html" %}
 
     <!-- Mobile hamburger -->
-    <button class="sp-hamburger" id="sp-hamburger" aria-label="Toggle menu" aria-expanded="false">
+    <button class="sp-hamburger" id="sp-hamburger" aria-label="{% trans 'Toggle menu' %}" aria-expanded="false">
       <span></span><span></span><span></span>
     </button>
   </div>
 </nav>
 
 <!-- Mobile nav -->
-<div class="sp-mobile-nav" id="sp-mobile-nav" role="navigation" aria-label="Mobile navigation">
+<div class="sp-mobile-nav" id="sp-mobile-nav" role="navigation" aria-label="{% trans 'Mobile navigation' %}">
   <a href="{% url 'home' %}"             class="sp-nav-link">🏠 {% trans "Home" %}</a>
   <a href="{% url 'scheme_awareness' %}" class="sp-nav-link active">📋 {% trans "Schemes" %}</a>
   <a href="#categories"                  class="sp-nav-link">🏷️ {% trans "Categories" %}</a>
@@ -103,7 +87,7 @@
 
 <!-- ===================== HERO ===================== -->
 <header class="sp-hero">
-  <div class="sp-hero-badge" aria-label="Portal label">🇮🇳 {% trans "Government Scheme Portal" %}</div>
+  <div class="sp-hero-badge" aria-label="{% trans 'Portal label' %}">🇮🇳 {% trans "Government Scheme Portal" %}</div>
   <h1 class="sp-hero-title">
     {% trans "Discover" %} <span class="gradient-text">{% trans "Government Schemes" %}</span><br/>
     {% trans "Built for Every Citizen" %}
@@ -114,7 +98,7 @@
 </header>
 
 <!-- ===================== STATS BAR ===================== -->
-<section class="sp-stats-bar" id="public-dashboard" aria-label="Scheme statistics">
+<section class="sp-stats-bar" id="public-dashboard" aria-label="{% trans 'Scheme statistics' %}">
   <div class="sp-stat-card">
     <span class="sp-stat-icon" aria-hidden="true">📋</span>
     <div class="sp-stat-num" data-target="{{ total_schemes }}">{{ total_schemes }}</div>
@@ -138,7 +122,7 @@
 </section>
 
 <!-- ===================== SEARCH BAR ===================== -->
-<section class="sp-search-wrap" aria-label="Search schemes">
+<section class="sp-search-wrap" aria-label="{% trans 'Search schemes' %}">
   <form method="GET" action="{% url 'scheme_awareness' %}" role="search">
     {% if state_filter  %}<input type="hidden" name="state"    value="{{ state_filter }}">{% endif %}
     {% if category_filter %}<input type="hidden" name="category" value="{{ category_filter }}">{% endif %}
@@ -153,7 +137,7 @@
         value="{{ search_query }}"
         placeholder="{% trans "Search schemes by name, category, keyword…" %}"
         autocomplete="off"
-        aria-label="Search schemes"
+        aria-label="{% trans 'Search schemes' %}"
       />
       <button type="submit" class="sp-search-btn">{% trans "Search" %}</button>
     </div>
@@ -163,16 +147,16 @@
     <input
       id="sp-live-search"
       type="search"
-      placeholder="⚡ Instant filter (no page reload)…"
+      placeholder="⚡ {% trans 'Instant filter (no page reload)…' %}"
       autocomplete="off"
-      aria-label="Instant filter"
+      aria-label="{% trans 'Instant filter' %}"
       style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 16px;color:#f1f5f9;font-size:13px;font-family:inherit;outline:none;width:100%;max-width:480px;"
     />
   </div>
 </section>
 
 <!-- ===================== TYPE FILTER CHIPS ===================== -->
-<section class="sp-filter-chips" aria-label="Quick type filters">
+<section class="sp-filter-chips" aria-label="{% trans 'Quick type filters' %}">
   <span class="sp-filter-label">{% trans "Quick filter" %}:</span>
   <button class="sp-chip {% if not type_filter %}active{% endif %}"
           data-type-filter="" aria-pressed="{% if not type_filter %}true{% else %}false{% endif %}">
@@ -192,11 +176,11 @@
 <main class="sp-main">
 
   <!-- ---- FILTER SIDEBAR ---- -->
-  <aside class="sp-sidebar" aria-label="Filter schemes">
+  <aside class="sp-sidebar" aria-label="{% trans 'Filter schemes' %}">
     <div class="sp-sidebar-header">
       <span class="sp-sidebar-title">⚙️ {% trans "Filters" %}</span>
       {% if state_filter or category_filter or type_filter or search_query %}
-        <a href="{% url 'scheme_awareness' %}" class="sp-clear-filters" aria-label="Clear all filters">{% trans "Clear all" %}</a>
+        <a href="{% url 'scheme_awareness' %}" class="sp-clear-filters" aria-label="{% trans 'Clear all filters' %}">{% trans "Clear all" %}</a>
       {% endif %}
     </div>
 
@@ -205,13 +189,13 @@
 
       <!-- State filter -->
       <div class="sp-filter-section">
-        <div class="sp-filter-section-title">🗺️ State / UT</div>
+        <div class="sp-filter-section-title">🗺️ {% trans "State / UT" %}</div>
         <input
           id="sp-state-search"
           type="search"
-          placeholder="Search state…"
+          placeholder="{% trans 'Search state…' %}"
           autocomplete="off"
-          aria-label="Search state"
+          aria-label="{% trans 'Search state' %}"
           style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:7px;padding:8px 12px;color:#f1f5f9;font-size:12.5px;font-family:inherit;outline:none;margin-bottom:10px;"
         />
         <div style="max-height:220px;overflow-y:auto;scrollbar-width:thin;">
@@ -219,7 +203,7 @@
              class="sp-filter-option {% if not state_filter %}active{% endif %}"
              aria-current="{% if not state_filter %}true{% else %}false{% endif %}">
             <span class="option-dot"></span>
-            All States
+            {% trans "All States" %}
             <span class="option-count">{{ total_schemes }}</span>
           </a>
           {% for s in states %}
@@ -238,9 +222,9 @@
 
       <!-- Category filter -->
       <div class="sp-filter-section" id="categories">
-        <div class="sp-filter-section-title">🏷️ Category</div>
-        <select name="category" class="sp-filter-select" id="category-select" aria-label="Filter by category">
-          <option value="">All Categories</option>
+        <div class="sp-filter-section-title">🏷️ {% trans "Category" %}</div>
+        <select name="category" class="sp-filter-select" id="category-select" aria-label="{% trans 'Filter by category' %}">
+          <option value="">{% trans "All Categories" %}</option>
           {% for cat in categories %}
           {% if cat %}
           <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>{{ cat }}</option>
@@ -251,50 +235,50 @@
 
       <!-- Scheme type filter -->
       <div class="sp-filter-section">
-        <div class="sp-filter-section-title">📋 Scheme Type</div>
-        <select name="type" class="sp-filter-select" id="type-select" aria-label="Filter by scheme type">
-          <option value="">All Types</option>
-          <option value="Central" {% if type_filter == 'Central' %}selected{% endif %}>🏛️ Central</option>
-          <option value="State"   {% if type_filter == 'State'   %}selected{% endif %}>🗺️ State</option>
+        <div class="sp-filter-section-title">📋 {% trans "Scheme Type" %}</div>
+        <select name="type" class="sp-filter-select" id="type-select" aria-label="{% trans 'Filter by scheme type' %}">
+          <option value="">{% trans "All Types" %}</option>
+          <option value="Central" {% if type_filter == 'Central' %}selected{% endif %}>🏛️ {% trans "Central" %}</option>
+          <option value="State"   {% if type_filter == 'State'   %}selected{% endif %}>🗺️ {% trans "State" %}</option>
         </select>
       </div>
 
       <!-- State filter (select) -->
       <div class="sp-filter-section">
-        <div class="sp-filter-section-title">📍 Quick State Select</div>
-        <select name="state" class="sp-filter-select" id="state-select" aria-label="Filter by state">
-          <option value="">All States</option>
+        <div class="sp-filter-section-title">📍 {% trans "Quick State Select" %}</div>
+        <select name="state" class="sp-filter-select" id="state-select" aria-label="{% trans 'Filter by state' %}">
+          <option value="">{% trans "All States" %}</option>
           {% for s in states %}
           {% if s %}
           <option value="{{ s }}" {% if state_filter == s %}selected{% endif %}>{{ s }}</option>
           {% endif %}
           {% endfor %}
         </select>
-        <button type="submit" class="sp-apply-filter-btn">Apply Filters</button>
+        <button type="submit" class="sp-apply-filter-btn">{% trans "Apply Filters" %}</button>
       </div>
 
     </form>
   </aside>
 
   <!-- ---- SCHEME CARDS GRID ---- -->
-  <section aria-label="Scheme results">
+  <section aria-label="{% trans 'Scheme results' %}">
 
     <!-- Grid header -->
     <div class="sp-grid-header">
       <div class="sp-result-count" id="sp-result-count">
-        {% blocktrans with count=schemes|length %}Showing <strong>{{ count }}</strong> schemes{% endblocktrans %}
-        {% if search_query %} for "<em>{{ search_query }}</em>"{% endif %}
-        {% if state_filter %} in <em>{{ state_filter }}</em>{% endif %}
+        {% blocktrans count count=schemes|length %}Showing <strong>{{ count }}</strong> scheme{% plural %}Showing <strong>{{ count }}</strong> schemes{% endblocktrans %}
+        {% if search_query %} {% trans "for" %} "<em>{{ search_query }}</em>"{% endif %}
+        {% if state_filter %} {% trans "in" %} <em>{{ state_filter }}</em>{% endif %}
         {% if category_filter %} — <em>{{ category_filter }}</em>{% endif %}
-        {% if type_filter %} ({{ type_filter }} only){% endif %}
+        {% if type_filter %} ({{ type_filter }} {% trans "only" %}){% endif %}
       </div>
       <div class="sp-sort-wrap">
-        <span class="sp-sort-label">Sort:</span>
-        <select class="sp-sort-select" id="sp-sort-select" aria-label="Sort schemes">
-          <option>Relevance</option>
-          <option>Name A–Z</option>
-          <option>Central First</option>
-          <option>State First</option>
+        <span class="sp-sort-label">{% trans "Sort:" %}</span>
+        <select class="sp-sort-select" id="sp-sort-select" aria-label="{% trans 'Sort schemes' %}">
+          <option value="relevance">{% trans "Relevance" %}</option>
+          <option value="name">{% trans "Name A–Z" %}</option>
+          <option value="central">{% trans "Central First" %}</option>
+          <option value="state">{% trans "State First" %}</option>
         </select>
       </div>
     </div>
@@ -307,6 +291,8 @@
         class="sp-scheme-card"
         role="listitem"
         data-scheme-id="{{ scheme.id }}"
+        data-scheme-translation-card
+        data-translation-fields="scheme_name,description"
         data-scheme-name="{{ scheme.scheme_name|lower }}"
         data-scheme-title="{{ scheme.scheme_name }}"
         data-scheme-desc="{{ scheme.description|default:'Details available on the official portal.' }}"
@@ -318,6 +304,7 @@
         data-max-age="{{ scheme.max_age|default:'' }}"
         data-income-limit="{{ scheme.income_limit|default:'' }}"
         data-official-website="{{ scheme.official_website|default:'' }}"
+        data-apply-link="{{ scheme.apply_link|default:scheme.official_website|default:'' }}"
         aria-label="{{ scheme.scheme_name }}"
       >
         <div class="sp-card-body">
@@ -325,7 +312,7 @@
           <!-- Badges -->
           <div class="sp-card-meta">
             <span class="sp-badge {% if scheme.scheme_type == 'Central' %}sp-badge-central{% else %}sp-badge-state{% endif %}">
-              {% if scheme.scheme_type == 'Central' %}🏛️ Central{% else %}🗺️ State{% endif %}
+              {% if scheme.scheme_type == 'Central' %}🏛️ {% trans "Central" %}{% else %}🗺️ {% trans "State" %}{% endif %}
             </span>
             {% if scheme.category and scheme.category != 'All' %}
             <span class="sp-badge sp-badge-category" title="{{ scheme.category }}">{{ scheme.category }}</span>
@@ -336,12 +323,13 @@
           </div>
 
           <!-- Title -->
-          <h2 class="sp-card-title">{{ scheme.scheme_name }}</h2>
+          <h2 class="sp-card-title" data-scheme-field="scheme_name">{{ scheme.scheme_name }}</h2>
 
           <!-- Description -->
-          <p class="sp-card-desc">
+          <p class="sp-card-desc" data-scheme-field="description">
             {{ scheme.description|default:"Details available on the official portal."|truncatechars:160 }}
           </p>
+          <p class="scheme-translation-status" data-translation-status role="status" hidden></p>
 
           <!-- Info row -->
           <div class="sp-card-info-row">
@@ -354,13 +342,13 @@
             {% if scheme.min_age and scheme.max_age %}
             <div class="sp-card-info-item">
               <span class="icon">👤</span>
-              <span>Age {{ scheme.min_age }}–{{ scheme.max_age }}</span>
+              <span>{% blocktrans with min_age=scheme.min_age max_age=scheme.max_age %}Age {{ min_age }}–{{ max_age }}{% endblocktrans %}</span>
             </div>
             {% endif %}
             {% if scheme.income_limit %}
             <div class="sp-card-info-item">
               <span class="icon">💰</span>
-              <span>≤ ₹{{ scheme.income_limit|floatformat:0 }}/yr</span>
+              <span>≤ ₹{{ scheme.income_limit|floatformat:0 }}/{% trans "yr" %}</span>
             </div>
             {% endif %}
           </div>
@@ -372,24 +360,38 @@
           <a
             href="{% url 'scheme_detail' scheme.id %}"
             class="sp-btn-view"
-            aria-label="View details for {{ scheme.scheme_name }}"
+            aria-label="{% blocktrans with name=scheme.scheme_name %}View details for {{ name }}{% endblocktrans %}"
           >
             👁️ {% trans "View Details" %}
           </a>
 
+          {% if scheme.official_website %}
+          <a
+            href="{{ scheme.official_website }}"
+            class="sp-btn-website"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="{% blocktrans with name=scheme.scheme_name %}Official website for {{ name }}{% endblocktrans %}"
+          >
+            🌐 {% trans "Official Website" %}
+          </a>
+          {% else %}
+          <span class="sp-btn-website" aria-disabled="true">{% trans "Official website unavailable" %}</span>
+          {% endif %}
+
           {% if user.is_authenticated %}
           <a
-            href="{% url 'apply' scheme.id %}"
+            href="{% url 'apply_assistance' %}?scheme_id={{ scheme.id }}"
             class="sp-btn-apply"
-            aria-label="Apply for {{ scheme.scheme_name }}"
+            aria-label="{% blocktrans with name=scheme.scheme_name %}Apply for {{ name }}{% endblocktrans %}"
           >
             ✅ {% trans "Apply Now" %}
           </a>
           {% else %}
           <button
             class="sp-btn-apply sp-btn-apply-lock"
-            onclick="handleApplyNow('{{ scheme.id }}', '{% url 'apply' scheme.id %}')"
-            aria-label="Login to apply for {{ scheme.scheme_name }}"
+            onclick="handleApplyNow('{{ scheme.id }}', '{% url 'apply_assistance' %}?scheme_id={{ scheme.id }}')"
+            aria-label="{% blocktrans with name=scheme.scheme_name %}Login to apply for {{ name }}{% endblocktrans %}"
           >
             {% trans "Apply Now" %}
           </button>
@@ -400,9 +402,9 @@
       {% empty %}
       <div class="sp-no-results" id="sp-no-results" style="display:block">
         <div class="no-results-icon">🔍</div>
-        <h3>No schemes found</h3>
-        <p>Try adjusting your filters or search query.<br/>
-           <a href="{% url 'scheme_awareness' %}" style="color:var(--primary-light)">Clear all filters</a>
+        <h3>{% trans "No schemes found" %}</h3>
+        <p>{% trans "Try adjusting your filters or search query." %}<br/>
+           <a href="{% url 'scheme_awareness' %}" style="color:var(--primary-light)">{% trans "Clear all filters" %}</a>
         </p>
       </div>
       {% endfor %}
@@ -411,8 +413,8 @@
       {% if schemes %}
       <div class="sp-no-results hidden" id="sp-no-results" aria-live="polite">
         <div class="no-results-icon">🔍</div>
-        <h3>No matching schemes</h3>
-        <p>Try a different keyword or clear the instant filter.</p>
+        <h3>{% trans "No matching schemes" %}</h3>
+        <p>{% trans "Try a different keyword or clear the instant filter." %}</p>
       </div>
       {% endif %}
 
@@ -435,29 +437,29 @@
     <button
       class="sp-login-card-close"
       onclick="closeLoginPrompt()"
-      aria-label="Close dialog"
+      aria-label="{% trans 'Close dialog' %}"
     >✕</button>
     <div class="sp-login-card-icon" aria-hidden="true">🔐</div>
-    <h3 id="login-prompt-title">Login Required</h3>
+    <h3 id="login-prompt-title">{% trans "Login Required" %}</h3>
     <p id="login-prompt-desc">
-      You need to be logged in to apply for this scheme.<br/>
-      It's free and takes less than a minute!
+      {% trans "You need to be logged in to apply for this scheme." %}<br/>
+      {% trans "It's free and takes less than a minute!" %}
     </p>
     <div class="sp-login-card-actions">
       <button class="sp-btn-go-login" onclick="goToLogin()">
-        🔑 Login to Apply
+        🔑 {% trans "Login to Apply" %}
       </button>
       <a href="{% url 'register' %}" class="sp-btn-go-login"
          style="background:linear-gradient(135deg,#059669 0%,#065f46 100%)">
-        ✨ Register Free
+        ✨ {% trans "Register Free" %}
       </a>
       <button class="sp-btn-cancel" onclick="closeLoginPrompt()">
-        Cancel
+        {% trans "Cancel" %}
       </button>
     </div>
     <p style="font-size:12px;color:var(--text-muted);margin-top:20px;margin-bottom:0">
-      You can browse all schemes without logging in.
-      Login is only needed to <strong style="color:var(--text-light)">apply</strong>.
+      {% trans "You can browse all schemes without logging in." %}
+      {% trans "Login is only needed to" %} <strong style="color:var(--text-light)">{% trans "apply" %}</strong>.
     </p>
   </div>
 </div>
@@ -466,22 +468,22 @@
 <footer class="sp-footer" role="contentinfo">
   <p>
     SmartAssist Government Scheme Platform &nbsp;|&nbsp;
-    <a href="{% url 'scheme_awareness' %}">Browse Schemes</a> &nbsp;|&nbsp;
+    <a href="{% url 'scheme_awareness' %}">{% trans "Browse Schemes" %}</a> &nbsp;|&nbsp;
     {% if user.is_authenticated %}
-    <a href="{% url 'dashboard' %}">Dashboard</a>
+    <a href="{% url 'dashboard' %}">{% trans "Dashboard" %}</a>
     {% else %}
-    <a href="{% url 'login' %}">Login</a> · <a href="{% url 'register' %}">Register</a>
+    <a href="{% url 'login' %}">{% trans "Login" %}</a> · <a href="{% url 'register' %}">{% trans "Register" %}</a>
     {% endif %}
   </p>
   <p style="margin-top:6px;opacity:.5;font-size:12px;">
-    Free to browse. Login only required to apply.
+    {% trans "Free to browse. Login only required to apply." %}
   </p>
 </footer>
 
 <!-- ===================== SCRIPTS ===================== -->
 <script>
-  /* Expose language code for apply URL construction */
-  document.body.dataset.applyBase = '/{{ LANGUAGE_CODE }}/apply/';
+  /* Use Django's locale-aware route, including the unprefixed English route. */
+  document.body.dataset.applyBase = '{% url "apply_assistance" %}';
   document.body.dataset.loginUrl  = '{% url "login" %}';
 
   /* Client-side sort */
@@ -491,15 +493,15 @@
     const val   = this.value;
 
     cards.sort(function (a, b) {
-      if (val === 'Name A–Z') {
+      if (val === 'name') {
         return (a.dataset.schemeName || '').localeCompare(b.dataset.schemeName || '');
       }
-      if (val === 'Central First') {
+      if (val === 'central') {
         const aIsCentral = a.dataset.schemeType === 'Central' ? 0 : 1;
         const bIsCentral = b.dataset.schemeType === 'Central' ? 0 : 1;
         return aIsCentral - bIsCentral;
       }
-      if (val === 'State First') {
+      if (val === 'state') {
         const aIsState = a.dataset.schemeType === 'State' ? 0 : 1;
         const bIsState = b.dataset.schemeType === 'State' ? 0 : 1;
         return aIsState - bIsState;
@@ -511,5 +513,7 @@
   });
 </script>
 <script src="{% static 'js/scheme-platform.js' %}"></script>
+<script src="{% static 'js/language-switcher.js' %}"></script>
+<script src="{% static 'js/scheme-localization.js' %}"></script>
 </body>
 </html>

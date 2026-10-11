@@ -225,22 +225,22 @@
   <div class="sp-login-card">
     <button class="sp-login-card-close" onclick="closeLoginPrompt()" aria-label="Close dialog">✕</button>
     <div class="sp-login-card-icon" aria-hidden="true">🔐</div>
-    <h3 id="login-prompt-title">Login Required</h3>
-    <p id="login-prompt-desc">You can view all scheme details freely. Login is required only for applying.</p>
+    <h3 id="login-prompt-title">{% trans "Login Required" %}</h3>
+    <p id="login-prompt-desc">{% trans "You can view all scheme details freely. Login is required only for applying." %}</p>
     <div class="sp-login-card-actions">
-      <button class="sp-btn-go-login" onclick="goToLogin()">🔑 Login to Apply</button>
-      <button class="sp-btn-cancel" onclick="closeLoginPrompt()">Cancel</button>
+      <button class="sp-btn-go-login" onclick="goToLogin()">🔑 {% trans "Login to Apply" %}</button>
+      <button class="sp-btn-cancel" onclick="closeLoginPrompt()">{% trans "Cancel" %}</button>
     </div>
   </div>
 </div>
 
 <footer class="sp-footer" role="contentinfo">
   <p>
-    SmartAssist Government Scheme Platform | <a href="{% url 'scheme_awareness' %}">Browse Schemes</a> |
+    {% trans "SmartAssist Government Scheme Platform" %} | <a href="{% url 'scheme_awareness' %}">{% trans "Browse Schemes" %}</a> |
     {% if user.is_authenticated %}
-      <a href="{% url 'logout' %}">Logout</a>
+      <a href="{% url 'logout' %}">{% trans "Logout" %}</a>
     {% else %}
-      <a href="{% url 'login' %}">Login</a>
+      <a href="{% url 'login' %}">{% trans "Login" %}</a>
     {% endif %}
   </p>
 </footer>

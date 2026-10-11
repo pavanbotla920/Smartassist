@@ -400,9 +400,9 @@
       {% empty %}
       <div class="sp-no-results" id="sp-no-results" style="display:block">
         <div class="no-results-icon">🔍</div>
-        <h3>No schemes found</h3>
-        <p>Try adjusting your filters or search query.<br/>
-           <a href="{% url 'scheme_awareness' %}" style="color:var(--primary-light)">Clear all filters</a>
+        <h3>{% trans "No schemes found" %}</h3>
+        <p>{% trans "Try adjusting your filters or search query." %}<br/>
+           <a href="{% url 'scheme_awareness' %}" style="color:var(--primary-light)">{% trans "Clear all filters" %}</a>
         </p>
       </div>
       {% endfor %}
@@ -411,8 +411,8 @@
       {% if schemes %}
       <div class="sp-no-results hidden" id="sp-no-results" aria-live="polite">
         <div class="no-results-icon">🔍</div>
-        <h3>No matching schemes</h3>
-        <p>Try a different keyword or clear the instant filter.</p>
+        <h3>{% trans "No matching schemes" %}</h3>
+        <p>{% trans "Try a different keyword or clear the instant filter." %}</p>
       </div>
       {% endif %}
 
@@ -438,26 +438,26 @@
       aria-label="Close dialog"
     >✕</button>
     <div class="sp-login-card-icon" aria-hidden="true">🔐</div>
-    <h3 id="login-prompt-title">Login Required</h3>
+    <h3 id="login-prompt-title">{% trans "Login Required" %}</h3>
     <p id="login-prompt-desc">
-      You need to be logged in to apply for this scheme.<br/>
-      It's free and takes less than a minute!
+      {% trans "You need to be logged in to apply for this scheme." %}<br/>
+      {% trans "It's free and takes less than a minute!" %}
     </p>
     <div class="sp-login-card-actions">
       <button class="sp-btn-go-login" onclick="goToLogin()">
-        🔑 Login to Apply
+        🔑 {% trans "Login to Apply" %}
       </button>
       <a href="{% url 'register' %}" class="sp-btn-go-login"
          style="background:linear-gradient(135deg,#059669 0%,#065f46 100%)">
-        ✨ Register Free
+        ✨ {% trans "Register Free" %}
       </a>
       <button class="sp-btn-cancel" onclick="closeLoginPrompt()">
-        Cancel
+        {% trans "Cancel" %}
       </button>
     </div>
     <p style="font-size:12px;color:var(--text-muted);margin-top:20px;margin-bottom:0">
-      You can browse all schemes without logging in.
-      Login is only needed to <strong style="color:var(--text-light)">apply</strong>.
+      {% trans "You can browse all schemes without logging in." %}
+      {% blocktrans %}Login is only needed to <strong style="color:var(--text-light)">apply</strong>.{% endblocktrans %}
     </p>
   </div>
 </div>
@@ -465,16 +465,16 @@
 <!-- ===================== FOOTER ===================== -->
 <footer class="sp-footer" role="contentinfo">
   <p>
-    SmartAssist Government Scheme Platform &nbsp;|&nbsp;
-    <a href="{% url 'scheme_awareness' %}">Browse Schemes</a> &nbsp;|&nbsp;
+    {% trans "SmartAssist Government Scheme Platform" %} &nbsp;|&nbsp;
+    <a href="{% url 'scheme_awareness' %}">{% trans "Browse Schemes" %}</a> &nbsp;|&nbsp;
     {% if user.is_authenticated %}
-    <a href="{% url 'dashboard' %}">Dashboard</a>
+    <a href="{% url 'dashboard' %}">{% trans "Dashboard" %}</a>
     {% else %}
-    <a href="{% url 'login' %}">Login</a> · <a href="{% url 'register' %}">Register</a>
+    <a href="{% url 'login' %}">{% trans "Login" %}</a> · <a href="{% url 'register' %}">{% trans "Register" %}</a>
     {% endif %}
   </p>
   <p style="margin-top:6px;opacity:.5;font-size:12px;">
-    Free to browse. Login only required to apply.
+    {% trans "Free to browse. Login only required to apply." %}
   </p>
 </footer>
 

@@ -450,13 +450,13 @@
 <div class="sa-home">
 <section class="sa-hero">
     <div class="sa-slide-wrap" id="saSlideWrap">
-        <div class="sa-slide active"><img src="/static/images/farmer_1.jpg" alt="farmer 1" onerror="this.src='https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=1920&q=80&fit=crop'"></div>
-        <div class="sa-slide"><img src="/static/images/farmer_2.jpg" alt="farmer 2" onerror="this.src='https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1920&q=80&fit=crop'"></div>
-        <div class="sa-slide"><img src="/static/images/farmer_3.jpg" alt="farmer 3" onerror="this.src='https://images.unsplash.com/photo-1560493676-04071c5f467b?w=1920&q=80&fit=crop'"></div>
-        <div class="sa-slide"><img src="/static/images/farmer_4.jpg" alt="farmer 4" onerror="this.src='https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=1920&q=80&fit=crop'"></div>
-        <div class="sa-slide"><img src="/static/images/farmer_5.jpg" alt="farmer 5" onerror="this.src='https://images.unsplash.com/photo-1536657464919-892534f60d6e?w=1920&q=80&fit=crop'"></div>
-        <div class="sa-slide"><img src="/static/images/farmer_6.jpg" alt="farmer 6" onerror="this.src='https://images.unsplash.com/photo-1592982537447-7440770cbfc9?w=1920&q=80&fit=crop'"></div>
-        <div class="sa-slide"><img src="/static/images/farmer_7.jpg" alt="farmer 7" onerror="this.src='https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=1920&q=80&fit=crop'"></div>
+        <div class="sa-slide active"><img src="/static/images/farmer_1.jpg" alt="{% trans 'Farmer working in a field' %}" onerror="this.src='https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=1920&q=80&fit=crop'"></div>
+        <div class="sa-slide"><img src="/static/images/farmer_2.jpg" alt="{% trans 'Farmer working in a field' %}" onerror="this.src='https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1920&q=80&fit=crop'"></div>
+        <div class="sa-slide"><img src="/static/images/farmer_3.jpg" alt="{% trans 'Farmer working in a field' %}" onerror="this.src='https://images.unsplash.com/photo-1560493676-04071c5f467b?w=1920&q=80&fit=crop'"></div>
+        <div class="sa-slide"><img src="/static/images/farmer_4.jpg" alt="{% trans 'Farmer working in a field' %}" onerror="this.src='https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=1920&q=80&fit=crop'"></div>
+        <div class="sa-slide"><img src="/static/images/farmer_5.jpg" alt="{% trans 'Farmer working in a field' %}" onerror="this.src='https://images.unsplash.com/photo-1536657464919-892534f60d6e?w=1920&q=80&fit=crop'"></div>
+        <div class="sa-slide"><img src="/static/images/farmer_6.jpg" alt="{% trans 'Farmer working in a field' %}" onerror="this.src='https://images.unsplash.com/photo-1592982537447-7440770cbfc9?w=1920&q=80&fit=crop'"></div>
+        <div class="sa-slide"><img src="/static/images/farmer_7.jpg" alt="{% trans 'Farmer working in a field' %}" onerror="this.src='https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=1920&q=80&fit=crop'"></div>
     </div>
     <div class="sa-overlay"></div>
 
@@ -605,7 +605,7 @@
         const dot = document.createElement('button');
         dot.className = 'sa-dot' + (i === 0 ? ' active' : '');
         dot.type = 'button';
-        dot.setAttribute('aria-label', 'Slide ' + (i + 1));
+        dot.setAttribute('aria-label', '{% trans "Slide" %} ' + (i + 1));
         dot.addEventListener('click', () => go(i));
         dotsWrap.appendChild(dot);
     });

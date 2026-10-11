@@ -2,14 +2,17 @@
 {% load i18n %}
 {% get_current_language as LANGUAGE_CODE %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="data:," />
   <title>{{ scheme.scheme_name }} - SmartAssist</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{% static 'css/scheme-platform.css' %}" />
+  <link rel="stylesheet" href="{% static 'css/language-switcher.css' %}" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
@@ -67,41 +70,50 @@
   class="sp-body"
   data-authenticated="{{ user.is_authenticated|lower }}"
   data-login-url="{% url 'login' %}"
-  data-apply-base="/{{ LANGUAGE_CODE }}/apply/"
+  data-apply-base="{% url 'apply_assistance' %}"
+  data-speech-base-url="{% url 'scheme_voice_audio' scheme_id=scheme.id %}"
+  data-scheme-translation-url="{% url 'scheme_translation_api' %}"
+  data-translation-failure-message="{% trans 'Scheme details remain in English because translation is unavailable.' %}"
+  data-scheme-id="{{ scheme.id }}"
+  data-scheme-translation-card
+  data-translation-fields="scheme_name,description,eligibility,documents_required"
+  data-scheme-detail-base="{% url 'scheme_awareness' %}"
+  data-schemes-api-base="{% url 'schemes_api' state_name='__state__' %}"
 >
 
 <div class="sp-bg" aria-hidden="true"></div>
 
-<nav class="sp-navbar" role="navigation" aria-label="Main navigation">
-  <a href="{% url 'home' %}" class="sp-navbar-brand" aria-label="SmartAssist Home">
+<nav class="sp-navbar" role="navigation" aria-label="{% trans 'Main navigation' %}">
+  <a href="{% url 'home' %}" class="sp-navbar-brand" aria-label="{% trans 'SmartAssist Home' %}">
     <div class="sp-nav-logo-icon" aria-hidden="true">🏛️</div>
     <div class="sp-nav-logo-text">
       <span class="brand-name">SmartAssist</span>
-      <span class="brand-sub">Gov Scheme Portal</span>
+      <span class="brand-sub">{% trans "Gov Scheme Portal" %}</span>
     </div>
   </a>
 
   <ul class="sp-nav-links" role="list">
-    <li><a href="{% url 'home' %}" class="sp-nav-link">🏠 Home</a></li>
-    <li><a href="{% url 'scheme_awareness' %}" class="sp-nav-link active">📋 Schemes</a></li>
-    <li><a href="{% url 'scheme_awareness' %}#categories" class="sp-nav-link">🏷️ Categories</a></li>
-    <li><a href="{% url 'scheme_awareness' %}#public-dashboard" class="sp-nav-link">📊 Dashboard</a></li>
+    <li><a href="{% url 'home' %}" class="sp-nav-link">🏠 {% trans "Home" %}</a></li>
+    <li><a href="{% url 'scheme_awareness' %}" class="sp-nav-link active">📋 {% trans "Schemes" %}</a></li>
+    <li><a href="{% url 'scheme_awareness' %}#categories" class="sp-nav-link">🏷️ {% trans "Categories" %}</a></li>
+    <li><a href="{% url 'scheme_awareness' %}#public-dashboard" class="sp-nav-link">📊 {% trans "Dashboard" %}</a></li>
   </ul>
 
   <div class="sp-nav-actions">
+    {% include "partials/language_selector.html" %}
     {% if user.is_authenticated %}
-      <a href="{% url 'logout' %}" class="sp-btn-login" style="border-color:rgba(239,68,68,.4);color:#fca5a5;background:rgba(239,68,68,.12)">🚪 Logout</a>
+      <a href="{% url 'logout' %}" class="sp-btn-login" style="border-color:rgba(239,68,68,.4);color:#fca5a5;background:rgba(239,68,68,.12)">🚪 {% trans "Logout" %}</a>
     {% else %}
-      <a href="{% url 'login' %}" class="sp-btn-login">🔑 Login</a>
+      <a href="{% url 'login' %}" class="sp-btn-login">🔑 {% trans "Login" %}</a>
     {% endif %}
   </div>
 </nav>
 
 <main class="sp-detail-wrap">
   <div class="sp-breadcrumb">
-    <a href="{% url 'home' %}">Home</a>
+    <a href="{% url 'home' %}">{% trans "Home" %}</a>
     <span class="sep">/</span>
-    <a href="{% url 'scheme_awareness' %}">Schemes</a>
+    <a href="{% url 'scheme_awareness' %}">{% trans "Schemes" %}</a>
     <span class="sep">/</span>
     <span class="current">{{ scheme.scheme_name|truncatechars:50 }}</span>
   </div>
@@ -109,7 +121,7 @@
   <section class="sp-detail-header">
     <div class="sp-detail-badges">
       <span class="sp-badge {% if scheme.scheme_type == 'Central' %}sp-badge-central{% else %}sp-badge-state{% endif %}">
-        {% if scheme.scheme_type == 'Central' %}🏛️ Central{% else %}🗺️ State{% endif %}
+        {% if scheme.scheme_type == 'Central' %}🏛️ {% trans "Central" %}{% else %}🗺️ {% trans "State" %}{% endif %}
       </span>
       {% if scheme.category %}
       <span class="sp-badge sp-badge-category">{{ scheme.category }}</span>
@@ -119,54 +131,80 @@
       {% endif %}
     </div>
 
-    <h1 class="sp-detail-title">{{ scheme.scheme_name }}</h1>
-    <div class="sp-detail-dept">🏢 {{ scheme.department|default:"Department Not Available" }}</div>
+    <h1 class="sp-detail-title" data-scheme-field="scheme_name">{{ scheme.scheme_name }}</h1>
+    <div class="sp-detail-dept">🏢 {{ scheme.department|default:_("Department Not Available") }}</div>
 
     <div class="sp-detail-apply-row">
       {% if user.is_authenticated %}
-      <a href="{% url 'apply' scheme.id %}" class="sp-btn-apply-lg">✅ Apply Now</a>
+      <a href="{% url 'apply_assistance' %}?scheme_id={{ scheme.id }}" class="sp-btn-apply-lg">✅ {% trans "Apply Now" %}</a>
       {% else %}
-      <button class="sp-btn-apply-lg" data-apply-url="{% url 'apply' scheme.id %}" onclick="handleApplyNow('{{ scheme.id }}', this.dataset.applyUrl)">🔒 Apply Now</button>
+      <button class="sp-btn-apply-lg" data-apply-url="{% url 'apply_assistance' %}?scheme_id={{ scheme.id }}" onclick="handleApplyNow('{{ scheme.id }}', this.dataset.applyUrl)">🔒 {% trans "Apply Now" %}</button>
       {% endif %}
 
       {% if scheme.official_website %}
-      <a href="{{ scheme.official_website }}" target="_blank" rel="noopener noreferrer" class="sp-btn-website">🌐 Official Website</a>
+      <a href="{{ scheme.official_website }}" target="_blank" rel="noopener noreferrer" class="sp-btn-website">🌐 {% trans "Official Website" %}</a>
+      {% else %}
+      <span class="sp-btn-website" aria-disabled="true">🌐 {% trans "Official website unavailable" %}</span>
       {% endif %}
     </div>
+
+    <div class="sp-detail-voice-row" style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;margin-top:1.25rem;">
+      <label for="scheme-listen-language" style="color:#cbd5e1;font-size:0.9rem;">{% trans "Listen in" %}</label>
+      <select id="scheme-listen-language" data-voice-language aria-label="{% trans 'Select voice language' %}" style="border:1px solid rgba(148,163,184,.3);border-radius:.65rem;background:#0f172a;color:#f8fafc;padding:.6rem .8rem;">
+        <option value="en" {% if LANGUAGE_CODE == 'en' %}selected{% endif %}>English</option>
+        <option value="hi" {% if LANGUAGE_CODE == 'hi' %}selected{% endif %}>हिन्दी</option>
+        <option value="mr" {% if LANGUAGE_CODE == 'mr' %}selected{% endif %}>मराठी</option>
+        <option value="te" {% if LANGUAGE_CODE == 'te' %}selected{% endif %}>తెలుగు</option>
+      </select>
+      <button
+        id="scheme-listen-button"
+        type="button"
+        class="sp-btn-website"
+        data-scheme-id="{{ scheme.id }}"
+        data-scheme-name="{{ scheme.scheme_name }}"
+        data-scheme-description="{{ scheme.description|default:'' }}"
+        data-scheme-eligibility="{{ scheme.eligibility|default:'' }}"
+        data-scheme-documents="{{ scheme.documents_required|default:'' }}"
+        data-scheme-benefits="{{ scheme.benefits|default:'' }}"
+        data-scheme-type="{{ scheme.scheme_type }}"
+        data-scheme-state="{{ scheme.state }}"
+        data-scheme-department="{{ scheme.department|default:'' }}"
+        aria-label="{% trans 'Listen to this scheme' %}"
+      >🔊 {% trans "Listen" %}</button>
+      <span id="scheme-listen-status" class="sp-map-copy" role="status" aria-live="polite">{% trans "When requested, only the selected scheme’s public name, description, eligibility, and document details are sent to free online translation and speech services. No account or application data is sent. Verify eligibility with the official scheme source." %}</span>
+    </div>
   </section>
 
-  <section class="sp-detail-section py-0">
-    <div class="rounded-[1.75rem] border border-white/10 bg-slate-950/90 p-6 shadow-2xl shadow-slate-950/30">
-      <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <p class="text-sm uppercase tracking-[0.3em] text-cyan-300">Interactive India Map</p>
-          <h2 class="mt-2 text-2xl font-semibold text-slate-100">Explore schemes by state</h2>
-          <p class="mt-2 max-w-2xl text-slate-400">Click any state to see sample scheme cards and preview state-specific offers.</p>
+  <section class="sp-detail-section sp-map-section">
+    <div class="sp-map-header">
+      <div>
+        <p class="sp-map-eyebrow">{% trans "Interactive India Map" %}</p>
+        <h2 class="sp-map-heading">{% trans "Explore schemes by state" %}</h2>
+        <p class="sp-map-copy">{% trans "Click any state to see available schemes and state-specific offers." %}</p>
+      </div>
+      <div class="sp-map-chip">{% trans "Browse by location" %}</div>
+    </div>
+
+    <div class="sp-map-grid">
+      <!-- India Map -->
+      <div class="sp-map-panel">
+        <h2 class="sp-map-panel-title">📍 {% trans "Click on a State" %}</h2>
+        <div class="sp-map-canvas-wrap">
+          <div id="india-map" aria-label="{% trans 'Interactive map of India' %}"></div>
         </div>
-        <div class="rounded-3xl bg-cyan-500/15 px-4 py-2 text-sm text-cyan-100 ring-1 ring-cyan-200/20">Modern responsive map UI</div>
       </div>
 
-      <div class="mt-8 grid gap-6 lg:grid-cols-[1.35fr_1fr]">
-        <!-- India Map -->
-        <div class="overflow-hidden rounded-[1.75rem] border border-white/10 bg-slate-900/80 p-4 shadow-xl shadow-cyan-500/10">
-          <h2 class="text-xl font-bold text-white mb-6">📍 Click on a State</h2>
-          <div class="relative rounded-2xl bg-gradient-to-b from-cyan-900/20 to-slate-900/20 p-6">
-            <div id="india-map" class="w-full h-96 rounded-lg"></div>
-          </div>
+      <!-- Schemes Panel -->
+      <div class="sp-map-panel">
+        <div class="sp-map-panel-heading">
+          <h2 id="map-panel-title" class="sp-map-panel-title">{% trans "Select a State" %}</h2>
+          <p id="map-state-info" class="sp-map-copy">👆 {% trans "Click on a state on the map to view available schemes" %}</p>
         </div>
 
-        <!-- Schemes Panel -->
-        <div class="rounded-[1.75rem] border border-white/10 bg-slate-900/80 p-5 shadow-2xl shadow-slate-950/30">
-          <div class="mb-8">
-            <h2 id="map-panel-title" class="text-3xl font-bold text-white">Select a State</h2>
-            <p id="map-state-info" class="mt-2 text-sm text-slate-400">👆 Click on a state on the map to view available schemes</p>
-          </div>
-
-          <!-- Scheme Cards -->
-          <div id="map-scheme-cards" class="space-y-3 max-h-[500px] overflow-y-auto pr-2">
-            <div class="rounded-lg border border-dashed border-white/20 bg-white/5 p-8 text-center text-slate-400">
-              <p class="text-sm">👆 Click on a state to view schemes</p>
-            </div>
+        <!-- Scheme Cards -->
+        <div id="map-scheme-cards" class="sp-map-cards">
+          <div class="sp-map-empty">
+            <p>👆 {% trans "Click on a state to view schemes" %}</p>
           </div>
         </div>
       </div>
@@ -174,44 +212,45 @@
   </section>
 
   <section class="sp-detail-section">
-    <h2 class="sp-section-title"><span class="section-icon icon-blue">📝</span>Description</h2>
-    <div class="sp-section-body">
-      {{ scheme.description|default:"No detailed description available for this scheme."|linebreaksbr }}
+    <h2 class="sp-section-title"><span class="section-icon icon-blue">📝</span>{% trans "Description" %}</h2>
+    <div class="sp-section-body" style="white-space:pre-line;">
+      <span data-scheme-field="description">{{ scheme.description|default:"No detailed description available for this scheme." }}</span>
     </div>
   </section>
 
   <section class="sp-detail-section">
-    <h2 class="sp-section-title"><span class="section-icon icon-green">✅</span>Eligibility</h2>
+    <h2 class="sp-section-title"><span class="section-icon icon-green">✅</span>{% trans "Eligibility" %}</h2>
     <div class="sp-eligibility-grid">
       <div class="sp-elig-item">
-        <div class="sp-elig-label">Minimum Age</div>
-        <div class="sp-elig-value">{{ scheme.min_age|default:"N/A" }}</div>
+        <div class="sp-elig-label">{% trans "Minimum Age" %}</div>
+        <div class="sp-elig-value">{{ scheme.min_age|default:_("N/A") }}</div>
       </div>
       <div class="sp-elig-item">
-        <div class="sp-elig-label">Maximum Age</div>
-        <div class="sp-elig-value">{{ scheme.max_age|default:"N/A" }}</div>
+        <div class="sp-elig-label">{% trans "Maximum Age" %}</div>
+        <div class="sp-elig-value">{{ scheme.max_age|default:_("N/A") }}</div>
       </div>
       <div class="sp-elig-item">
-        <div class="sp-elig-label">Income Limit</div>
-        <div class="sp-elig-value">{% if scheme.income_limit %}<= Rs {{ scheme.income_limit }} / year{% else %}N/A{% endif %}</div>
+        <div class="sp-elig-label">{% trans "Income Limit" %}</div>
+        <div class="sp-elig-value">{% if scheme.income_limit %}≤ {% trans "Rs" %} {{ scheme.income_limit }} / {% trans "year" %}{% else %}{% trans "N/A" %}{% endif %}</div>
       </div>
       <div class="sp-elig-item">
-        <div class="sp-elig-label">Category</div>
-        <div class="sp-elig-value">{{ scheme.category|default:"All" }}</div>
+        <div class="sp-elig-label">{% trans "Category" %}</div>
+        <div class="sp-elig-value">{{ scheme.category|default:_("All") }}</div>
       </div>
     </div>
 
-    <div class="sp-section-body">
-      {{ scheme.eligibility|default:"Please check official guidelines for complete eligibility details."|linebreaksbr }}
+    <div class="sp-section-body" style="white-space:pre-line;">
+      <span data-scheme-field="eligibility">{{ scheme.eligibility|default:_("Please check official guidelines for complete eligibility details.") }}</span>
     </div>
   </section>
 
   <section class="sp-detail-section">
-    <h2 class="sp-section-title"><span class="section-icon icon-amber">📄</span>Required Documents</h2>
-    <div class="sp-section-body">
-      {{ scheme.documents_required|default:"Required documents vary by applicant profile. Please verify on the official website before applying."|linebreaksbr }}
+    <h2 class="sp-section-title"><span class="section-icon icon-amber">📄</span>{% trans "Required Documents" %}</h2>
+    <div class="sp-section-body" style="white-space:pre-line;">
+      <span data-scheme-field="documents_required">{{ scheme.documents_required|default:_("Required documents vary by applicant profile. Please verify on the official website before applying.") }}</span>
     </div>
   </section>
+  <p class="scheme-translation-status" data-translation-status role="status" hidden></p>
 </main>
 
 <div
@@ -223,7 +262,7 @@
   aria-describedby="login-prompt-desc"
 >
   <div class="sp-login-card">
-    <button class="sp-login-card-close" onclick="closeLoginPrompt()" aria-label="Close dialog">✕</button>
+    <button class="sp-login-card-close" onclick="closeLoginPrompt()" aria-label="{% trans 'Close dialog' %}">✕</button>
     <div class="sp-login-card-icon" aria-hidden="true">🔐</div>
     <h3 id="login-prompt-title">{% trans "Login Required" %}</h3>
     <p id="login-prompt-desc">{% trans "You can view all scheme details freely. Login is required only for applying." %}</p>
@@ -245,7 +284,33 @@
   </p>
 </footer>
 
+<script src="{% static 'js/scheme-voice.js' %}"></script>
+<script src="{% static 'js/language-switcher.js' %}"></script>
+<script src="{% static 'js/scheme-localization.js' %}"></script>
 <script>
+  const listenButton = document.getElementById('scheme-listen-button');
+  const listenLanguage = document.getElementById('scheme-listen-language');
+  const listenStatus = document.getElementById('scheme-listen-status');
+
+  const playSchemeSpeech = async () => {
+    if (!listenButton || !listenLanguage || !window.SmartAssistVoice) return;
+    listenButton.disabled = true;
+    try {
+      const played = await window.SmartAssistVoice.speak(
+        listenButton.dataset.schemeId,
+        listenLanguage.value,
+        { onStatus: (message) => { listenStatus.textContent = message; } }
+      );
+      if (played) listenStatus.textContent = 'Playback finished.';
+    } catch (error) {
+      listenStatus.textContent = error.message;
+    } finally {
+      listenButton.disabled = false;
+    }
+  };
+
+  listenButton?.addEventListener('click', playSchemeSpeech);
+
   console.log('Leaflet map script loading...');
   
   // Initialize Leaflet map
@@ -263,18 +328,17 @@
 
   console.log('Map initialized:', map);
 
-  // Add OpenStreetMap tiles with fallback
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors',
-    maxZoom: 18,
-    errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
-  }).addTo(map);
-
   // Load India states GeoJSON
   let indiaStatesLayer;
   fetch('{% static "india_states.geojson" %}')
-    .then(response => response.json())
+    .then(response => {
+      if (!response.ok) throw new Error(`GeoJSON request failed: ${response.status}`);
+      return response.json();
+    })
     .then(data => {
+      if (!data.features || !data.features.length) {
+        throw new Error('India state GeoJSON contains no state features.');
+      }
       indiaStatesLayer = L.geoJSON(data, {
         style: {
           color: '#0ea5e9',
@@ -284,6 +348,7 @@
           fillOpacity: 0.1
         },
         onEachFeature: function(feature, layer) {
+          if (feature.properties.name) layer.bindTooltip(feature.properties.name, { sticky: true });
           layer.on({
             mouseover: function(e) {
               const layer = e.target;
@@ -306,32 +371,61 @@
 
       // Fit map to India bounds
       map.fitBounds(indiaStatesLayer.getBounds());
+      map.invalidateSize();
     })
     .catch(error => {
       console.error('Error loading GeoJSON:', error);
-      // Fallback to basic map
+      stateInfo.textContent = 'The India state map could not be loaded. Please refresh and try again.';
+      cardsContainer.innerHTML = '<div class="sp-map-empty sp-map-error"><p>India map data could not be loaded.</p></div>';
     });
 
   // DOM elements
   const panelTitle = document.getElementById('map-panel-title');
   const stateInfo = document.getElementById('map-state-info');
   const cardsContainer = document.getElementById('map-scheme-cards');
+  const applyBase = document.body.dataset.applyBase;
+  const detailBase = document.body.dataset.schemeDetailBase;
+  const schemesApiBase = document.body.dataset.schemesApiBase;
 
   let currentState = null;
 
   // Create scheme card
   const createCard = (scheme) => {
     const card = document.createElement('article');
-    card.className = 'rounded-lg border border-white/10 bg-white/5 p-4 shadow transition hover:shadow-lg hover:bg-white/10';
-    card.innerHTML = `
-      <span class="inline-flex rounded-full bg-teal-500/20 text-teal-200 px-3 py-1 text-xs font-semibold">${scheme.category}</span>
-      <h4 class="mt-2 text-base font-bold text-white">${scheme.name}</h4>
-      <p class="mt-2 text-sm text-slate-300">${scheme.description}</p>
-      <div class="mt-4 flex gap-2">
-        <a href="${scheme.apply_link}" target="_blank" class="flex-1 rounded-lg bg-teal-600 hover:bg-teal-500 px-3 py-2 text-xs font-semibold text-white transition text-center">Apply Now</a>
-        <button class="flex-1 rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/10">View Details</button>
-      </div>
-    `;
+    card.className = 'sp-map-card';
+
+    const category = document.createElement('span');
+    category.className = 'sp-map-card-category';
+    category.textContent = scheme.category || 'Scheme';
+
+    const title = document.createElement('h3');
+    title.className = 'sp-map-card-title';
+    title.textContent = scheme.name || 'Government scheme';
+
+    const description = document.createElement('p');
+    description.className = 'sp-map-card-description';
+    description.textContent = scheme.description || 'More information is available on the scheme details page.';
+
+    const actions = document.createElement('div');
+    actions.className = 'sp-map-card-actions';
+
+    const detailsLink = document.createElement('a');
+    detailsLink.className = 'sp-map-card-details';
+    detailsLink.href = detailBase + encodeURIComponent(scheme.id) + '/';
+    detailsLink.textContent = 'View Details';
+    actions.appendChild(detailsLink);
+
+    const applyButton = document.createElement('button');
+    applyButton.className = 'sp-map-card-apply';
+    applyButton.type = 'button';
+    applyButton.textContent = 'Apply Now';
+    applyButton.addEventListener('click', function () {
+      const applyUrl = applyBase + '?scheme_id=' + encodeURIComponent(scheme.id);
+      window.handleApplyNow(String(scheme.id), applyUrl);
+    });
+    actions.appendChild(applyButton);
+
+    card.append(category, title, description, actions);
     return card;
   };
 
@@ -343,10 +437,11 @@
       stateInfo.textContent = '✅ Loading schemes for ' + stateName;
 
       // Show loading state
-      cardsContainer.innerHTML = '<div class="rounded-lg border border-dashed border-white/20 bg-white/5 p-6 text-center text-slate-400"><p class="text-sm">⏳ Loading schemes...</p></div>';
+      cardsContainer.innerHTML = '<div class="sp-map-empty"><p>⏳ Loading schemes...</p></div>';
 
       // Fetch from Django API
-      const response = await fetch(`/api/schemes/${encodeURIComponent(stateName)}/`);
+      const apiUrl = schemesApiBase.replace('__state__', encodeURIComponent(stateName));
+      const response = await fetch(apiUrl);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -356,7 +451,7 @@
       // Update UI
       cardsContainer.innerHTML = '';
       if (schemes.length === 0) {
-        cardsContainer.innerHTML = '<div class="rounded-lg border border-dashed border-white/20 bg-white/5 p-6 text-center text-slate-400"><p class="text-sm">No schemes available for this state</p></div>';
+        cardsContainer.innerHTML = '<div class="sp-map-empty"><p>No schemes available for this state</p></div>';
       } else {
         schemes.forEach(scheme => {
           cardsContainer.appendChild(createCard(scheme));
@@ -367,7 +462,7 @@
 
     } catch (error) {
       console.error('Error fetching schemes:', error);
-      cardsContainer.innerHTML = '<div class="rounded-lg border border-dashed border-white/20 bg-white/5 p-6 text-center text-red-400"><p class="text-sm">❌ Error loading schemes. Please try again.</p></div>';
+      cardsContainer.innerHTML = '<div class="sp-map-empty sp-map-error"><p>❌ Error loading schemes. Please try again.</p></div>';
       stateInfo.textContent = '❌ Failed to load schemes for ' + stateName;
     }
   };

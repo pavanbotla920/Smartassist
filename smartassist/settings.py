@@ -26,7 +26,13 @@ SECRET_KEY = 'django-insecure-m2es_c4rc4tmq6tb-#ct#*_v8^xx_*kl+v+-8_*qmmx#qdiwpr
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '0.0.0.0',
+    '[::1]',
+    'testserver',
+]
 
 
 # Application definition
@@ -112,23 +118,7 @@ LANGUAGES = [
     ('en', 'English'),
     ('hi', 'Hindi'),
     ('mr', 'Marathi'),
-    ('gu', 'Gujarati'),
-    ('bn', 'Bengali'),
-    ('ta', 'Tamil'),
     ('te', 'Telugu'),
-    ('kn', 'Kannada'),
-    ('ml', 'Malayalam'),
-    ('pa', 'Punjabi'),
-    ('ur', 'Urdu'),
-    ('or', 'Odia'),
-    ('as', 'Assamese'),
-    ('sa', 'Sanskrit'),
-    ('kok', 'Konkani'),
-    ('mni', 'Manipuri'),
-    ('ne', 'Nepali'),
-    ('sd', 'Sindhi'),
-    ('bodo', 'Bodo'),
-    ('sat', 'Santhali'),
 ]
 
 LOCALE_PATHS = [
@@ -152,7 +142,7 @@ TIME_ZONE = 'Asia/Kolkata'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
     BASE_DIR / 'static',

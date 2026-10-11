@@ -2,24 +2,36 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Count, Q
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout as auth_logout
-from django.http import JsonResponse, Http404, HttpResponse, StreamingHttpResponse
-from django.views.decorators.http import require_POST
+from django.core.cache import cache
+from django.http import HttpResponse, JsonResponse, Http404, StreamingHttpResponse
+from django.views.decorators.http import require_GET, require_POST
 from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
-from django.utils.translation import gettext as _, activate, check_for_language
-from django.urls import translate_url
+from django.utils.translation import gettext as _, check_for_language
+from django.urls import reverse, translate_url
 from django.conf import settings as conf_settings
 from django.utils.http import url_has_allowed_host_and_scheme
-from urllib.parse import urlparse, urlencode
+from urllib.parse import urlencode, urlparse
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 from .models import ApplicationRequest, Scheme, Notification, UserProfile
 from .forms import UserRegisterForm, UserUpdateForm, UserProfileForm, CitizenApplicationForm, SchemeForm
 import csv
+import asyncio
 import json
 import re
 import os
 import tempfile
 import subprocess
+import hashlib
+import html
+import logging
+from aiohttp import ClientError, ClientResponseError
+from edge_tts import Communicate
+from edge_tts.exceptions import EdgeTTSException
+
+
+logger = logging.getLogger(__name__)
 
 
 # -----------------------------
@@ -31,7 +43,12 @@ def register(request):
         if form.is_valid():
             form.save()
             username = form.cleaned_data.get('username')
-            messages.success(request, f'Account created for {username}! You can now log in.')
+            messages.success(
+                request,
+                _('Account created for %(username)s! You can now log in.') % {
+                    'username': username,
+                },
+            )
             return redirect('login')
     else:
         form = UserRegisterForm()
@@ -85,6 +102,8 @@ def scheme_awareness(request):
     state_filter = (request.GET.get('state') or '').strip()
     category_filter = (request.GET.get('category') or '').strip()
     type_filter = (request.GET.get('type') or '').strip()
+    if type_filter:
+        type_filter = {'central': 'Central', 'state': 'State'}.get(type_filter.lower(), type_filter)
 
     if search_query:
         schemes = schemes.filter(
@@ -150,65 +169,331 @@ def scheme_detail(request, scheme_id):
     return render(request, 'scheme_detail.html', {'scheme': scheme})
 
 
-def tts_proxy(request):
-    """Proxy Google Translate TTS audio to avoid browser CORS restrictions."""
-    text = (request.GET.get('text') or '').strip()
-    language = (request.GET.get('lang') or 'en').strip()
+class VoiceServiceError(Exception):
+    """Raised when an external translation or speech provider cannot respond."""
 
-    if not text:
-        return HttpResponse('Text parameter is required.', status=400)
 
-    language_map = {
-        'English': 'en',
-        'Hindi': 'hi',
-        'Marathi': 'mr',
-        'Telugu': 'te',
-        'Tamil': 'ta',
-        'Kannada': 'kn',
-        'Malayalam': 'ml',
-        'Bengali': 'bn',
-        'Gujarati': 'gu',
-        'Punjabi': 'pa'
+VOICE_LANGUAGES = {
+    'english': ('en', 'English', 'en-IN-NeerjaNeural'),
+    'en': ('en', 'English', 'en-IN-NeerjaNeural'),
+    'hindi': ('hi', 'Hindi', 'hi-IN-SwaraNeural'),
+    'hi': ('hi', 'Hindi', 'hi-IN-SwaraNeural'),
+    'marathi': ('mr', 'Marathi', 'mr-IN-AarohiNeural'),
+    'mr': ('mr', 'Marathi', 'mr-IN-AarohiNeural'),
+    'telugu': ('te', 'Telugu', 'te-IN-ShrutiNeural'),
+    'te': ('te', 'Telugu', 'te-IN-ShrutiNeural'),
+}
+
+
+def _scheme_voice_text(scheme):
+    fields = (
+        ('Scheme name', f'Government scheme called {scheme.scheme_name}'),
+        ('About this scheme', scheme.description),
+        ('Eligibility', scheme.eligibility),
+        ('Required documents', scheme.documents_required),
+    )
+    return '\n'.join(
+        f'{label}: {value.strip()}'
+        for label, value in fields
+        if value and value.strip()
+    )
+
+
+def _split_voice_text(text, limit):
+    remaining = text.strip()
+    chunks = []
+    while remaining:
+        if len(remaining) <= limit:
+            chunks.append(remaining)
+            break
+        split_at = remaining.rfind(' ', 0, limit + 1)
+        if split_at <= 0:
+            split_at = limit
+        chunks.append(remaining[:split_at].strip())
+        remaining = remaining[split_at:].strip()
+    return chunks
+
+
+def _provider_response(url, service_name):
+    request = Request(
+        url,
+        headers={'User-Agent': 'SmartAssist multilingual scheme assistance/1.0'},
+    )
+    try:
+        with urlopen(request, timeout=12) as response:
+            return response.read()
+    except HTTPError as exc:
+        logger.warning('%s returned HTTP %s', service_name, exc.code)
+        raise VoiceServiceError(
+            f'{service_name} is temporarily unavailable (HTTP {exc.code}). Please try again later.'
+        ) from exc
+    except (URLError, TimeoutError) as exc:
+        logger.warning('%s could not be reached: %s', service_name, exc)
+        raise VoiceServiceError(
+            f'{service_name} could not be reached. Check your internet connection and try again.'
+        ) from exc
+
+
+def _translate_scheme_voice_text(text, language_code):
+    return _translate_text(text, language_code)
+
+
+def _translate_text(text, language_code):
+    if len(text) > 4500:
+        raise VoiceServiceError(
+            'This scheme has too much text for the free translation quota. Please check its details on the official website.'
+        )
+
+    translated_chunks = []
+    for chunk in _split_voice_text(text, 450):
+        query = urlencode({
+            'q': chunk,
+            'langpair': f'en|{language_code}',
+        })
+        payload = _provider_response(
+            f'https://api.mymemory.translated.net/get?{query}',
+            'Free translation service',
+        )
+        try:
+            result = json.loads(payload)
+        except (TypeError, ValueError) as exc:
+            raise VoiceServiceError(
+                'The translation service returned an unreadable response. Please try again later.'
+            ) from exc
+
+        if result.get('responseStatus') != 200 or result.get('quotaFinished'):
+            logger.warning(
+                'Translation service rejected the request: status=%s details=%s',
+                result.get('responseStatus'),
+                result.get('responseDetails', ''),
+            )
+            raise VoiceServiceError(
+                'The free translation service is unavailable or its daily quota has been reached. Please try again later.'
+            )
+
+        translated = result.get('responseData', {}).get('translatedText', '').strip()
+        if not translated:
+            raise VoiceServiceError(
+                'The translation service did not return translated scheme information.'
+            )
+        translated_chunks.append(html.unescape(translated))
+    return ' '.join(translated_chunks)
+
+
+@require_GET
+def scheme_translation_api(request):
+    """Translate only public scheme fields; never accept user/application data."""
+    try:
+        scheme_id = int(request.GET.get('scheme_id', ''))
+    except (TypeError, ValueError):
+        return JsonResponse({'error': 'A valid scheme_id is required.'}, status=400)
+
+    language = (request.GET.get('lang') or '').strip().lower()
+    if language not in {'en', 'hi', 'mr', 'te'}:
+        return JsonResponse(
+            {'error': 'Choose English, Hindi, Marathi, or Telugu.'},
+            status=400,
+        )
+
+    scheme = get_object_or_404(Scheme, id=scheme_id)
+    all_fields = {
+        'scheme_name': scheme.scheme_name or '',
+        'description': scheme.description or '',
+        'eligibility': scheme.eligibility or '',
+        'documents_required': scheme.documents_required or '',
     }
+    requested_fields = request.GET.get('fields')
+    if requested_fields:
+        field_names = tuple(dict.fromkeys(requested_fields.split(',')))
+        if not field_names or any(field not in all_fields for field in field_names):
+            return JsonResponse({'error': 'One or more scheme fields are invalid.'}, status=400)
+        fields = {field: all_fields[field] for field in field_names}
+    else:
+        fields = all_fields
 
-    code = language_map.get(language, language if len(language) == 2 else 'en')
-    params = urlencode({'ie': 'UTF-8', 'tl': code, 'client': 'tw-ob', 'q': text})
-    url = f'https://translate.google.com/translate_tts?{params}'
+    if language == 'en':
+        return JsonResponse({'language': language, 'fields': fields})
 
-    req = Request(url, headers={
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36'
-    })
+    cache_fingerprint = hashlib.sha256(
+        json.dumps(fields, ensure_ascii=False, sort_keys=True).encode('utf-8')
+    ).hexdigest()
+    cache_key = f'scheme_translation:{scheme.pk}:{language}:{cache_fingerprint}'
+    cached_translation = cache.get(cache_key)
+    if cached_translation is not None:
+        return JsonResponse(cached_translation)
 
     try:
-        with urlopen(req, timeout=15) as resp:
-            content_type = resp.headers.get_content_type() if hasattr(resp.headers, 'get_content_type') else 'audio/mpeg'
-            return HttpResponse(resp.read(), content_type=content_type)
+        translated_fields = {
+            field: _translate_text(value, language) if value.strip() else ''
+            for field, value in fields.items()
+        }
+    except VoiceServiceError as exc:
+        logger.warning(
+            'Scheme translation failed for scheme_id=%s language=%s: %s',
+            scheme.pk,
+            language,
+            exc,
+        )
+        return JsonResponse(
+            {
+                'error': str(exc),
+                'language': language,
+                'original_language': 'en',
+            },
+            status=503,
+        )
+
+    response_data = {
+        'language': language,
+        'original_language': 'en',
+        'fields': translated_fields,
+    }
+    cache.set(cache_key, response_data, timeout=24 * 60 * 60)
+    return JsonResponse(response_data)
+
+
+async def _stream_edge_speech(text, voice_name):
+    audio = bytearray()
+    async for item in Communicate(text, voice_name).stream():
+        if item['type'] == 'audio':
+            audio.extend(item['data'])
+    return bytes(audio)
+
+
+def _synthesize_scheme_voice(text, voice_name):
+    try:
+        audio = asyncio.run(asyncio.wait_for(
+            _stream_edge_speech(text, voice_name),
+            timeout=30,
+        ))
+    except asyncio.TimeoutError as exc:
+        raise VoiceServiceError(
+            'The free speech service took too long to respond. Please try again.'
+        ) from exc
+    except ClientResponseError as exc:
+        logger.warning('Free speech service returned HTTP %s', exc.status)
+        if exc.status == 429:
+            message = 'The free speech service is rate-limited right now. Please wait and try again.'
+        else:
+            message = 'The free speech service is temporarily unavailable. Please try again later.'
+        raise VoiceServiceError(message) from exc
+    except (ClientError, EdgeTTSException, OSError) as exc:
+        logger.warning('Free speech service request failed: %s', exc)
+        raise VoiceServiceError(
+            'The free speech service could not be reached. Check your internet connection and try again.'
+        ) from exc
     except Exception as exc:
-        return HttpResponse(f'TTS proxy error: {exc}', status=502)
+        logger.exception('Unexpected failure while generating speech')
+        raise VoiceServiceError(
+            'Speech could not be generated right now. Please try again later.'
+        ) from exc
+
+    if not audio:
+        raise VoiceServiceError('The speech service returned empty audio.')
+    return audio
+
+
+@require_GET
+def scheme_voice_audio(request, scheme_id):
+    """Translate only this stored scheme's information and return its speech audio."""
+    requested_language = (request.GET.get('lang') or '').strip().lower()
+    language = VOICE_LANGUAGES.get(requested_language)
+    if language is None:
+        return JsonResponse(
+            {'error': 'Choose English, Hindi, Marathi, or Telugu.'},
+            status=400,
+        )
+
+    scheme = get_object_or_404(Scheme, id=scheme_id)
+    source_text = _scheme_voice_text(scheme)
+    if not source_text:
+        return JsonResponse(
+            {'error': 'This scheme does not have any information available to read aloud.'},
+            status=422,
+        )
+
+    remote_address = request.META.get('REMOTE_ADDR', 'unknown')
+    rate_key = f'scheme-voice-rate:{hashlib.sha256(remote_address.encode()).hexdigest()}'
+    if cache.add(rate_key, 1, timeout=60):
+        request_count = 1
+    else:
+        try:
+            request_count = cache.incr(rate_key)
+        except ValueError:
+            request_count = 1
+            cache.set(rate_key, request_count, timeout=60)
+    if request_count > 20:
+        return JsonResponse(
+            {'error': 'Voice requests are temporarily limited. Please wait a minute and try again.'},
+            status=429,
+        )
+
+    language_code, language_name, voice_name = language
+    audio_cache_key = 'scheme-voice-audio:' + hashlib.sha256(
+        f'{scheme.pk}:{language_code}:{source_text}'.encode()
+    ).hexdigest()
+    cached_audio = cache.get(audio_cache_key)
+    if cached_audio is not None:
+        return HttpResponse(cached_audio, content_type='audio/mpeg')
+
+    spoken_text = source_text
+    if language_code != 'en':
+        try:
+            spoken_text = _translate_scheme_voice_text(source_text, language_code)
+        except VoiceServiceError as exc:
+            return JsonResponse({'error': str(exc)}, status=503)
+
+    try:
+        audio = _synthesize_scheme_voice(spoken_text, voice_name)
+    except VoiceServiceError as exc:
+        return JsonResponse({
+            'error': str(exc),
+            'translated_text': spoken_text,
+            'language': language_code,
+            'language_name': language_name,
+        }, status=503)
+
+    cache.set(audio_cache_key, audio, timeout=60 * 60 * 12)
+    response = HttpResponse(audio, content_type='audio/mpeg')
+    response['Cache-Control'] = 'private, max-age=3600'
+    return response
 
 
 @login_required
 def apply_for_assistance(request):
     """Citizen application form"""
     user_profile, created = UserProfile.objects.get_or_create(user=request.user)
+    scheme_id = request.POST.get('scheme_id') or request.GET.get('scheme_id')
+    scheme = get_object_or_404(Scheme, id=scheme_id) if scheme_id else None
 
     if request.method == 'POST':
         form = CitizenApplicationForm(request.POST)
         if form.is_valid():
             application = form.save(commit=False)
             application.user = request.user
+            application.scheme = scheme
             application.status = 'Submitted'
             application.save()
 
-            # Create notification
+            scheme_name = scheme.scheme_name if scheme else _('government scheme assistance')
             Notification.objects.create(
                 user=request.user,
                 notification_type='email',
                 subject=_('Application Submitted'),
-                message=_('Your application for government scheme assistance has been submitted successfully.')
+                message=_('Your application for %(scheme)s has been submitted successfully.') % {
+                    'scheme': scheme_name,
+                },
             )
 
-            messages.success(request, _('Application submitted for assistance. Our volunteers will help you apply for suitable schemes.'))
+            if scheme:
+                messages.success(
+                    request,
+                    _('Your request for %(scheme)s has been submitted. Our volunteers will help you with the application.') % {
+                        'scheme': scheme.scheme_name,
+                    },
+                )
+            else:
+                messages.success(request, _('Application submitted for assistance. Our volunteers will help you apply for suitable schemes.'))
             return redirect('application_status')
     else:
         # Pre-fill form with profile data
@@ -223,9 +508,11 @@ def apply_for_assistance(request):
             'state': user_profile.state,
             'district': user_profile.district,
         }
+        if scheme and not initial_data['state']:
+            initial_data['state'] = scheme.state
         form = CitizenApplicationForm(initial=initial_data)
 
-    return render(request, 'apply.html', {'form': form})
+    return render(request, 'apply.html', {'form': form, 'scheme': scheme})
 
 
 @login_required
@@ -397,8 +684,6 @@ def set_language(request):
     if lang_code not in valid_codes:
         lang_code = 'en'
 
-    activate(lang_code)
-
     # Prefer explicit next target, otherwise fall back to referrer.
     next_url = request.GET.get('next') or request.POST.get('next') or request.META.get('HTTP_REFERER', '/')
 
@@ -413,6 +698,7 @@ def set_language(request):
     parsed = urlparse(next_url)
     path_only = parsed.path or '/'
     query = f'?{parsed.query}' if parsed.query else ''
+    fragment = f'#{parsed.fragment}' if parsed.fragment else ''
 
     # Strip any existing language prefix so we never double-prefix.
     all_lang_codes = [code for code, _ in conf_settings.LANGUAGES if code != 'en']
@@ -427,9 +713,9 @@ def set_language(request):
     # Build language-prefixed path directly.
     # English uses no prefix (prefix_default_language=False in i18n_patterns).
     if lang_code == 'en':
-        next_path = path_only + query
+        next_path = path_only + query + fragment
     else:
-        next_path = f'/{lang_code}{path_only}' + query
+        next_path = f'/{lang_code}{path_only}' + query + fragment
 
     response = redirect(next_path)
     
@@ -540,12 +826,17 @@ def _format_link(url):
     if not clean_url:
         return None
     clean_url = clean_url.rstrip(' .,;\n\r\t')
-    if clean_url.lower().startswith(('javascript:', 'data:', 'vbscript:')):
-        return None
     if clean_url.startswith('//'):
         clean_url = 'https:' + clean_url
-    if not clean_url.lower().startswith(('http://', 'https://')):
+    elif urlparse(clean_url).scheme and not clean_url.lower().startswith(('http://', 'https://')):
+        return None
+    elif '://' in clean_url and not clean_url.lower().startswith(('http://', 'https://')):
+        return None
+    elif not clean_url.lower().startswith(('http://', 'https://')):
         clean_url = 'https://' + clean_url
+    parsed_url = urlparse(clean_url)
+    if parsed_url.scheme.lower() not in {'http', 'https'} or not parsed_url.hostname:
+        return None
     return clean_url
 
 
@@ -600,6 +891,8 @@ def india_map_overview_api(request):
         'total_schemes': total_schemes,
         'central_schemes': central_schemes,
         'state_schemes': state_schemes,
+        'active_states': len(state_counts),
+        'top_state': top_states[0][0] if top_states else '—',
         'category_counts': category_counts,
         'top_states': [{'state': name, 'count': count} for name, count in top_states],
         'top_category': top_category,
@@ -683,6 +976,7 @@ def schemes_by_state_api(request, state_name):
                 'eligibility': scheme.get('eligibility'),
                 'documents_required': scheme.get('documents_required'),
                 'category': scheme.get('scheme_type') or 'General',
+                'scheme_type': scheme.get('scheme_type') or '',
                 'apply_link': scheme.get('official_website'),
                 'official_website': scheme.get('official_website'),
                 'department': scheme.get('department'),
@@ -700,16 +994,19 @@ def state_schemes_public_api(request, state_name):
         Q(state__iexact=state_name_unescaped) | Q(scheme_type='Central')
     ).order_by('scheme_name')
 
-    if not matching_schemes.exists():
-        return JsonResponse([], safe=False, status=404)
-
     scheme_data = []
     for scheme in matching_schemes:
         apply_link = _format_link(scheme.apply_link) or _format_link(scheme.official_website)
         scheme_data.append({
             'name': scheme.scheme_name,
             'description': scheme.description or scheme.benefits or 'No description available.',
+            'eligibility': scheme.eligibility or '',
+            'documents_required': scheme.documents_required or '',
+            'benefits': scheme.benefits or '',
             'category': scheme.category or scheme.scheme_type or 'General',
+            'scheme_type': scheme.scheme_type or '',
+            'state': scheme.state or '',
+            'department': scheme.department or '',
             'apply_link': apply_link,
             'official_website': _format_link(scheme.official_website),
             'id': scheme.id,
@@ -794,38 +1091,8 @@ def recommend_schemes(request):
 # -----------------------------
 @login_required
 def apply_scheme(request, scheme_id):
-
     scheme = get_object_or_404(Scheme, id=scheme_id)
-
-    ApplicationRequest.objects.create(
-        user=request.user,
-        scheme=scheme,
-        name=request.user.username,
-        age=25,
-        gender="Male",
-        mobile="9999999999",
-        education="Graduate",
-        income="300000",
-        category="General",
-        state=scheme.state,
-        district="Unknown",
-        status="Pending"
-    )
-
-    Notification.objects.create(
-        user=request.user,
-        message=f"You applied for {scheme.scheme_name}"
-    )
-    messages.success(request, _(f"Application recorded for {scheme.scheme_name}. Redirecting to the official portal…"))
-
-    # Prefer the dedicated apply link, fall back to official website.
-    # Normalize before redirecting so links without protocol do not break.
-    external_url = _format_link(scheme.apply_link) or _format_link(scheme.official_website)
-    if external_url:
-        return redirect(external_url)
-
-    messages.warning(request, _('Official website link is unavailable for this scheme.'))
-    return redirect('my_apps')
+    return redirect(f"{reverse('apply_assistance')}?scheme_id={scheme.pk}")
 
 
 # -----------------------------
@@ -843,15 +1110,20 @@ def my_applications(request):
     })
 
 
-import openai
 from django.conf import settings
 
-openai.api_key = getattr(settings, 'OPENAI_API_KEY', None)
+try:
+    import openai
+except ModuleNotFoundError:
+    openai = None
+
+if openai is not None:
+    openai.api_key = getattr(settings, 'OPENAI_API_KEY', None)
 
 
 def _get_openai_client():
     api_key = getattr(settings, 'OPENAI_API_KEY', None)
-    if not api_key:
+    if not api_key or openai is None:
         return None
 
     try:
@@ -930,7 +1202,7 @@ def _localize_text(key, lang='en'):
 def _transcribe_audio_with_openai(audio_file):
     """Return transcript text using Whisper when API key is configured."""
     api_key = getattr(settings, 'OPENAI_API_KEY', None)
-    if not api_key:
+    if not api_key or openai is None:
         return ''
 
     # New SDK path

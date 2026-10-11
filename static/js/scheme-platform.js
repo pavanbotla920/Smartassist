@@ -403,7 +403,7 @@
     const minAge = card.dataset.minAge;
     const maxAge = card.dataset.maxAge;
     const incomeLimit = card.dataset.incomeLimit;
-    const officialWebsite = card.dataset.officialWebsite;
+    const officialWebsite = card.dataset.officialWebsite || card.dataset.applyLink || '';
 
     modal.querySelector('#sp-details-title').textContent = title;
 

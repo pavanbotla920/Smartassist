@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-{% load i18n %}
+{% load static i18n %}
 {% get_current_language as LANGUAGE_CODE %}
 <html lang="{{ LANGUAGE_CODE }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:,">
     <title>{% block title %}{% trans "SmartAssist - Inclusive Government Scheme Platform" %}{% endblock %}</title>
 
     <!-- Bootstrap 5 CSS -->
@@ -41,6 +42,29 @@
         .status-rejected { background-color: #dc3545; }
         .language-switcher {
             margin-left: auto;
+        }
+        .site-language-selector {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            margin-left: auto;
+        }
+        .site-language-label {
+            margin: 0;
+            color: #334155;
+            font-size: 0.82rem;
+            white-space: nowrap;
+        }
+        .site-language-select {
+            max-width: 175px;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.5rem;
+            background: #fff;
+            color: #0f172a;
+            padding: 0.45rem 0.6rem;
+        }
+        @media (max-width: 900px) {
+            .site-language-selector { margin: 0.75rem 0; }
         }
         .awareness-message {
             background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
@@ -211,8 +235,7 @@
             height: 30px;
             object-fit: contain;
             border-radius: 8px;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 3px;
+            background: transparent;
         }
 
         .gov-link-card span {
@@ -248,7 +271,7 @@
                 SmartAssist
             </a>
 
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-label="{% trans 'Toggle navigation' %}">
                 <span class="navbar-toggler-icon"></span>
             </button>
 
@@ -289,33 +312,7 @@
                 </ul>
 
                 <!-- Language Switcher -->
-                <div class="language-switcher dropdown">
-                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-globe"></i> {{ LANGUAGE_CODE|upper }}
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="{% url 'set_language' %}?lang=en&next={{ request.get_full_path|urlencode }}">English</a></li>
-                        <li><a class="dropdown-item" href="{% url 'set_language' %}?lang=hi&next={{ request.get_full_path|urlencode }}">हिंदी</a></li>
-                        <li><a class="dropdown-item" href="{% url 'set_language' %}?lang=mr&next={{ request.get_full_path|urlencode }}">मराठी</a></li>
-                        <li><a class="dropdown-item" href="{% url 'set_language' %}?lang=gu&next={{ request.get_full_path|urlencode }}">ગુજરાતી</a></li>
-                        <li><a class="dropdown-item" href="{% url 'set_language' %}?lang=bn&next={{ request.get_full_path|urlencode }}">বাংলা</a></li>
-                        <li><a class="dropdown-item" href="{% url 'set_language' %}?lang=ta&next={{ request.get_full_path|urlencode }}">தமிழ்</a></li>
-                        <li><a class="dropdown-item" href="{% url 'set_language' %}?lang=te&next={{ request.get_full_path|urlencode }}">తెలుగు</a></li>
-                        <li><a class="dropdown-item" href="{% url 'set_language' %}?lang=kn&next={{ request.get_full_path|urlencode }}">ಕನ್ನಡ</a></li>
-                        <li><a class="dropdown-item" href="{% url 'set_language' %}?lang=ml&next={{ request.get_full_path|urlencode }}">മലയാളം</a></li>
-                        <li><a class="dropdown-item" href="{% url 'set_language' %}?lang=pa&next={{ request.get_full_path|urlencode }}">ਪੰਜਾਬੀ</a></li>
-                        <li><a class="dropdown-item" href="{% url 'set_language' %}?lang=ur&next={{ request.get_full_path|urlencode }}">اردو</a></li>
-                        <li><a class="dropdown-item" href="{% url 'set_language' %}?lang=or&next={{ request.get_full_path|urlencode }}">ଓଡ଼ିଆ</a></li>
-                        <li><a class="dropdown-item" href="{% url 'set_language' %}?lang=as&next={{ request.get_full_path|urlencode }}">অসমীয়া</a></li>
-                        <li><a class="dropdown-item" href="{% url 'set_language' %}?lang=sa&next={{ request.get_full_path|urlencode }}">संस्कृतम्</a></li>
-                        <li><a class="dropdown-item" href="{% url 'set_language' %}?lang=kok&next={{ request.get_full_path|urlencode }}">कोंकणी</a></li>
-                        <li><a class="dropdown-item" href="{% url 'set_language' %}?lang=mni&next={{ request.get_full_path|urlencode }}">মৈতৈলোন্</a></li>
-                        <li><a class="dropdown-item" href="{% url 'set_language' %}?lang=ne&next={{ request.get_full_path|urlencode }}">नेपाली</a></li>
-                        <li><a class="dropdown-item" href="{% url 'set_language' %}?lang=sd&next={{ request.get_full_path|urlencode }}">سنڌي</a></li>
-                        <li><a class="dropdown-item" href="{% url 'set_language' %}?lang=bodo&next={{ request.get_full_path|urlencode }}">बड़ो</a></li>
-                        <li><a class="dropdown-item" href="{% url 'set_language' %}?lang=sat&next={{ request.get_full_path|urlencode }}">ᱥᱟᱱᱛᱟᱲᱤ</a></li>
-                    </ul>
-                </div>
+                {% include "partials/language_selector.html" %}
 
                 {% if user.is_authenticated %}
                     <div class="dropdown ms-3">
@@ -348,9 +345,9 @@
                 <h5 class="footer-title">SmartAssist</h5>
                 <p class="footer-subtext">{% trans "AI-powered platform to discover government schemes easily" %}</p>
                 <div class="footer-socials">
-                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                    <a href="#" aria-label="{% trans 'Facebook' %}"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" aria-label="{% trans 'Twitter' %}"><i class="fab fa-twitter"></i></a>
+                    <a href="#" aria-label="{% trans 'Instagram' %}"><i class="fab fa-instagram"></i></a>
                 </div>
             </div>
 
@@ -371,15 +368,15 @@
                 <h6>{% trans "Useful Links" %}</h6>
                 <div class="useful-grid">
                     <a href="https://www.digitalindia.gov.in/" target="_blank" rel="noopener" class="gov-link-card">
-                        <img src="https://www.google.com/s2/favicons?domain=www.digitalindia.gov.in&sz=64" alt="Digital India">
+                        <span class="gov-link-icon" aria-hidden="true">🇮🇳</span>
                         <span>{% trans "Digital India" %}</span>
                     </a>
                     <a href="https://www.india.gov.in/" target="_blank" rel="noopener" class="gov-link-card">
-                        <img src="https://www.google.com/s2/favicons?domain=www.india.gov.in&sz=64" alt="india.gov.in">
+                        <span class="gov-link-icon" aria-hidden="true">🏛️</span>
                         <span>india.gov.in</span>
                     </a>
                     <a href="https://www.data.gov.in/" target="_blank" rel="noopener" class="gov-link-card">
-                        <img src="https://www.google.com/s2/favicons?domain=www.data.gov.in&sz=64" alt="data.gov.in">
+                        <span class="gov-link-icon" aria-hidden="true">📊</span>
                         <span>data.gov.in</span>
                     </a>
                 </div>
@@ -392,6 +389,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Chart.js for analytics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{% static 'js/language-switcher.js' %}"></script>
 
     <script>
         window.addEventListener('DOMContentLoaded', function() {

@@ -1,214 +1,129 @@
+# Django translation file for Marathi (mr)
+# SmartAssist-Kisan — complete catalogue
 msgid ""
 msgstr ""
-"Project-Id-Version: smartassist\n"
+"Project-Id-Version: SmartAssist 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-09 19:48+0530\n"
-"PO-Revision-Date: 2026-03-29 00:00+0000\n"
-"Last-Translator: GitHub Copilot\n"
-"Language-Team: Marathi\n"
+"POT-Creation-Date: 2026-10-10 15:59+0530\n"
 "Language: mr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: farmers/forms.py:11 farmers/forms.py:25
-msgid "Username"
-msgstr "वापरकर्तानाव"
-
-#: farmers/forms.py:12 farmers/forms.py:25
-msgid "Email address"
-msgstr "ईमेल पत्ता"
-
-#: farmers/forms.py:13
-msgid "Password"
-msgstr "पासवर्ड"
-
-#: farmers/forms.py:14
-msgid "Confirm password"
-msgstr "पासवर्डची पुष्टी करा"
-
-#: farmers/forms.py:33
-msgid "Phone number"
-msgstr "दूरध्वनी क्रमांक"
-
-#: farmers/forms.py:34 farmers/forms.py:57 templates/apply.html:34
-#: templates/apply.html:141 templates/dashboard.html:1849
-#: templates/india_map_schemes.html:197 templates/my_applications.html:50
-#: templates/scheme_awareness.html:171 templates/scheme_awareness.html:242
-#: templates/scheme_awareness.html:315 templates/scheme_detail.html:124
-msgid "State"
-msgstr "राज्य"
-
-#: farmers/forms.py:35 farmers/forms.py:58 templates/apply.html:151
-#: templates/my_applications.html:54
-msgid "District"
-msgstr "जिल्हा"
-
-#: farmers/forms.py:36 farmers/forms.py:50 templates/apply.html:66
-msgid "Age"
-msgstr "वय"
-
-#: farmers/forms.py:37 farmers/forms.py:51 templates/apply.html:78
-msgid "Gender"
-msgstr "लिंग"
-
-#: farmers/forms.py:38 templates/dashboard.html:1424
-msgid "Education"
-msgstr "शिक्षण"
-
-#: farmers/forms.py:39
-msgid "Income range"
-msgstr "उत्पन्न मर्यादा"
-
-#: farmers/forms.py:40 farmers/forms.py:56 templates/apply.html:129
-#: templates/scheme_awareness.html:225 templates/scheme_detail.html:237
-msgid "Category"
-msgstr "प्रवर्ग"
-
-#: farmers/forms.py:49 templates/apply.html:56
-msgid "Full Name"
-msgstr "पूर्ण नाव"
-
-#: farmers/forms.py:52 templates/apply.html:88
-msgid "Mobile Number"
-msgstr "मोबाइल क्रमांक"
-
-#: farmers/forms.py:53 templates/apply.html:100
-msgid "Email"
-msgstr "ईमेल"
-
-#: farmers/forms.py:54 templates/apply.html:107
-msgid "Education Level"
-msgstr "शिक्षणाची पातळी"
-
-#: farmers/forms.py:55 templates/apply.html:119
-msgid "Annual Income (₹)"
-msgstr "वार्षिक उत्पन्न (₹)"
-
-#: farmers/forms.py:70
-msgid "Annual income in rupees"
-msgstr "रुपयांमधील वार्षिक उत्पन्न"
-
-#: farmers/views.py:48
-#, python-format
-msgid "Account created for %(username)s! You can now log in."
-msgstr "%(username)s यांच्यासाठी खाते तयार केले! आता तुम्ही लॉग इन करू शकता."
-
-#: farmers/views.py:61
+# ============================================================
+# VIEWS.PY — gettext strings
+# ============================================================
+#: farmers/views.py:44
 msgid "You have been logged out successfully."
-msgstr ""
+msgstr "तुम्ही यशस्वीरित्या लॉग आउट झाला आहात."
 
-#: farmers/views.py:75
+#: farmers/views.py:58
 msgid "Your profile has been updated!"
-msgstr ""
+msgstr "तुमचे प्रोफाइल अद्यतनित केले गेले आहे!"
 
-#: farmers/views.py:478
-#, fuzzy
-#| msgid "Government Scheme Platform"
-msgid "government scheme assistance"
-msgstr "शासकीय योजना व्यासपीठ"
-
-#: farmers/views.py:482 templates/application_status.html:145
+#: farmers/views.py:207 templates/application_status.html:145
 #: templates/application_status.html:211
 msgid "Application Submitted"
-msgstr "अर्ज सादर केला"
+msgstr "अर्ज सबमिट केला"
 
-#: farmers/views.py:483
-#, python-format
-msgid "Your application for %(scheme)s has been submitted successfully."
-msgstr ""
-
-#: farmers/views.py:491
-#, python-format
+#: farmers/views.py:208
 msgid ""
-"Your request for %(scheme)s has been submitted. Our volunteers will help you "
-"with the application."
-msgstr ""
-"%(scheme)s साठीची तुमची विनंती सादर झाली आहे. आमचे स्वयंसेवक अर्जासाठी तुम्हाला मदत "
-"करतील."
+"Your application for government scheme assistance has been submitted "
+"successfully."
+msgstr "सरकारी योजना मदतीसाठी तुमचा अर्ज यशस्वीरित्या सबमिट केला गेला आहे."
 
-#: farmers/views.py:496
+#: farmers/views.py:211
 msgid ""
 "Application submitted for assistance. Our volunteers will help you apply for "
 "suitable schemes."
 msgstr ""
-"सहाय्यासाठीचा अर्ज सादर झाला आहे. योग्य योजनांसाठी अर्ज करण्यास आमचे स्वयंसेवक मदत "
+"मदतीसाठी अर्ज सबमिट केला. आमचे स्वयंसेवक तुम्हाला योग्य योजनांसाठी अर्ज करण्यास मदत "
 "करतील."
 
-#: farmers/views.py:569
+#: farmers/views.py:282
 msgid "Scheme added successfully!"
-msgstr ""
+msgstr "योजना यशस्वीरित्या जोडली!"
 
-#: farmers/views.py:599
+#: farmers/views.py:312
 msgid "Application Status Updated"
-msgstr ""
+msgstr "अर्जाची स्थिती अद्यतनित केली"
 
-#: farmers/views.py:600
+#: farmers/views.py:313
 #, python-brace-format
 msgid "Your application status has been updated to: {new_status}"
 msgstr ""
 
-#: farmers/views.py:603
+#: farmers/views.py:316
 msgid "Application status updated!"
-msgstr ""
+msgstr "अर्जाची स्थिती अद्यतनित केली!"
 
-#: farmers/views.py:630
+#: farmers/views.py:343
 msgid "Scheme Applied"
-msgstr ""
+msgstr "योजनेसाठी अर्ज केला"
 
-#: farmers/views.py:631
+#: farmers/views.py:344
 #, python-brace-format
 msgid "We have applied for {scheme.scheme_name} on your behalf."
 msgstr ""
 
-#: farmers/views.py:634
+#: farmers/views.py:347
 msgid "Scheme applied successfully!"
+msgstr "योजनेसाठी यशस्वीरित्या अर्ज केला!"
+
+#: farmers/views.py:819
+#, python-brace-format
+msgid ""
+"Application recorded for {scheme.scheme_name}. Redirecting to the official "
+"portal…"
 msgstr ""
 
-#: templates/admin_dashboard.html:4
-#, fuzzy
-#| msgid "Admin Dashboard"
-msgid "Admin Dashboard - SmartAssist"
-msgstr "प्रशासक डॅशबोर्ड"
+#: farmers/views.py:827
+msgid "Official website link is unavailable for this scheme."
+msgstr "या योजनेसाठी अधिकृत वेबसाइट लिंक अनुपलब्ध आहे."
 
-#: templates/admin_dashboard.html:12 templates/base.html:302
+# ============================================================
+# ADMIN DASHBOARD
+# ============================================================
+#: templates/admin_dashboard.html:4
+msgid "Admin Dashboard - SmartAssist"
+msgstr "प्रशासक डॅशबोर्ड - स्मार्टअसिस्ट"
+
+#: templates/admin_dashboard.html:12 templates/base.html:279
 msgid "Admin Dashboard"
 msgstr "प्रशासक डॅशबोर्ड"
 
 #: templates/admin_dashboard.html:14
 msgid "Manage citizen applications and government schemes"
-msgstr ""
+msgstr "नागरिक अर्ज आणि सरकारी योजना व्यवस्थापित करा"
 
 #: templates/admin_dashboard.html:25 templates/dashboard.html:1703
 msgid "Total Applications"
-msgstr ""
+msgstr "एकूण अर्ज"
 
 #: templates/admin_dashboard.html:34 templates/my_applications.html:43
 msgid "Pending"
-msgstr ""
+msgstr "प्रलंबित"
 
 #: templates/admin_dashboard.html:43 templates/application_status.html:38
 #: templates/application_status.html:219
 msgid "Under Review"
-msgstr ""
+msgstr "पुनरावलोकनाधीन"
 
 #: templates/admin_dashboard.html:52 templates/application_status.html:40
 #: templates/my_applications.html:42
-#, fuzzy
-#| msgid "Apply"
 msgid "Applied"
-msgstr "अर्ज करा"
+msgstr "अर्ज केला"
 
 #: templates/admin_dashboard.html:61 templates/application_status.html:42
 #: templates/dashboard.html:1697 templates/my_applications.html:40
 msgid "Approved"
-msgstr ""
+msgstr "मंजूर"
 
 #: templates/admin_dashboard.html:70 templates/application_status.html:44
 #: templates/my_applications.html:41
 msgid "Rejected"
-msgstr ""
+msgstr "नाकारले"
 
 #: templates/admin_dashboard.html:83 templates/dashboard.html:1843
 msgid "Recent Applications"
@@ -216,88 +131,82 @@ msgstr "अलीकडील अर्ज"
 
 #: templates/admin_dashboard.html:85
 msgid "View All"
-msgstr ""
+msgstr "सर्व पहा"
 
 #: templates/admin_dashboard.html:105
 msgid "Update"
-msgstr ""
+msgstr "अद्यतन करा"
 
 #: templates/admin_dashboard.html:112 templates/dashboard.html:1869
 #: templates/my_applications.html:76
 msgid "No applications yet"
 msgstr "अद्याप कोणतेही अर्ज नाहीत"
 
+# ============================================================
+# DASHBOARD — additional strings
+# ============================================================
 #: templates/admin_dashboard.html:124
-#, fuzzy
-#| msgid "Quick Links"
 msgid "Quick Actions"
-msgstr "जलद दुवे"
+msgstr "जलद क्रिया"
 
 #: templates/admin_dashboard.html:131
-#, fuzzy
-#| msgid "View Schemes"
 msgid "Add New Scheme"
-msgstr "योजना पाहा"
+msgstr "नवीन योजना जोडा"
 
 #: templates/admin_dashboard.html:135
-#, fuzzy
-#| msgid "Reports"
 msgid "View Reports"
-msgstr "अहवाल"
+msgstr "अहवाल पहा"
 
 #: templates/admin_dashboard.html:139
 msgid "Export Data"
-msgstr ""
+msgstr "डेटा निर्यात करा"
 
 #: templates/admin_dashboard.html:150
 msgid "Recent Activity"
-msgstr ""
+msgstr "अलीकडील कृती"
 
 #: templates/admin_dashboard.html:158
 msgid "Application #123 approved"
-msgstr ""
+msgstr "अर्ज #123 मंजूर"
 
 #: templates/admin_dashboard.html:165
 msgid "New scheme added: PM Kisan"
-msgstr ""
+msgstr "नवीन योजना जोडली: पीएम किसान"
 
 #: templates/admin_dashboard.html:172
 msgid "5 applications under review"
-msgstr ""
+msgstr "5 अर्ज पुनरावलोकनाखाली"
 
 #: templates/admin_dashboard.html:230
 msgid "Data export functionality would be implemented here"
-msgstr ""
+msgstr "डेटा निर्यात कार्यक्षमता येथे लागू केली जाईल"
 
+# ============================================================
+# APPLICATION_STATUS.HTML
+# ============================================================
 #: templates/application_status.html:4
-#, fuzzy
-#| msgid "Login - SmartAssist"
 msgid "Application Status - SmartAssist"
-msgstr "लॉगिन - स्मार्टअसिस्ट"
+msgstr "अर्जाची स्थिती - स्मार्टअसिस्ट"
 
 #: templates/application_status.html:12
-#, fuzzy
-#| msgid "My Status"
 msgid "My Application Status"
-msgstr "माझी स्थिती"
+msgstr "माझ्या अर्जाची स्थिती"
 
 #: templates/application_status.html:15
 msgid "Track the progress of your scheme applications"
-msgstr "तुमच्या योजना अर्जांची प्रगती पाहा"
+msgstr "तुमच्या योजना अर्जांच्या प्रगतीचा मागोवा घ्या"
 
 #: templates/application_status.html:31 templates/my_applications.html:32
-#, fuzzy
-#| msgid "2. Get Assistance"
 msgid "General Assistance Request"
-msgstr "2. सहाय्य मिळवा"
+msgstr "सामान्य मदत विनंती"
 
 #: templates/application_status.html:36
 msgid "Submitted"
-msgstr "सादर केले"
+msgstr "सबमिट केले"
 
 #: templates/application_status.html:51
 msgid "Name:"
-msgstr ""
+msgstr "नाव:"
 
 #: templates/application_status.html:52
 msgid "Age:"
@@ -305,11 +214,11 @@ msgstr "वय:"
 
 #: templates/application_status.html:53
 msgid "Mobile:"
-msgstr "मोबाइल:"
+msgstr "मोबाईल:"
 
 #: templates/application_status.html:56
 msgid "State:"
-msgstr ""
+msgstr "राज्य:"
 
 #: templates/application_status.html:57
 msgid "District:"
@@ -317,7 +226,7 @@ msgstr "जिल्हा:"
 
 #: templates/application_status.html:58
 msgid "Category:"
-msgstr ""
+msgstr "श्रेणी:"
 
 #: templates/application_status.html:66
 msgid "Application Number:"
@@ -329,29 +238,27 @@ msgstr "नोंदी:"
 
 #: templates/application_status.html:81
 msgid "Submitted on"
-msgstr "सादर केल्याची तारीख"
+msgstr "या तारखेला सबमिट केले"
 
 #: templates/application_status.html:83
 msgid "Last updated"
-msgstr "शेवटचे अद्यतन"
+msgstr "शेवटचे अद्यतनित"
 
 #: templates/application_status.html:92
-#, fuzzy
-#| msgid "Apply"
 msgid "Applied by:"
-msgstr "अर्ज करा"
+msgstr "यांच्याद्वारे अर्ज केला:"
 
 #: templates/application_status.html:94
 msgid "Processing by volunteer"
-msgstr "स्वयंसेवकाकडून प्रक्रिया सुरू"
+msgstr "स्वयंसेवकाद्वारे प्रक्रिया करत आहे"
 
 #: templates/application_status.html:98
 msgid "Timeline"
-msgstr "कालरेषा"
+msgstr "टाइमलाइन"
 
 #: templates/application_status.html:111
 msgid "Community Impact"
-msgstr "समुदायावरील परिणाम"
+msgstr "समुदाय प्रभाव"
 
 #: templates/application_status.html:112
 msgid ""
@@ -359,481 +266,455 @@ msgid ""
 "scheme, please help spread awareness by informing your family, friends, and "
 "community members about these government initiatives."
 msgstr ""
+"पहिले पाऊल उचलल्याबद्दल अभिनंदन! तुम्हाला कोणत्याही योजनेचा लाभ मिळाल्यावर, कृपया "
+"तुमच्या कुटुंबातील सदस्यांना, मित्रांना आणि समुदायातील सदस्यांना या सरकारी उपक्रमांबद्दल "
+"माहिती देऊन जागरूकता पसरवण्यास मदत करा."
 
 #: templates/application_status.html:122
 msgid "No Applications Yet"
-msgstr "अद्याप अर्ज नाहीत"
+msgstr "अद्याप कोणतेही अर्ज नाहीत"
 
 #: templates/application_status.html:123
 msgid "You haven't submitted any applications for assistance yet."
-msgstr "तुम्ही अद्याप सहाय्यासाठी कोणताही अर्ज सादर केलेला नाही."
+msgstr "तुम्ही अद्याप मदतीसाठी कोणतेही अर्ज सबमिट केलेले नाहीत."
 
 #: templates/application_status.html:125 templates/dashboard.html:1434
-#: templates/dashboard.html:1503 templates/dashboard.html:1924
-#: templates/scheme_awareness.html:388 templates/scheme_awareness.html:396
-#: templates/scheme_detail.html:139 templates/scheme_detail.html:141
-#: templates/state_dashboard.html:189
-#, fuzzy
-#| msgid "Apply"
+#: templates/dashboard.html:1503 templates/scheme_awareness.html:386
+#: templates/scheme_awareness.html:394
 msgid "Apply Now"
-msgstr "अर्ज करा"
+msgstr "आता अर्ज करा"
 
 #: templates/application_status.html:136
 msgid "Application Timeline"
-msgstr ""
+msgstr "अर्ज टाइमलाइन"
 
 #: templates/application_status.html:146
-#, fuzzy
-#| msgid "Track your application status and receive benefits when approved."
 msgid "Your application has been received and is being reviewed."
-msgstr "तुमचा अर्ज प्राप्त झाला असून त्याची तपासणी सुरू आहे."
-
-#: templates/application_status.html:147
-msgid "Date will be shown here"
-msgstr "तारीख येथे दाखवली जाईल"
+msgstr "तुमचा अर्ज प्राप्त झाला आहे आणि त्याचे पुनरावलोकन केले जात आहे."
 
 #: templates/application_status.html:212
 msgid ""
 "Your application has been received and is being reviewed by our volunteers."
-msgstr ""
-
-#: templates/application_status.html:213
-msgid "Application date"
-msgstr "अर्जाची तारीख"
+msgstr "तुमचा अर्ज प्राप्त झाला आहे आणि आमच्या स्वयंसेवकांद्वारे त्याचे पुनरावलोकन केले जात आहे."
 
 #: templates/application_status.html:220
 msgid "Our team is reviewing your eligibility for various schemes."
-msgstr ""
+msgstr "आमची कार्यसंघ विविध योजनांसाठी तुमच्या पात्रतेचे पुनरावलोकन करत आहे."
 
-#: templates/application_status.html:221
-msgid "In progress"
-msgstr "प्रगतीपथावर"
-
+# ============================================================
+# APPLY.HTML (Application form)
+# ============================================================
 #: templates/apply.html:4
 msgid "Apply for Scheme Assistance - SmartAssist"
-msgstr "योजना सहाय्यासाठी अर्ज करा - SmartAssist"
+msgstr "योजना मदतीसाठी अर्ज करा - स्मार्टअसिस्ट"
 
-#: templates/apply.html:15
-#, python-format
-msgid "Request help applying for %(scheme_name)s"
-msgstr "%(scheme_name)s साठी अर्ज करण्याकरिता मदतीची विनंती करा"
-
-#: templates/apply.html:17
+#: templates/apply.html:14
 msgid "Apply for Government Scheme Assistance"
-msgstr "शासकीय योजनेसाठी सहाय्याचा अर्ज करा"
+msgstr "सरकारी योजना मदतीसाठी अर्ज करा"
 
-#: templates/apply.html:25
-#, python-format
-msgid ""
-"Fill in your details to request help with %(scheme_name)s. Our volunteers "
-"will review your request and contact you about the next steps."
-msgstr ""
-"%(scheme_name)s साठी मदत मागण्यासाठी तुमचा तपशील भरा. आमचे स्वयंसेवक तुमच्या विनंतीची "
-"तपासणी करून पुढील प्रक्रियेसाठी तुमच्याशी संपर्क साधतील."
-
-#: templates/apply.html:27
+#: templates/apply.html:20
 msgid ""
 "Fill in your basic details below. Our volunteers will review your "
 "information and apply for suitable government schemes on your behalf. You "
 "will be notified of the progress."
 msgstr ""
-"खाली तुमचा मूलभूत तपशील भरा. आमचे स्वयंसेवक माहिती तपासून तुमच्या वतीने योग्य शासकीय "
-"योजनांसाठी अर्ज करतील. अर्जाच्या प्रगतीची माहिती तुम्हाला दिली जाईल."
+"खाली तुमचे मूलभूत तपशील भरा. आमचे स्वयंसेवक तुमच्या माहितीचे पुनरावलोकन करतील आणि तुमच्या "
+"वतीने योग्य सरकारी योजनांसाठी अर्ज करतील. तुम्हाला प्रगतीबद्दल सूचित केले जाईल."
 
-#: templates/apply.html:31
-msgid "Selected scheme details"
-msgstr "निवडलेल्या योजनेचा तपशील"
+#: templates/apply.html:29
+msgid "Full Name"
+msgstr "पूर्ण नाव"
 
-#: templates/apply.html:33 templates/dashboard.html:1921
-msgid "Type"
-msgstr "प्रकार"
-
-#: templates/apply.html:33 templates/apply.html:34
-msgid "Not specified"
-msgstr "नमूद केलेले नाही"
-
-#: templates/apply.html:35 templates/scheme_detail.html:222
-#: templates/state_dashboard.html:184
-msgid "Eligibility"
-msgstr "पात्रता"
-
-#: templates/apply.html:35 templates/apply.html:36
-msgid "Check the official website for details."
-msgstr "तपशीलांसाठी अधिकृत संकेतस्थळ पहा."
-
-#: templates/apply.html:36
-msgid "Required documents"
-msgstr "आवश्यक कागदपत्रे"
-
-#: templates/apply.html:42
-msgid "Please correct the following errors:"
-msgstr "कृपया खालील चुका दुरुस्त करा:"
-
-#: templates/apply.html:60
+#: templates/apply.html:33
 msgid "Please provide your full name."
-msgstr "कृपया तुमचे पूर्ण नाव लिहा."
+msgstr "कृपया तुमचे पूर्ण नाव द्या."
 
-#: templates/apply.html:70
+#: templates/apply.html:39
+msgid "Age"
+msgstr "वय"
+
+#: templates/apply.html:43
 msgid "Please provide your age."
-msgstr "कृपया तुमचे वय लिहा."
+msgstr "कृपया तुमचे वय द्या."
 
-#: templates/apply.html:82
+#: templates/apply.html:51
+msgid "Gender"
+msgstr "लिंग"
+
+#: templates/apply.html:55
 msgid "Please select your gender."
 msgstr "कृपया तुमचे लिंग निवडा."
 
-#: templates/apply.html:92
+#: templates/apply.html:61
+msgid "Mobile Number"
+msgstr "मोबाईल नंबर"
+
+#: templates/apply.html:65
 msgid "Please provide your mobile number."
-msgstr "कृपया तुमचा मोबाइल क्रमांक लिहा."
+msgstr "कृपया तुमचा मोबाईल नंबर द्या."
 
-#: templates/apply.html:100
+#: templates/apply.html:73
+msgid "Email"
+msgstr "ईमेल"
+
+#: templates/apply.html:73
 msgid "Optional"
-msgstr "ऐच्छिक"
+msgstr "पर्यायी"
 
-#: templates/apply.html:111
+#: templates/apply.html:80
+msgid "Education Level"
+msgstr "शिक्षण पातळी"
+
+#: templates/apply.html:84
 msgid "Please select your education level."
-msgstr "कृपया तुमचे शिक्षण निवडा."
+msgstr "कृपया तुमची शिक्षण पातळी निवडा."
 
-#: templates/apply.html:123
+#: templates/apply.html:92
+msgid "Annual Income (₹)"
+msgstr "वार्षिक उत्पन्न (₹)"
+
+#: templates/apply.html:96
 msgid "Please provide your annual income."
-msgstr "कृपया तुमचे वार्षिक उत्पन्न लिहा."
+msgstr "कृपया तुमचे वार्षिक उत्पन्न द्या."
 
-#: templates/apply.html:133
+#: templates/apply.html:102
+msgid "Category"
+msgstr "श्रेणी"
+
+#: templates/apply.html:106
 msgid "Please select your category."
-msgstr "कृपया तुमचा प्रवर्ग निवडा."
+msgstr "कृपया तुमची श्रेणी निवडा."
 
-#: templates/apply.html:145
+#: templates/apply.html:114 templates/dashboard.html:1849
+#: templates/my_applications.html:50 templates/scheme_awareness.html:187
+msgid "State"
+msgstr "राज्य"
+
+#: templates/apply.html:118
 msgid "Please select your state."
 msgstr "कृपया तुमचे राज्य निवडा."
 
-#: templates/apply.html:155
+#: templates/apply.html:124 templates/my_applications.html:54
+msgid "District"
+msgstr "जिल्हा"
+
+#: templates/apply.html:128
 msgid "Please provide your district."
-msgstr "कृपया तुमचा जिल्हा लिहा."
+msgstr "कृपया तुमचा जिल्हा द्या."
 
-#: templates/apply.html:162
+#: templates/apply.html:135
 msgid "Pro Tip:"
-msgstr "उपयुक्त सूचना:"
+msgstr "प्रो टिप:"
 
-#: templates/apply.html:163
+#: templates/apply.html:136
 msgid ""
 "After receiving scheme benefits, please share information about these "
 "schemes with your family, friends, and community members to help others "
 "benefit as well."
 msgstr ""
-"योजनेचे लाभ मिळाल्यानंतर, तुमचे कुटुंबीय, मित्र आणि समुदायातील लोकांना या योजनांची माहिती "
-"द्या, जेणेकरून इतरांनाही लाभ मिळू शकेल."
+"योजनेचे लाभ मिळाल्यानंतर, कृपया इतरांनाही लाभ मिळण्यास मदत करण्यासाठी तुमच्या कुटुंबातील "
+"सदस्यांना, मित्रांना आणि समुदायातील सदस्यांना या योजनांबद्दल माहिती द्या."
 
-#: templates/apply.html:169
+#: templates/apply.html:142
 msgid "Submit Application for Assistance"
-msgstr "सहाय्यासाठीचा अर्ज सादर करा"
+msgstr "मदतीसाठी अर्ज सबमिट करा"
 
-#: templates/base.html:9
+# ============================================================
+# HOME.HTML (home.html)
+# ============================================================
+#: templates/base.html:8
 msgid "SmartAssist - Inclusive Government Scheme Platform"
-msgstr "स्मार्टअसिस्ट - समावेशक शासकीय योजना व्यासपीठ"
+msgstr "स्मार्टअसिस्ट - सर्वसमावेशक सरकारी योजना व्यासपीठ"
 
-#: templates/base.html:274
-msgid "Toggle navigation"
-msgstr "नेव्हिगेशन टॉगल करा"
-
-#: templates/base.html:281 templates/scheme_awareness.html:42
-#: templates/scheme_awareness.html:76 templates/scheme_detail.html:96
-#: templates/scheme_detail.html:114
+# ============================================================
+# NAVIGATION (base.html)
+# ============================================================
+#: templates/base.html:258 templates/scheme_awareness.html:39
+#: templates/scheme_awareness.html:92
 msgid "Home"
 msgstr "मुख्यपृष्ठ"
 
-#: templates/base.html:284
+#: templates/base.html:261
 msgid "India Map"
-msgstr "भारताचा नकाशा"
+msgstr "भारत नकाशा"
 
-#: templates/base.html:289 templates/dashboard.html:1906
-#: templates/home.html:496 templates/home.html:578
-#: templates/india_map_schemes.html:192 templates/scheme_awareness.html:43
-#: templates/scheme_awareness.html:77 templates/scheme_detail.html:97
-#: templates/scheme_detail.html:116
+#: templates/base.html:266 templates/home.html:496 templates/home.html:578
+#: templates/scheme_awareness.html:40 templates/scheme_awareness.html:93
 msgid "Schemes"
 msgstr "योजना"
 
-#: templates/base.html:292
+#: templates/base.html:269
 msgid "Apply"
 msgstr "अर्ज करा"
 
-#: templates/base.html:295
+#: templates/base.html:272
 msgid "My Status"
 msgstr "माझी स्थिती"
 
-#: templates/base.html:298 templates/base.html:363 templates/home.html:474
-#: templates/scheme_awareness.html:45 templates/scheme_awareness.html:79
-#: templates/scheme_awareness.html:473 templates/scheme_detail.html:99
+#: templates/base.html:275 templates/base.html:366 templates/home.html:474
+#: templates/scheme_awareness.html:42 templates/scheme_awareness.html:95
+#: templates/scheme_awareness.html:471
 msgid "Dashboard"
 msgstr "डॅशबोर्ड"
 
-#: templates/base.html:305
+#: templates/base.html:282
 msgid "Manage Schemes"
 msgstr "योजना व्यवस्थापन"
 
-#: templates/base.html:308
+#: templates/base.html:285
 msgid "Reports"
 msgstr "अहवाल"
 
-#: templates/base.html:323
+#: templates/base.html:326
 msgid "Profile"
 msgstr "प्रोफाइल"
 
-#: templates/base.html:325 templates/dashboard.html:1205
-#: templates/scheme_awareness.html:56 templates/scheme_awareness.html:81
-#: templates/scheme_detail.html:105 templates/scheme_detail.html:280
+#: templates/base.html:328 templates/dashboard.html:1205
+#: templates/scheme_awareness.html:53 templates/scheme_awareness.html:97
+#: templates/scheme_detail.html:241
 msgid "Logout"
-msgstr "बाहेर पडा"
+msgstr "लॉग आउट"
 
-#: templates/base.html:329 templates/home.html:472 templates/login.html:14
+#: templates/base.html:332 templates/home.html:472 templates/login.html:14
 #: templates/login.html:38 templates/password_reset_complete.html:20
-#: templates/scheme_awareness.html:59 templates/scheme_awareness.html:83
-#: templates/scheme_awareness.html:475 templates/scheme_detail.html:107
-#: templates/scheme_detail.html:282
+#: templates/scheme_awareness.html:56 templates/scheme_awareness.html:99
+#: templates/scheme_awareness.html:473 templates/scheme_detail.html:243
 msgid "Login"
-msgstr "लॉगिन"
+msgstr "लॉग इन"
 
-#: templates/base.html:330 templates/register.html:25
-#: templates/scheme_awareness.html:61 templates/scheme_awareness.html:84
-#: templates/scheme_awareness.html:475
+#: templates/base.html:333 templates/register.html:25
+#: templates/scheme_awareness.html:58 templates/scheme_awareness.html:100
+#: templates/scheme_awareness.html:473
 msgid "Register"
 msgstr "नोंदणी"
 
-#: templates/base.html:346
-msgid "AI-powered platform to discover government schemes easily"
-msgstr "शासकीय योजना सहज शोधण्यासाठी एआय-आधारित व्यासपीठ"
-
-#: templates/base.html:348
-msgid "Facebook"
-msgstr ""
-
 #: templates/base.html:349
-msgid "Twitter"
-msgstr ""
+msgid "AI-powered platform to discover government schemes easily"
+msgstr "सरकारी योजना सहजपणे शोधण्यासाठी AI-सक्षम व्यासपीठ"
 
-#: templates/base.html:350
-msgid "Instagram"
-msgstr ""
-
-#: templates/base.html:355
+#: templates/base.html:358
 msgid "Quick Links"
 msgstr "जलद दुवे"
 
-#: templates/base.html:357
+#: templates/base.html:360
 msgid "About Us"
 msgstr "आमच्याबद्दल"
 
-#: templates/base.html:358
+#: templates/base.html:361
 msgid "Contact Us"
-msgstr "आमच्याशी संपर्क"
+msgstr "आमच्याशी संपर्क साधा"
 
-#: templates/base.html:359
+#: templates/base.html:362
 msgid "Accessibility"
-msgstr "सुलभता"
+msgstr "प्रवेशयोग्यता"
 
-#: templates/base.html:360
+#: templates/base.html:363
 msgid "FAQ"
 msgstr "वारंवार विचारले जाणारे प्रश्न"
 
-#: templates/base.html:361
+#: templates/base.html:364
 msgid "Terms & Conditions"
-msgstr "अटी व शर्ती"
+msgstr "अटी आणि शर्ती"
 
-#: templates/base.html:362
+#: templates/base.html:365
 msgid "Disclaimer"
 msgstr "अस्वीकरण"
 
-#: templates/base.html:368
+#: templates/base.html:371
 msgid "Useful Links"
 msgstr "उपयुक्त दुवे"
 
-#: templates/base.html:372
+#: templates/base.html:375
 msgid "Digital India"
 msgstr "डिजिटल इंडिया"
 
-#: templates/base.html:385
+#: templates/base.html:388
 msgid "Version"
 msgstr "आवृत्ती"
 
+# ============================================================
+# DASHBOARD.HTML
+# ============================================================
 #: templates/dashboard.html:9
-#, fuzzy
-#| msgid "SmartAssist - AI-Powered Agriculture Scheme Platform"
 msgid "SmartAssist - Agricultural Schemes Dashboard"
-msgstr "स्मार्टअसिस्ट - एआय-आधारित कृषी योजना व्यासपीठ"
+msgstr "स्मार्टअसिस्ट - कृषी योजना डॅशबोर्ड"
 
 #: templates/dashboard.html:1193
-#, fuzzy
-#| msgid "SmartAssist - AI-Powered Agriculture Scheme Platform"
 msgid "SmartAssist Agriculture Dashboard"
-msgstr "स्मार्टअसिस्ट - एआय-आधारित कृषी योजना व्यासपीठ"
+msgstr "स्मार्टअसिस्ट कृषी डॅशबोर्ड"
 
 #: templates/dashboard.html:1198
 msgid "Welcome"
-msgstr ""
+msgstr "स्वागत आहे"
 
 #: templates/dashboard.html:1199
-#, fuzzy
-#| msgid "Government Scheme Platform"
 msgid "Government Schemes Portal"
-msgstr "शासकीय योजना व्यासपीठ"
+msgstr "सरकारी योजना पोर्टल"
 
 #: templates/dashboard.html:1201
 msgid "AI Recommendations"
-msgstr ""
+msgstr "AI शिफारसी"
 
 #: templates/dashboard.html:1202 templates/my_applications.html:12
 msgid "My Applications"
-msgstr ""
+msgstr "माझे अर्ज"
 
 #: templates/dashboard.html:1401
 msgid "Farmer Welfare"
-msgstr ""
+msgstr "शेतकरी कल्याण"
 
 #: templates/dashboard.html:1403
 msgid ""
 "Direct income support of ₹6,000 per year to all eligible farmer families in "
 "three equal instalments directly into their bank accounts."
 msgstr ""
+"सर्व पात्र शेतकरी कुटुंबांना दरवर्षी ₹6,000 चे थेट उत्पन्न समर्थन त्यांच्या बँक खात्यांमध्ये तीन "
+"समान हप्त्यांमध्ये."
+
+#: templates/dashboard.html:1424
+msgid "Education"
+msgstr "शिक्षण"
 
 #: templates/dashboard.html:1426
 msgid ""
 "Merit-based scholarship for OBC, EBC and DNT students in Classes 9–11. "
 "Empowering the future through quality education support."
 msgstr ""
+"इयत्ता 9-11 मधील OBC, EBC आणि DNT विद्यार्थ्यांसाठी गुणवत्ता-आधारित शिष्यवृत्ती. "
+"गुणवत्तापूर्ण शिक्षण समर्थनाद्वारे भविष्याचे सक्षमीकरण."
 
 #: templates/dashboard.html:1433 templates/dashboard.html:1456
 #: templates/dashboard.html:1479
 msgid "Know More"
-msgstr ""
+msgstr "अधिक जाणून घ्या"
 
 #: templates/dashboard.html:1447
 msgid "Insurance"
-msgstr ""
+msgstr "विमा"
 
 #: templates/dashboard.html:1449
 msgid ""
 "Accidental insurance cover of ₹2 lakh at just ₹20 per year. Financial "
 "protection for families against accidents and permanent disability."
 msgstr ""
+"फक्त ₹20 प्रति वर्ष दराने ₹2 लाखांचे अपघाती विमा संरक्षण. अपघात आणि कायमचे अपंगत्व "
+"यापासून कुटुंबांसाठी आर्थिक संरक्षण."
 
 #: templates/dashboard.html:1457 templates/dashboard.html:1480
 msgid "Check Eligibility"
-msgstr ""
+msgstr "पात्रता तपासा"
 
 #: templates/dashboard.html:1470
 msgid "Crop Security"
-msgstr ""
+msgstr "पीक सुरक्षा"
 
 #: templates/dashboard.html:1472
 msgid ""
 "Affordable crop insurance to protect farmers against yield losses due to "
 "natural calamities, pests, and diseases."
 msgstr ""
+"नैसर्गिक आपत्ती, कीड आणि रोगांमुळे होणाऱ्या पिकांच्या नुकसानीपासून शेतकऱ्यांचे संरक्षण "
+"करण्यासाठी परवडणारा पीक विमा."
 
 #: templates/dashboard.html:1493
 msgid "Inclusion"
-msgstr ""
+msgstr "समावेशन"
 
 #: templates/dashboard.html:1494
 msgid "Women Farmer"
-msgstr ""
+msgstr "महिला शेतकरी"
 
 #: templates/dashboard.html:1494
 msgid "Empowerment"
-msgstr ""
+msgstr "सक्षमीकरण"
 
 #: templates/dashboard.html:1495
 msgid ""
 "Access targeted support schemes for women in agriculture including credit, "
 "training, and market linkage assistance."
 msgstr ""
+"कृषी क्षेत्रातील महिलांसाठी कर्ज, प्रशिक्षण आणि बाजार जोडणी सहाय्य यासह लक्ष्यित समर्थन "
+"योजनांमध्ये प्रवेश मिळवा."
 
 #: templates/dashboard.html:1502 templates/home.html:470
 msgid "Explore Schemes"
-msgstr "योजना शोधा"
+msgstr "योजना अन्वेषण करा"
 
 #: templates/dashboard.html:1516
 msgid "Digital Support"
-msgstr ""
+msgstr "डिजिटल समर्थन"
 
 #: templates/dashboard.html:1517
 msgid "AI Guidance"
-msgstr ""
+msgstr "AI मार्गदर्शन"
 
 #: templates/dashboard.html:1518
 msgid ""
 "Use AI-powered recommendations to identify best-fit schemes and get step-by-"
 "step guidance for application and eligibility checks."
 msgstr ""
+"सर्वोत्तम जुळणाऱ्या योजना ओळखण्यासाठी AI-सक्षम शिफारसींचा वापर करा आणि अर्ज आणि "
+"पात्रता तपासणीसाठी टप्प्याटप्प्याने मार्गदर्शन मिळवा."
 
 #: templates/dashboard.html:1525
-#, fuzzy
-#| msgid "Terms & Conditions"
 msgid "Try AI Recommendations"
-msgstr "अटी व शर्ती"
+msgstr "AI शिफारसी वापरून पहा"
 
 #: templates/dashboard.html:1526
-#, fuzzy
-#| msgid "Explore Schemes"
 msgid "Browse All Schemes"
-msgstr "योजना शोधा"
+msgstr "सर्व योजना ब्राउझ करा"
 
 #: templates/dashboard.html:1539 templates/dashboard.html:1562
-#, fuzzy
-#| msgid "Manage Schemes"
 msgid "Central Scheme"
-msgstr "योजना व्यवस्थापन"
+msgstr "केंद्रीय योजना"
 
 #: templates/dashboard.html:1541
 msgid ""
 "Health assurance scheme providing annual coverage up to ₹5 lakh per family "
 "for secondary and tertiary hospitalization."
 msgstr ""
+"दुय्यम आणि तृतीयक रुग्णालयात दाखल करण्यासाठी प्रति कुटुंब ₹5 लाख पर्यंत वार्षिक कव्हरेज "
+"प्रदान करणारी आरोग्य हमी योजना."
 
 #: templates/dashboard.html:1548
-#, fuzzy
-#| msgid "Explore Schemes"
 msgid "Explore Central Scheme"
-msgstr "योजना शोधा"
+msgstr "केंद्रीय योजना अन्वेषण करा"
 
 #: templates/dashboard.html:1549
-#, fuzzy
-#| msgid "2. Get Assistance"
 msgid "Apply Assistance"
-msgstr "2. सहाय्य मिळवा"
+msgstr "मदतीसाठी अर्ज करा"
 
 #: templates/dashboard.html:1564
 msgid ""
 "Housing support for eligible rural families to build pucca houses with basic "
 "facilities under the flagship central scheme."
 msgstr ""
+"प्रमुख केंद्रीय योजनेअंतर्गत पात्र ग्रामीण कुटुंबांना मूलभूत सुविधांसह पक्की घरे बांधण्यासाठी "
+"गृहनिर्माण समर्थन."
 
 #: templates/dashboard.html:1571
-#, fuzzy
-#| msgid "View Schemes"
 msgid "View Central Schemes"
-msgstr "योजना पाहा"
+msgstr "केंद्रीय योजना पहा"
 
 #: templates/dashboard.html:1572
 msgid "AI Recommend"
-msgstr ""
+msgstr "AI शिफारस"
 
 #: templates/dashboard.html:1589
 msgid "Find Schemes For You"
-msgstr ""
+msgstr "तुमच्यासाठी योजना शोधा"
 
 #: templates/dashboard.html:1668
 msgid "Total Schemes Available"
 msgstr "एकूण उपलब्ध योजना"
 
-#: templates/dashboard.html:1676 templates/india_map_schemes.html:194
-#: templates/scheme_awareness.html:110 templates/state_dashboard.html:84
+#: templates/dashboard.html:1676 templates/scheme_awareness.html:126
 msgid "Central Schemes"
-msgstr "केंद्र शासनाच्या योजना"
+msgstr "केंद्रीय योजना"
 
-#: templates/dashboard.html:1684 templates/india_map_schemes.html:195
-#: templates/scheme_awareness.html:115 templates/state_dashboard.html:88
+#: templates/dashboard.html:1684 templates/scheme_awareness.html:131
 msgid "State Schemes"
-msgstr "राज्य शासनाच्या योजना"
+msgstr "राज्य योजना"
 
 #: templates/dashboard.html:1691
 msgid "Your Applications"
@@ -841,27 +722,19 @@ msgstr "तुमचे अर्ज"
 
 #: templates/dashboard.html:1710
 msgid "Scheme Overview"
-msgstr "योजनांचा आढावा"
+msgstr "योजनेचे विहंगावलोकन"
 
 #: templates/dashboard.html:1715
 msgid "Central Government Schemes"
-msgstr "केंद्र शासनाच्या योजना"
+msgstr "केंद्र सरकारच्या योजना"
 
 #: templates/dashboard.html:1721
 msgid "State Government Schemes"
-msgstr "राज्य शासनाच्या योजना"
-
-#: templates/dashboard.html:1726 templates/reports.html:83
-msgid "Approved Applications"
-msgstr "मंजूर अर्ज"
-
-#: templates/dashboard.html:1730
-msgid "Pending Applications"
-msgstr "प्रलंबित अर्ज"
+msgstr "राज्य सरकारच्या योजना"
 
 #: templates/dashboard.html:1740
 msgid "State-wise Agricultural Schemes Distribution"
-msgstr "राज्यानुसार कृषी योजनांचे वितरण"
+msgstr "राज्यनिहाय कृषी योजनांचे वितरण"
 
 #: templates/dashboard.html:1744
 msgid "Most Schemes First"
@@ -873,23 +746,17 @@ msgstr "सर्वात कमी योजना प्रथम"
 
 #: templates/dashboard.html:1746
 msgid "Name A-Z"
-msgstr "नाव (A–Z)"
+msgstr "नाव A-Z"
 
 #: templates/dashboard.html:1747
 msgid "Name Z-A"
-msgstr "नाव (Z–A)"
+msgstr "नाव Z-A"
 
 #: templates/dashboard.html:1749
 msgid "Search states..."
 msgstr "राज्ये शोधा..."
 
-#: templates/dashboard.html:1751 templates/dashboard.html:1928
-msgid "States/UTs Covered"
-msgstr "समाविष्ट राज्ये/केंद्रशासित प्रदेश"
-
-#: templates/dashboard.html:1759 templates/dashboard.html:1910
-#: templates/india_map_schemes.html:193 templates/scheme_awareness.html:105
-#: templates/state_dashboard.html:80
+#: templates/dashboard.html:1759 templates/scheme_awareness.html:121
 msgid "Total Schemes"
 msgstr "एकूण योजना"
 
@@ -903,36 +770,33 @@ msgstr "प्रति राज्य सरासरी"
 
 #: templates/dashboard.html:1771
 msgid "Coverage"
-msgstr "व्याप्ती"
+msgstr "कव्हरेज"
 
 #: templates/dashboard.html:1772
-#, python-format
+#, fuzzy, python-format
+#| msgid "100% All India"
 msgid "100%% All India"
-msgstr "100%% संपूर्ण भारतात"
+msgstr "100% संपूर्ण भारत"
 
 #: templates/dashboard.html:1784
 msgid "schemes"
 msgstr "योजना"
 
-#: templates/dashboard.html:1791 templates/dashboard.html:1912
-msgid "of maximum"
-msgstr "कमालपैकी"
-
 #: templates/dashboard.html:1795
 msgid "View Schemes"
-msgstr "योजना पाहा"
+msgstr "योजना पहा"
 
 #: templates/dashboard.html:1804
 msgid "Selected State Schemes"
 msgstr "निवडलेल्या राज्याच्या योजना"
 
-#: templates/dashboard.html:1808 templates/state_dashboard.html:121
+#: templates/dashboard.html:1808
 msgid "Loading schemes..."
 msgstr "योजना लोड होत आहेत..."
 
 #: templates/dashboard.html:1816 templates/reports.html:27
 msgid "Application Status Distribution"
-msgstr "अर्ज स्थितीचे वितरण"
+msgstr "अर्ज स्थिती वितरण"
 
 #: templates/dashboard.html:1821 templates/reports.html:40
 msgid "Applications by State"
@@ -940,7 +804,7 @@ msgstr "राज्यानुसार अर्ज"
 
 #: templates/dashboard.html:1826
 msgid "Schemes by Department"
-msgstr "विभागानुसार योजना"
+msgstr "विभागावर आधारित योजना"
 
 #: templates/dashboard.html:1831
 msgid "Schemes by State"
@@ -948,7 +812,7 @@ msgstr "राज्यानुसार योजना"
 
 #: templates/dashboard.html:1836
 msgid "State Scheme Trend (Line Chart)"
-msgstr "राज्यनिहाय योजनांचा कल (रेषा आलेख)"
+msgstr "राज्य योजना कल (लाइन चार्ट)"
 
 #: templates/dashboard.html:1847
 msgid "Applicant Name"
@@ -970,147 +834,59 @@ msgstr "अर्जाची तारीख"
 msgid ""
 "SmartAssist - Agricultural Schemes Portal | Government of India | All Rights "
 "Reserved"
-msgstr ""
+msgstr "स्मार्टअसिस्ट - कृषी योजना पोर्टल | भारत सरकार | सर्व हक्क राखीव"
 
 #: templates/dashboard.html:1887
 msgid "State Details"
-msgstr ""
+msgstr "राज्याचे तपशील"
 
 #: templates/dashboard.html:1894
 msgid "Close"
-msgstr ""
+msgstr "बंद करा"
 
-#: templates/dashboard.html:1895 templates/dashboard.html:1915
-#, fuzzy
-#| msgid "View Schemes"
+#: templates/dashboard.html:1895
 msgid "View All Schemes"
-msgstr "योजना पाहा"
-
-#: templates/dashboard.html:1903
-msgid "No Data"
-msgstr "माहिती उपलब्ध नाही"
-
-#: templates/dashboard.html:1904
-msgid "Unknown"
-msgstr "अज्ञात"
-
-#: templates/dashboard.html:1905
-msgid "Applications"
-msgstr "अर्ज"
-
-#: templates/dashboard.html:1907
-msgid "Schemes Available"
-msgstr "उपलब्ध योजना"
-
-#: templates/dashboard.html:1908
-msgid "Schemes per State"
-msgstr "राज्यानुसार योजना"
-
-#: templates/dashboard.html:1909
-msgid "Scheme Details"
-msgstr "योजनेचा तपशील"
-
-#: templates/dashboard.html:1911
-msgid "Coverage Level"
-msgstr "व्याप्तीची पातळी"
-
-#: templates/dashboard.html:1913
-#, fuzzy
-#| msgid "Government Scheme Platform"
-msgid "Government Level"
-msgstr "शासनाची पातळी"
-
-#: templates/dashboard.html:1914
-msgid "Central & State"
-msgstr "केंद्र व राज्य"
-
-#: templates/dashboard.html:1916
-msgid "Loading schemes for"
-msgstr "योजनांचे लोडिंग सुरू आहे:"
-
-#: templates/dashboard.html:1917
-msgid "No schemes are currently available for"
-msgstr "सध्या यासाठी कोणतीही योजना उपलब्ध नाही"
-
-#: templates/dashboard.html:1918
-msgid "No schemes found or invalid state."
-msgstr "कोणतीही योजना आढळली नाही किंवा राज्य अवैध आहे."
-
-#: templates/dashboard.html:1919
-msgid "No description available."
-msgstr "वर्णन उपलब्ध नाही."
-
-#: templates/dashboard.html:1920
-msgid "Department"
-msgstr "विभाग"
-
-#: templates/dashboard.html:1922 templates/scheme_awareness.html:376
-#: templates/scheme_detail.html:145
-msgid "Official Website"
-msgstr "अधिकृत संकेतस्थळ"
-
-#: templates/dashboard.html:1923 templates/scheme_awareness.html:379
-#: templates/scheme_detail.html:147 templates/state_dashboard.html:191
-msgid "Official website unavailable"
-msgstr "अधिकृत संकेतस्थळ उपलब्ध नाही"
-
-#: templates/dashboard.html:1925
-msgid "(not available)"
-msgstr "(उपलब्ध नाही)"
-
-#: templates/dashboard.html:1926
-msgid "Unable to load schemes. Please try again."
-msgstr "योजना लोड करता आल्या नाहीत. कृपया पुन्हा प्रयत्न करा."
-
-#: templates/dashboard.html:1927
-msgid "States/UTs Shown"
-msgstr "दर्शवलेली राज्ये/केंद्रशासित प्रदेश"
+msgstr "सर्व योजना पहा"
 
 #: templates/home.html:4
 msgid "SmartAssist - AI-Powered Agriculture Scheme Platform"
-msgstr "स्मार्टअसिस्ट - एआय-आधारित कृषी योजना व्यासपीठ"
-
-#: templates/home.html:453 templates/home.html:454 templates/home.html:455
-#: templates/home.html:456 templates/home.html:457 templates/home.html:458
-#: templates/home.html:459
-msgid "Farmer working in a field"
-msgstr "शेतात काम करणारा शेतकरी"
+msgstr "स्मार्टअसिस्ट - एआय-संचालित कृषी योजना व्यासपीठ"
 
 #: templates/home.html:467
 msgid "AI-Powered"
-msgstr "एआय-आधारित"
+msgstr "एआय-संचालित"
 
-#: templates/home.html:467 templates/scheme_detail.html:278
+#: templates/home.html:467
 msgid "Government Scheme Platform"
-msgstr "शासकीय योजना व्यासपीठ"
+msgstr "सरकारी योजना व्यासपीठ"
 
 #: templates/home.html:468
 msgid ""
 "SmartAssist bridges the digital divide by connecting citizens with "
 "government welfare schemes through dedicated volunteers and administrators."
 msgstr ""
-"स्मार्टअसिस्ट समर्पित स्वयंसेवक आणि प्रशासकांच्या मदतीने नागरिकांना शासकीय कल्याणकारी "
-"योजनांशी जोडून डिजिटल दरी कमी करते."
+"स्मार्टअसिस्ट समर्पित स्वयंसेवक आणि प्रशासकांद्वारे नागरिकांना सरकारी कल्याणकारी योजनांशी "
+"जोडून डिजिटल दरी कमी करते."
 
 #: templates/home.html:480
 msgid "Live Platform Highlights"
-msgstr "लाईव्ह प्लॅटफॉर्म वैशिष्ट्ये"
+msgstr "लाइव्ह प्लॅटफॉर्म हायलाइट्स"
 
 #: templates/home.html:482
 msgid "Find Central and State Schemes Quickly"
-msgstr "केंद्र व राज्य योजना पटकन शोधा"
+msgstr "केंद्र आणि राज्य योजना त्वरित शोधा"
 
 #: templates/home.html:483
 msgid "AI-based recommendations for better matching"
-msgstr "अधिक अचूक जुळणीसाठी एआय-आधारित शिफारसी"
+msgstr "अधिक चांगल्या जुळणीसाठी एआय-आधारित शिफारसी"
 
 #: templates/home.html:484
 msgid "Volunteer-assisted application support"
-msgstr "स्वयंसेवक-सहाय्यित अर्ज मदत"
+msgstr "स्वयंसेवक-सहाय्यित अर्ज समर्थन"
 
 #: templates/home.html:485
 msgid "Mobile-friendly and multilingual access"
-msgstr "मोबाईलसाठी अनुकूल व बहुभाषिक प्रवेश"
+msgstr "मोबाईल-अनुकूल आणि बहुभाषिक प्रवेश"
 
 #: templates/home.html:497
 msgid "States Covered"
@@ -1118,7 +894,7 @@ msgstr "समाविष्ट राज्ये"
 
 #: templates/home.html:498
 msgid "Smart Matching"
-msgstr "स्मार्ट जुळणी"
+msgstr "स्मार्ट जुळवणी"
 
 #: templates/home.html:499
 msgid "Online Access"
@@ -1130,7 +906,7 @@ msgstr "हे कसे कार्य करते"
 
 #: templates/home.html:506
 msgid "Simple steps to access government welfare schemes"
-msgstr "शासकीय कल्याणकारी योजनांपर्यंत पोहोचण्यासाठी सोप्या पायऱ्या"
+msgstr "सरकारी कल्याणकारी योजनांमध्ये प्रवेश करण्यासाठी सोप्या पायऱ्या"
 
 #: templates/home.html:512
 msgid "1. Register"
@@ -1138,30 +914,32 @@ msgstr "1. नोंदणी करा"
 
 #: templates/home.html:513
 msgid "Create your account with basic details. No complex forms required."
-msgstr "मूलभूत माहितीसह आपले खाते तयार करा. अवघड फॉर्मची गरज नाही."
+msgstr ""
+"मूलभूत तपशीलांसह तुमचे खाते तयार करा. कोणत्याही गुंतागुंतीच्या फॉर्मची आवश्यकता नाही."
 
 #: templates/home.html:518
 msgid "2. Get Assistance"
-msgstr "2. सहाय्य मिळवा"
+msgstr "2. मदत मिळवा"
 
 #: templates/home.html:519
 msgid ""
 "Our volunteers review your details and apply for suitable schemes on your "
 "behalf."
 msgstr ""
-"आमचे स्वयंसेवक आपली माहिती तपासतात आणि आपल्या वतीने योग्य योजनांसाठी अर्ज करतात."
+"आमचे स्वयंसेवक तुमच्या तपशीलांचे पुनरावलोकन करतात आणि तुमच्या वतीने योग्य योजनांसाठी अर्ज "
+"करतात."
 
 #: templates/home.html:524
 msgid "3. Track & Receive"
-msgstr "3. मागोवा घ्या आणि लाभ मिळवा"
+msgstr "3. मागोवा घ्या आणि प्राप्त करा"
 
 #: templates/home.html:525
 msgid "Track your application status and receive benefits when approved."
-msgstr "आपल्या अर्जाची स्थिती पाहा आणि मंजुरीनंतर लाभ मिळवा."
+msgstr "तुमच्या अर्जाच्या स्थितीचा मागोवा घ्या आणि मंजूर झाल्यावर लाभ मिळवा."
 
 #: templates/home.html:531
 msgid "SDG Impact"
-msgstr "एसडीजी प्रभाव"
+msgstr "SDG प्रभाव"
 
 #: templates/home.html:537
 msgid "No Poverty"
@@ -1189,13 +967,13 @@ msgid ""
 "literacy level or digital skills, can access government welfare schemes and "
 "contribute to community development."
 msgstr ""
-"साक्षरता पातळी किंवा डिजिटल कौशल्य काहीही असो, प्रत्येक नागरिकाला शासकीय कल्याणकारी "
-"योजनांचा लाभ घेता येईल आणि समुदाय विकासात योगदान देता येईल असे समावेशक डिजिटल "
-"परिसंस्था निर्माण करणे हे आमचे ध्येय आहे."
+"एक सर्वसमावेशक डिजिटल परिसंस्था निर्माण करणे जिथे प्रत्येक नागरिक, साक्षरता पातळी किंवा "
+"डिजिटल कौशल्ये काहीही असली तरी, सरकारी कल्याणकारी योजनांमध्ये प्रवेश करू शकतो आणि "
+"समुदाय विकासामध्ये योगदान देऊ शकतो."
 
 #: templates/home.html:570
 msgid "Citizens Helped"
-msgstr "मदत मिळालेले नागरिक"
+msgstr "मदत केलेले नागरिक"
 
 #: templates/home.html:574
 msgid "Volunteers"
@@ -1203,7 +981,7 @@ msgstr "स्वयंसेवक"
 
 #: templates/home.html:586
 msgid "Community Awareness Initiative"
-msgstr "समुदाय जनजागृती उपक्रम"
+msgstr "समुदाय जागरूकता उपक्रम"
 
 #: templates/home.html:587
 msgid ""
@@ -1211,192 +989,19 @@ msgid ""
 "neighbors about government schemes. Together, we can build an aware and "
 "empowered community!"
 msgstr ""
-"लाभ मिळाल्यानंतर कृपया आपल्या कुटुंबीयांना, मित्रांना आणि शेजाऱ्यांना शासकीय योजनांविषयी "
-"माहिती द्या. आपण सर्व मिळून जागरूक आणि सक्षम समाज उभारू शकतो!"
+"लाभ मिळाल्यानंतर, कृपया तुमच्या कुटुंबातील सदस्यांना, मित्रांना आणि शेजाऱ्यांना सरकारी "
+"योजनांबद्दल माहिती द्या. एकत्र मिळून, आपण एक जागरूक आणि सक्षम समुदाय तयार करू शकतो!"
 
-#: templates/home.html:608
-msgid "Slide"
-msgstr "स्लाइड"
-
-#: templates/india_map_schemes.html:9 templates/india_map_schemes.html:67
-msgid "Explore Government Schemes Across India"
-msgstr "संपूर्ण भारतातील शासकीय योजना शोधा"
-
-#: templates/india_map_schemes.html:64
-msgid "AI-powered public welfare analytics"
-msgstr "एआय-आधारित सार्वजनिक कल्याण विश्लेषण"
-
-#: templates/india_map_schemes.html:68
-msgid ""
-"Interactive AI-powered dashboard for discovering central and state welfare "
-"schemes with modern analytics and voice-enabled insights."
-msgstr "आधुनिक विश्लेषण व आवाजातील माहितीच्या मदतीने केंद्र व राज्यांच्या कल्याणकारी योजना शोधण्यासाठीचा परस्परसंवादी एआय डॅशबोर्ड."
-
-#: templates/india_map_schemes.html:73
-msgid "Platform status"
-msgstr "व्यासपीठाची स्थिती"
-
-#: templates/india_map_schemes.html:74
-msgid "Live India scheme explorer"
-msgstr "भारत योजनांचा थेट शोध"
-
-#: templates/india_map_schemes.html:77
-msgid "Audio support"
-msgstr "ध्वनी सहाय्य"
-
-#: templates/india_map_schemes.html:78
-msgid "4 languages"
-msgstr "४ भाषा"
-
-#: templates/india_map_schemes.html:79
-msgid ""
-"English, Hindi, Marathi, and Telugu voice assistance is available on each "
-"scheme card."
-msgstr "प्रत्येक योजना कार्डवर इंग्रजी, हिंदी, मराठी आणि तेलुगू भाषांमध्ये आवाज सहाय्य उपलब्ध आहे."
-
-#: templates/india_map_schemes.html:90
-msgid "National Map View"
-msgstr "राष्ट्रीय नकाशा दृश्य"
-
-#: templates/india_map_schemes.html:91
-msgid "India scheme terrain"
-msgstr "भारत योजनांचा नकाशा"
-
-#: templates/india_map_schemes.html:92
-msgid ""
-"Hover states to preview analytics, click to open detailed schemes with voice "
-"narration."
-msgstr "विश्लेषणाची झलक पाहण्यासाठी राज्यावर माउस न्या; आवाजासह योजनेचा तपशील उघडण्यासाठी क्लिक करा."
-
-#: templates/india_map_schemes.html:94
-msgid "Hover for insights • Click for details"
-msgstr "माहितीसाठी माउस न्या • तपशीलांसाठी क्लिक करा"
-
-#: templates/india_map_schemes.html:102
-msgid "Selected region"
-msgstr "निवडलेला प्रदेश"
-
-#: templates/india_map_schemes.html:104 templates/india_map_schemes.html:201
-msgid "Choose a state to view scheme intelligence and details."
-msgstr "योजनांची माहिती व तपशील पाहण्यासाठी राज्य निवडा."
-
-#: templates/india_map_schemes.html:108
-msgid "Total schemes"
-msgstr "एकूण योजना"
-
-#: templates/india_map_schemes.html:112
-msgid "Central schemes"
-msgstr "केंद्र शासनाच्या योजना"
-
-#: templates/india_map_schemes.html:116
-msgid "State schemes"
-msgstr "राज्य शासनाच्या योजना"
-
-#: templates/india_map_schemes.html:125
-msgid "Voice assistance"
-msgstr "आवाज सहाय्य"
-
-#: templates/india_map_schemes.html:126
-msgid "Speech-enabled discovery"
-msgstr "आवाज-सक्षम योजना शोध"
-
-#: templates/india_map_schemes.html:127
-msgid ""
-"Choose a state on the map to open its scheme list, then select a language "
-"and press Listen on the specific scheme."
-msgstr "राज्याच्या योजना उघडण्यासाठी नकाशावर राज्य निवडा, नंतर भाषा निवडून संबंधित योजनेवरील ऐका दाबा."
-
-#: templates/india_map_schemes.html:128 templates/scheme_detail.html:174
-#: templates/state_dashboard.html:133
-msgid ""
-"When requested, only the selected scheme’s public name, description, "
-"eligibility, and document details are sent to free online translation and "
-"speech services. No account or application data is sent. Verify eligibility "
-"with the official scheme source."
-msgstr "विनंती केल्यावर निवडलेल्या योजनेचे सार्वजनिक नाव, वर्णन, पात्रता आणि कागदपत्रांची माहितीच मोफत ऑनलाइन भाषांतर व वाणी सेवांकडे पाठवली जाते. खाते किंवा अर्जाची माहिती पाठवली जात नाही. पात्रतेची खात्री अधिकृत योजना-स्रोताकडून करा."
-
-#: templates/india_map_schemes.html:131
-msgid "Live scheme feed"
-msgstr "योजनांचा थेट फीड"
-
-#: templates/india_map_schemes.html:132
-msgid "Always up to date"
-msgstr "नेहमी अद्ययावत"
-
-#: templates/india_map_schemes.html:133
-msgid ""
-"Data is loaded from the backend for every state, showing central and local "
-"welfare schemes in one place."
-msgstr "प्रत्येक राज्याचा डेटा बॅकएंडवरून लोड केला जातो; त्यामुळे केंद्र व स्थानिक कल्याणकारी योजना एकाच ठिकाणी दिसतात."
-
-#: templates/india_map_schemes.html:142
-msgid "India analytics"
-msgstr "भारत विश्लेषण"
-
-#: templates/india_map_schemes.html:143
-msgid "Election-style state scorecard"
-msgstr "निवडणूक शैलीतील राज्य गुणपत्रक"
-
-#: templates/india_map_schemes.html:144
-msgid ""
-"Real-time scheme distribution, top performing states and category "
-"intelligence."
-msgstr "योजनांचे तत्काळ वितरण, आघाडीची राज्ये आणि श्रेणीविषयक माहिती."
-
-#: templates/india_map_schemes.html:148
-msgid "Active states"
-msgstr "सक्रिय राज्ये"
-
-#: templates/india_map_schemes.html:152
-msgid "Top state"
-msgstr "आघाडीचे राज्य"
-
-#: templates/india_map_schemes.html:156
-msgid "Top category"
-msgstr "प्रमुख श्रेणी"
-
-#: templates/india_map_schemes.html:163
-msgid "Scheme mix"
-msgstr "योजनांचे वितरण"
-
-#: templates/india_map_schemes.html:170
-msgid "Scheme balance"
-msgstr "केंद्र व राज्य योजनांचे प्रमाण"
-
-#: templates/india_map_schemes.html:176
-msgid "State leaders"
-msgstr "आघाडीची राज्ये"
-
-#: templates/india_map_schemes.html:196 templates/scheme_awareness.html:167
-#: templates/scheme_awareness.html:241 templates/scheme_awareness.html:315
-#: templates/scheme_detail.html:124
-msgid "Central"
-msgstr "केंद्र"
-
-#: templates/india_map_schemes.html:198 templates/state_dashboard.html:175
-msgid "Unavailable"
-msgstr "उपलब्ध नाही"
-
-#: templates/india_map_schemes.html:199
-msgid "State insight"
-msgstr "राज्याची माहिती"
-
-#: templates/india_map_schemes.html:200
-#, python-brace-format
-msgid "Viewing welfare schemes for {state}."
-msgstr "राज्य {state} साठीच्या कल्याणकारी योजना पाहत आहात."
-
-#: templates/india_map_schemes.html:202
-msgid "Unable to render the India map."
-msgstr "भारताचा नकाशा दाखवता आला नाही."
-
+# ============================================================
+# LOGIN.HTML
+# ============================================================
 #: templates/login.html:4
 msgid "Login - SmartAssist"
 msgstr "लॉगिन - स्मार्टअसिस्ट"
 
 #: templates/login.html:21
 msgid "Invalid username or password. Please check your credentials."
-msgstr "अवैध वापरकर्तानाव किंवा संकेतशब्द. कृपया आपली माहिती तपासा."
+msgstr "अवैध वापरकर्तानाव किंवा पासवर्ड. कृपया तुमचे क्रेडेन्शियल्स तपासा."
 
 #: templates/login.html:31
 msgid "Forgot password?"
@@ -1404,68 +1009,61 @@ msgstr "पासवर्ड विसरलात?"
 
 #: templates/login.html:45
 msgid "Don't have an account?"
-msgstr "आपले खाते नाही का?"
+msgstr "खाते नाही?"
 
 #: templates/login.html:46
 msgid "Register here"
 msgstr "येथे नोंदणी करा"
 
+# ============================================================
+# MY_APPLICATIONS.HTML
+# ============================================================
 #: templates/my_applications.html:4
-#, fuzzy
-#| msgid "Login - SmartAssist"
 msgid "My Applications - SmartAssist"
-msgstr "लॉगिन - स्मार्टअसिस्ट"
+msgstr "माझे अर्ज - स्मार्टअसिस्ट"
 
 #: templates/my_applications.html:15
 msgid "Track every scheme request you submitted through SmartAssist."
-msgstr "SmartAssist द्वारे सादर केलेल्या प्रत्येक योजना विनंतीची प्रगती पाहा."
+msgstr "तुम्ही स्मार्टअसिस्टद्वारे सबमिट केलेल्या प्रत्येक योजना विनंतीचा मागोवा घ्या."
 
 #: templates/my_applications.html:58
 msgid "Submitted On"
-msgstr "सादर केल्याची तारीख"
+msgstr "या तारखेला सबमिट केले"
 
 #: templates/my_applications.html:65
 msgid "Application Number"
-msgstr ""
+msgstr "अर्ज क्रमांक"
 
 #: templates/my_applications.html:77
 msgid ""
 "Start by browsing schemes and applying to one that matches your profile."
 msgstr ""
+"योजना ब्राउझ करून सुरुवात करा आणि तुमच्या प्रोफाईलशी जुळणाऱ्या एका योजनेसाठी अर्ज करा."
 
-#: templates/my_applications.html:79 templates/scheme_awareness.html:471
-#: templates/scheme_detail.html:278
-#, fuzzy
-#| msgid "View Schemes"
+#: templates/my_applications.html:79 templates/scheme_awareness.html:469
+#: templates/scheme_detail.html:239
 msgid "Browse Schemes"
-msgstr "योजना पाहा"
+msgstr "योजना ब्राउझ करा"
 
-#: templates/partials/language_selector.html:4
-msgid "Website language"
-msgstr "संकेतस्थळाची भाषा"
-
-#: templates/partials/language_selector.html:10
-msgid "Select website language"
-msgstr "संकेतस्थळाची भाषा निवडा"
-
+# ============================================================
+# PASSWORD RESET
+# ============================================================
 #: templates/password_reset.html:4
-#, fuzzy
-#| msgid "Register - SmartAssist"
 msgid "Reset Password - SmartAssist"
-msgstr "पासवर्ड रीसेट करा - SmartAssist"
+msgstr "पासवर्ड रीसेट करा - स्मार्टअसिस्ट"
 
 #: templates/password_reset.html:14
 msgid "Forgot your password?"
-msgstr "तुम्ही पासवर्ड विसरलात का?"
+msgstr "तुमचा पासवर्ड विसरलात?"
 
 #: templates/password_reset.html:19
 msgid ""
 "Enter your registered email ID and we will send you a password reset link."
-msgstr "तुमचा नोंदणीकृत ईमेल पत्ता टाका; आम्ही तुम्हाला पासवर्ड रीसेट दुवा पाठवू."
+msgstr "तुमचा नोंदणीकृत ईमेल आयडी प्रविष्ट करा आणि आम्ही तुम्हाला पासवर्ड रीसेट लिंक पाठवू."
 
 #: templates/password_reset.html:28
 msgid "Send Reset Link"
-msgstr "रीसेट दुवा पाठवा"
+msgstr "रीसेट लिंक पाठवा"
 
 #: templates/password_reset.html:34 templates/password_reset_confirm.html:37
 #: templates/password_reset_done.html:52
@@ -1473,24 +1071,24 @@ msgid "Back to Login"
 msgstr "लॉगिनवर परत जा"
 
 #: templates/password_reset_complete.html:4
-#, fuzzy
-#| msgid "Register - SmartAssist"
 msgid "Password Updated - SmartAssist"
-msgstr "पासवर्ड अद्ययावत झाला - SmartAssist"
+msgstr "पासवर्ड अद्यतनित झाला - स्मार्टअसिस्ट"
 
 #: templates/password_reset_complete.html:14
 msgid "Password Reset Complete"
-msgstr "पासवर्ड रीसेट पूर्ण झाले"
+msgstr "पासवर्ड रीसेट पूर्ण"
 
 #: templates/password_reset_complete.html:17
 msgid ""
 "Your password has been updated successfully. You can now log in with your "
 "new password."
-msgstr "तुमचा पासवर्ड यशस्वीरित्या अद्ययावत झाला आहे. आता तुम्ही नवीन पासवर्डने लॉग इन करू शकता."
+msgstr ""
+"तुमचा पासवर्ड यशस्वीरित्या अद्यतनित झाला आहे. तुम्ही आता तुमच्या नवीन पासवर्डसह लॉग इन "
+"करू शकता."
 
 #: templates/password_reset_confirm.html:4
 msgid "Set New Password - SmartAssist"
-msgstr "नवीन पासवर्ड सेट करा - SmartAssist"
+msgstr "नवीन पासवर्ड सेट करा - स्मार्टअसिस्ट"
 
 #: templates/password_reset_confirm.html:14
 msgid "Set New Password"
@@ -1498,7 +1096,7 @@ msgstr "नवीन पासवर्ड सेट करा"
 
 #: templates/password_reset_confirm.html:19
 msgid "Enter your new password twice."
-msgstr "तुमचा नवीन पासवर्ड दोनदा टाका."
+msgstr "तुमचा नवीन पासवर्ड दोनदा प्रविष्ट करा."
 
 #: templates/password_reset_confirm.html:26
 msgid "Change Password"
@@ -1509,79 +1107,39 @@ msgid ""
 "The password reset link is invalid or has already been used. Please request "
 "a new reset link."
 msgstr ""
-"पासवर्ड रीसेट दुवा अवैध आहे किंवा आधीच वापरला आहे. कृपया नवीन रीसेट दुव्याची विनंती करा."
+"पासवर्ड रीसेट लिंक अवैध आहे किंवा आधीच वापरली गेली आहे. कृपया नवीन रीसेट लिंकची विनंती "
+"करा."
 
 #: templates/password_reset_done.html:4
 msgid "Reset Link Sent - SmartAssist"
-msgstr "रीसेट दुवा पाठवला - SmartAssist"
+msgstr "रीसेट लिंक पाठवली - स्मार्टअसिस्ट"
 
 #: templates/password_reset_done.html:14
 msgid "Password Reset Link Ready"
-msgstr "पासवर्ड रीसेट दुवा तयार आहे"
+msgstr "पासवर्ड रीसेट लिंक तयार"
 
-#: templates/password_reset_done.html:20
-msgid "Reset link generated successfully!"
-msgstr "रीसेट दुवा यशस्वीरित्या तयार झाला!"
-
-#: templates/password_reset_done.html:21
-msgid "Click the button below to set your new password."
-msgstr "नवीन पासवर्ड सेट करण्यासाठी खालील बटणावर क्लिक करा."
-
-#: templates/password_reset_done.html:23
-msgid "Click here to Reset your Password"
-msgstr "तुमचा पासवर्ड रीसेट करण्यासाठी येथे क्लिक करा"
-
-#: templates/password_reset_done.html:30
-msgid "Email sent:"
-msgstr "ईमेल पाठवला:"
-
-#: templates/password_reset_done.html:30
-msgid "We also sent this reset link to your inbox."
-msgstr "हा रीसेट दुवा आम्ही तुमच्या ईमेल इनबॉक्समध्येही पाठवला आहे."
-
-#: templates/password_reset_done.html:35
-msgid "Email not sent:"
-msgstr "ईमेल पाठवला नाही:"
-
-#: templates/password_reset_done.html:35
-msgid "SMTP is not working right now, but the button above works."
-msgstr "SMTP सध्या कार्यरत नाही, पण वरील बटण काम करते."
-
-#: templates/password_reset_done.html:40
-msgid "Tip:"
-msgstr "सूचना:"
-
-#: templates/password_reset_done.html:40
-msgid "Configure Gmail SMTP to receive the reset link by email too."
-msgstr "ईमेलद्वारेही रीसेट दुवा मिळवण्यासाठी Gmail SMTP कॉन्फिगर करा."
-
-#: templates/password_reset_done.html:46
-msgid "Email not found."
-msgstr "ईमेल पत्ता सापडला नाही."
-
-#: templates/password_reset_done.html:47
-msgid ""
-"No account is registered with that email address. Please check and try again."
-msgstr "या ईमेल पत्त्यावर कोणतेही खाते नोंदणीकृत नाही. कृपया तपासून पुन्हा प्रयत्न करा."
-
+# ============================================================
+# PROFILE.HTML
+# ============================================================
 #: templates/profile.html:4
-#, fuzzy
-#| msgid "Login - SmartAssist"
 msgid "Profile - SmartAssist"
-msgstr "प्रोफाइल - SmartAssist"
+msgstr "प्रोफाइल - स्मार्टअसिस्ट"
 
 #: templates/profile.html:14 templates/profile.html:84
 msgid "Update Profile"
-msgstr "प्रोफाइल अद्ययावत करा"
+msgstr "प्रोफाइल अद्यतनित करा"
 
 #: templates/profile.html:21
 msgid "Account Information"
-msgstr "खात्याची माहिती"
+msgstr "खाते माहिती"
 
 #: templates/profile.html:39
 msgid "Personal Information"
 msgstr "वैयक्तिक माहिती"
 
+# ============================================================
+# REGISTER.HTML
+# ============================================================
 #: templates/register.html:4
 msgid "Register - SmartAssist"
 msgstr "नोंदणी - स्मार्टअसिस्ट"
@@ -1592,17 +1150,18 @@ msgstr "खाते तयार करा"
 
 #: templates/register.html:32
 msgid "Already have an account?"
-msgstr "आधीपासून खाते आहे का?"
+msgstr "आधीच खाते आहे?"
 
 #: templates/register.html:33
 msgid "Login here"
 msgstr "येथे लॉगिन करा"
 
+# ============================================================
+# REPORTS.HTML
+# ============================================================
 #: templates/reports.html:4
-#, fuzzy
-#| msgid "Register - SmartAssist"
 msgid "Reports & Analytics - SmartAssist"
-msgstr "नोंदणी - स्मार्टअसिस्ट"
+msgstr "अहवाल आणि विश्लेषण - स्मार्टअसिस्ट"
 
 #: templates/reports.html:12
 msgid "Reports & Analytics"
@@ -1610,671 +1169,1502 @@ msgstr "अहवाल आणि विश्लेषण"
 
 #: templates/reports.html:15
 msgid "Comprehensive insights into scheme applications and community impact"
-msgstr "योजना अर्ज आणि समुदायावरील परिणाम यांची सविस्तर माहिती"
+msgstr "योजना अर्ज आणि समुदाय प्रभावाविषयी सर्वसमावेशक अंतर्दृष्टी"
 
 #: templates/reports.html:57
 msgid "Scheme-wise Applications"
-msgstr ""
+msgstr "योजनानिहाय अर्ज"
 
 #: templates/reports.html:74
 msgid "Total Citizens"
-msgstr ""
+msgstr "एकूण नागरिक"
 
-#: templates/reports.html:92 templates/state_dashboard.html:118
-#, fuzzy
-#| msgid "Manage Schemes"
+#: templates/reports.html:83
+msgid "Approved Applications"
+msgstr "मंजूर अर्ज"
+
+#: templates/reports.html:92
 msgid "Available Schemes"
-msgstr "योजना व्यवस्थापन"
+msgstr "उपलब्ध योजना"
 
 #: templates/reports.html:101
-#, fuzzy
-#| msgid "Volunteers"
 msgid "Active Volunteers"
-msgstr "स्वयंसेवक"
+msgstr "सक्रिय स्वयंसेवक"
 
 #: templates/reports.html:114
-#, fuzzy
-#| msgid "Reports"
 msgid "Export Reports"
-msgstr "अहवाल"
+msgstr "अहवाल निर्यात करा"
 
 #: templates/reports.html:122
 msgid "Export PDF"
-msgstr ""
+msgstr "PDF निर्यात करा"
 
 #: templates/reports.html:128
 msgid "Export Excel"
-msgstr ""
+msgstr "Excel निर्यात करा"
 
 #: templates/reports.html:134
 msgid "Export CSV"
-msgstr ""
+msgstr "CSV निर्यात करा"
 
 #: templates/reports.html:140
-#, fuzzy
-#| msgid "Reports"
 msgid "Print Report"
-msgstr "अहवाल"
+msgstr "अहवाल मुद्रित करा"
 
 #: templates/reports.html:238
 msgid "PDF export functionality would be implemented here"
-msgstr ""
+msgstr "PDF निर्यात कार्यक्षमता येथे लागू केली जाईल"
 
 #: templates/reports.html:242
 msgid "Excel export functionality would be implemented here"
-msgstr ""
+msgstr "Excel निर्यात कार्यक्षमता येथे लागू केली जाईल"
 
 #: templates/reports.html:246
 msgid "CSV export functionality would be implemented here"
-msgstr ""
+msgstr "CSV निर्यात कार्यक्षमता येथे लागू केली जाईल"
 
-#: templates/scheme_awareness.html:9 templates/scheme_awareness.html:92
-#, fuzzy
-#| msgid "Government Scheme Platform"
+# ============================================================
+# SCHEME_AWARENESS.HTML (Schemes listing page)
+# ============================================================
+#: templates/scheme_awareness.html:9 templates/scheme_awareness.html:108
 msgid "Government Schemes"
-msgstr "शासकीय योजना व्यासपीठ"
+msgstr "सरकारी योजना"
 
-#: templates/scheme_awareness.html:22 templates/scheme_detail.html:76
-#: templates/state_dashboard.html:52
-msgid "Scheme details remain in English because translation is unavailable."
-msgstr "भाषांतर उपलब्ध नसल्यामुळे योजनेचा तपशील इंग्रजीत दाखवला आहे."
-
-#: templates/scheme_awareness.html:29 templates/scheme_detail.html:86
-msgid "Main navigation"
-msgstr "मुख्य नेव्हिगेशन"
-
-#: templates/scheme_awareness.html:32 templates/scheme_detail.html:87
-msgid "SmartAssist Home"
-msgstr "SmartAssist मुख्यपृष्ठ"
-
-#: templates/scheme_awareness.html:36 templates/scheme_detail.html:91
+#: templates/scheme_awareness.html:33
 msgid "Gov Scheme Portal"
-msgstr "शासकीय योजना पोर्टल"
+msgstr "सरकारी योजना पोर्टल"
 
-#: templates/scheme_awareness.html:44 templates/scheme_awareness.html:78
-#: templates/scheme_awareness.html:120 templates/scheme_detail.html:98
+#: templates/scheme_awareness.html:41 templates/scheme_awareness.html:94
+#: templates/scheme_awareness.html:136
 msgid "Categories"
-msgstr ""
+msgstr "श्रेण्या"
 
-#: templates/scheme_awareness.html:51
-msgid "Your profile"
-msgstr "तुमची प्रोफाइल"
-
-#: templates/scheme_awareness.html:68
-msgid "Toggle menu"
-msgstr "मेनू दाखवा किंवा लपवा"
-
-#: templates/scheme_awareness.html:75
-msgid "Mobile navigation"
-msgstr "मोबाइल नेव्हिगेशन"
-
-#: templates/scheme_awareness.html:90
-msgid "Portal label"
-msgstr "पोर्टलचे नाव"
-
-#: templates/scheme_awareness.html:90
+#: templates/scheme_awareness.html:106
 msgid "Government Scheme Portal"
-msgstr "शासकीय योजना पोर्टल"
+msgstr "सरकारी योजना पोर्टल"
 
-#: templates/scheme_awareness.html:92
-#, fuzzy
-#| msgid "Disclaimer"
+#: templates/scheme_awareness.html:108
 msgid "Discover"
-msgstr "अस्वीकरण"
+msgstr "शोधा"
 
-#: templates/scheme_awareness.html:93
+#: templates/scheme_awareness.html:109
 msgid "Built for Every Citizen"
-msgstr ""
+msgstr "प्रत्येक नागरिकासाठी तयार केलेले"
 
-#: templates/scheme_awareness.html:96
+#: templates/scheme_awareness.html:112
 #, python-format
 msgid ""
 "Explore %(total)s welfare schemes — browse freely, filter by state or "
 "category, and apply for the ones you qualify for."
 msgstr ""
+"%(total)s कल्याणकारी योजनांचे अन्वेषण करा — मोकळेपणाने ब्राउझ करा, राज्य किंवा "
+"श्रेणीनुसार फिल्टर करा आणि तुम्ही ज्यासाठी पात्र आहात त्यासाठी अर्ज करा."
 
-#: templates/scheme_awareness.html:101
-#, fuzzy
-#| msgid "Schemes"
-msgid "Scheme statistics"
-msgstr "योजना"
-
-#: templates/scheme_awareness.html:125 templates/scheme_awareness.html:140
-msgid "Search schemes"
-msgstr "योजना शोधा"
-
-#: templates/scheme_awareness.html:138
+#: templates/scheme_awareness.html:154
 msgid "Search schemes by name, category, keyword…"
-msgstr "नाव, श्रेणी किंवा कीवर्डनुसार योजना शोधा…"
+msgstr "नाव, श्रेणी, कीवर्डनुसार योजना शोधा…"
 
-#: templates/scheme_awareness.html:142
+#: templates/scheme_awareness.html:158
 msgid "Search"
 msgstr "शोधा"
 
-#: templates/scheme_awareness.html:150
-msgid "Instant filter (no page reload)…"
-msgstr ""
-
-#: templates/scheme_awareness.html:152
-msgid "Instant filter"
-msgstr ""
-
-#: templates/scheme_awareness.html:159
-msgid "Quick type filters"
-msgstr ""
-
-#: templates/scheme_awareness.html:160
-#, fuzzy
-#| msgid "Quick Links"
+#: templates/scheme_awareness.html:176
 msgid "Quick filter"
-msgstr "जलद दुवे"
+msgstr "जलद फिल्टर"
 
-#: templates/scheme_awareness.html:163
+#: templates/scheme_awareness.html:179
 msgid "All Schemes"
 msgstr "सर्व योजना"
 
-#: templates/scheme_awareness.html:179
-#, fuzzy
-#| msgid "View Schemes"
-msgid "Filter schemes"
-msgstr "योजना पाहा"
-
-#: templates/scheme_awareness.html:181
-msgid "Filters"
-msgstr ""
-
-#: templates/scheme_awareness.html:183 templates/scheme_awareness.html:407
-msgid "Clear all filters"
-msgstr ""
-
 #: templates/scheme_awareness.html:183
+msgid "Central"
+msgstr "केंद्रीय"
+
+#: templates/scheme_awareness.html:197
+msgid "Filters"
+msgstr "फिल्टर्स"
+
+#: templates/scheme_awareness.html:199
 msgid "Clear all"
-msgstr ""
+msgstr "सर्व साफ करा"
 
-#: templates/scheme_awareness.html:192
-msgid "State / UT"
-msgstr ""
-
-#: templates/scheme_awareness.html:196
-msgid "Search state…"
-msgstr ""
-
-#: templates/scheme_awareness.html:198
-msgid "Search state"
-msgstr ""
-
-#: templates/scheme_awareness.html:206 templates/scheme_awareness.html:250
-msgid "All States"
-msgstr "सर्व राज्ये"
-
-#: templates/scheme_awareness.html:226
-msgid "Filter by category"
-msgstr ""
-
-#: templates/scheme_awareness.html:227
-msgid "All Categories"
-msgstr ""
-
-#: templates/scheme_awareness.html:238
-#, fuzzy
-#| msgid "Schemes"
-msgid "Scheme Type"
-msgstr "योजना"
-
-#: templates/scheme_awareness.html:239
-msgid "Filter by scheme type"
-msgstr ""
-
-#: templates/scheme_awareness.html:240
-msgid "All Types"
-msgstr "सर्व प्रकार"
-
-#: templates/scheme_awareness.html:248
-msgid "Quick State Select"
-msgstr ""
-
-#: templates/scheme_awareness.html:249
-msgid "Filter by state"
-msgstr ""
-
-#: templates/scheme_awareness.html:257
-msgid "Apply Filters"
-msgstr ""
-
-#: templates/scheme_awareness.html:264
-#, fuzzy
-#| msgid "Schemes"
-msgid "Scheme results"
-msgstr "योजना"
-
-#: templates/scheme_awareness.html:269
+#: templates/scheme_awareness.html:285
 #, python-format
-msgid "Showing <strong>%(count)s</strong> scheme"
-msgid_plural "Showing <strong>%(count)s</strong> schemes"
-msgstr[0] ""
-msgstr[1] ""
+msgid "Showing <strong>%(count)s</strong> schemes"
+msgstr "<strong>%(count)s</strong> योजना दर्शवित आहे"
 
-#: templates/scheme_awareness.html:270
-msgid "for"
-msgstr "साठी"
-
-#: templates/scheme_awareness.html:271
-msgid "in"
-msgstr "मध्ये"
-
-#: templates/scheme_awareness.html:273
-msgid "only"
-msgstr "फक्त"
-
-#: templates/scheme_awareness.html:276
-msgid "Sort:"
-msgstr "क्रमवारी:"
-
-#: templates/scheme_awareness.html:277
-msgid "Sort schemes"
-msgstr "योजनांची क्रमवारी लावा"
-
-#: templates/scheme_awareness.html:278
-msgid "Relevance"
-msgstr "संबंधितता"
-
-#: templates/scheme_awareness.html:279
-msgid "Name A–Z"
-msgstr "नाव (A–Z)"
-
-#: templates/scheme_awareness.html:280
-msgid "Central First"
-msgstr "केंद्रीय योजना प्रथम"
-
-#: templates/scheme_awareness.html:281
-msgid "State First"
-msgstr "राज्य योजना प्रथम"
-
-#: templates/scheme_awareness.html:345
-#, python-format
-msgid "Age %(min_age)s–%(max_age)s"
-msgstr "वय %(min_age)s–%(max_age)s"
-
-#: templates/scheme_awareness.html:351
-msgid "yr"
-msgstr "वर्ष"
-
-#: templates/scheme_awareness.html:363
-#, python-format
-msgid "View details for %(name)s"
-msgstr "%(name)s चा तपशील पहा"
-
-#: templates/scheme_awareness.html:365
+#: templates/scheme_awareness.html:377
 msgid "View Details"
+msgstr "तपशील पहा"
+
+#: templates/scheme_awareness.html:403
+#, fuzzy
+#| msgid "schemes"
+msgid "No schemes found"
+msgstr "योजना"
+
+#: templates/scheme_awareness.html:404
+msgid "Try adjusting your filters or search query."
 msgstr ""
-
-#: templates/scheme_awareness.html:374
-#, python-format
-msgid "Official website for %(name)s"
-msgstr "%(name)s ची अधिकृत वेबसाइट"
-
-#: templates/scheme_awareness.html:386
-#, python-format
-msgid "Apply for %(name)s"
-msgstr "%(name)s साठी अर्ज करा"
-
-#: templates/scheme_awareness.html:394
-#, python-format
-msgid "Login to apply for %(name)s"
-msgstr "%(name)s साठी अर्ज करण्यासाठी लॉगिन करा"
 
 #: templates/scheme_awareness.html:405
-msgid "No schemes found"
-msgstr "कोणतीही योजना आढळली नाही"
+#, fuzzy
+#| msgid "Clear all"
+msgid "Clear all filters"
+msgstr "सर्व साफ करा"
 
-#: templates/scheme_awareness.html:406
-msgid "Try adjusting your filters or search query."
-msgstr "फिल्टर किंवा शोध शब्द बदलून पहा."
-
-#: templates/scheme_awareness.html:416
+#: templates/scheme_awareness.html:414
+#, fuzzy
+#| msgid "Loading schemes..."
 msgid "No matching schemes"
-msgstr "जुळणारी योजना आढळली नाही"
+msgstr "योजना लोड होत आहेत..."
 
-#: templates/scheme_awareness.html:417
+#: templates/scheme_awareness.html:415
 msgid "Try a different keyword or clear the instant filter."
-msgstr "दुसरा कीवर्ड वापरा किंवा झटपट फिल्टर काढा."
+msgstr ""
 
-#: templates/scheme_awareness.html:440 templates/scheme_detail.html:265
-msgid "Close dialog"
-msgstr "संवाद बंद करा"
-
-#: templates/scheme_awareness.html:443 templates/scheme_detail.html:267
+#: templates/scheme_awareness.html:441 templates/scheme_detail.html:228
+#, fuzzy
+#| msgid "Login here"
 msgid "Login Required"
-msgstr "लॉगिन आवश्यक आहे"
+msgstr "येथे लॉगिन करा"
 
-#: templates/scheme_awareness.html:445
+#: templates/scheme_awareness.html:443
 msgid "You need to be logged in to apply for this scheme."
-msgstr "या योजनेसाठी अर्ज करण्यासाठी लॉगिन करणे आवश्यक आहे."
+msgstr ""
 
-#: templates/scheme_awareness.html:446
+#: templates/scheme_awareness.html:444
 msgid "It's free and takes less than a minute!"
-msgstr "हे विनामूल्य आहे आणि एका मिनिटापेक्षा कमी वेळ लागतो!"
+msgstr ""
 
-#: templates/scheme_awareness.html:450 templates/scheme_detail.html:270
+#: templates/scheme_awareness.html:448 templates/scheme_detail.html:231
 msgid "Login to Apply"
-msgstr "अर्ज करण्यासाठी लॉगिन करा"
+msgstr ""
 
-#: templates/scheme_awareness.html:454
+#: templates/scheme_awareness.html:452
+#, fuzzy
+#| msgid "Register here"
 msgid "Register Free"
-msgstr "विनामूल्य नोंदणी करा"
+msgstr "येथे नोंदणी करा"
 
-#: templates/scheme_awareness.html:457 templates/scheme_detail.html:271
+#: templates/scheme_awareness.html:455 templates/scheme_detail.html:232
 msgid "Cancel"
-msgstr "रद्द करा"
+msgstr ""
 
-#: templates/scheme_awareness.html:461
+#: templates/scheme_awareness.html:459
 msgid "You can browse all schemes without logging in."
-msgstr "लॉगिन न करता सर्व योजना पाहू शकता."
+msgstr ""
 
-#: templates/scheme_awareness.html:462
-msgid "Login is only needed to"
-msgstr "लॉगिन फक्त यासाठी आवश्यक आहे:"
+#: templates/scheme_awareness.html:460
+msgid ""
+"Login is only needed to <strong style=\"color:var(--text-light)\">apply</"
+"strong>."
+msgstr ""
 
-#: templates/scheme_awareness.html:462
-msgid "apply"
-msgstr "अर्ज करणे"
+# ============================================================
+# HOME.HTML (home.html)
+# ============================================================
+#: templates/scheme_awareness.html:468 templates/scheme_detail.html:239
+#, fuzzy
+#| msgid "SmartAssist - Inclusive Government Scheme Platform"
+msgid "SmartAssist Government Scheme Platform"
+msgstr "स्मार्टअसिस्ट - सर्वसमावेशक सरकारी योजना व्यासपीठ"
 
-#: templates/scheme_awareness.html:479
+#: templates/scheme_awareness.html:477
 msgid "Free to browse. Login only required to apply."
-msgstr "योजना पाहणे विनामूल्य आहे. अर्ज करण्यासाठीच लॉगिन आवश्यक आहे."
-
-#: templates/scheme_detail.html:135
-msgid "Department Not Available"
-msgstr "विभागाची माहिती उपलब्ध नाही"
-
-#: templates/scheme_detail.html:152
-msgid "Listen in"
-msgstr "या भाषेत ऐका"
-
-#: templates/scheme_detail.html:153
-msgid "Select voice language"
-msgstr "आवाजाची भाषा निवडा"
-
-#: templates/scheme_detail.html:172
-msgid "Listen to this scheme"
-msgstr "ही योजना ऐका"
-
-#: templates/scheme_detail.html:173 templates/state_dashboard.html:192
-#, fuzzy
-#| msgid "Listen in"
-msgid "Listen"
-msgstr "या भाषेत ऐका"
-
-#: templates/scheme_detail.html:181
-msgid "Interactive India Map"
-msgstr "भारताचा परस्परसंवादी नकाशा"
-
-#: templates/scheme_detail.html:182
-#, fuzzy
-#| msgid "Explore Schemes"
-msgid "Explore schemes by state"
-msgstr "राज्यानुसार योजना पहा"
-
-#: templates/scheme_detail.html:183
-msgid "Click any state to see available schemes and state-specific offers."
-msgstr ""
-
-#: templates/scheme_detail.html:185
-msgid "Browse by location"
-msgstr ""
-
-#: templates/scheme_detail.html:191
-msgid "Click on a State"
-msgstr ""
-
-#: templates/scheme_detail.html:193
-msgid "Interactive map of India"
-msgstr ""
-
-#: templates/scheme_detail.html:200
-#, fuzzy
-#| msgid "Get Started"
-msgid "Select a State"
-msgstr "सुरुवात करा"
-
-#: templates/scheme_detail.html:201
-msgid "Click on a state on the map to view available schemes"
-msgstr ""
-
-#: templates/scheme_detail.html:207
-msgid "Click on a state to view schemes"
-msgstr ""
-
-#: templates/scheme_detail.html:215
-msgid "Description"
-msgstr "वर्णन"
-
-#: templates/scheme_detail.html:225
-msgid "Minimum Age"
-msgstr "किमान वय"
-
-#: templates/scheme_detail.html:226 templates/scheme_detail.html:230
-#: templates/scheme_detail.html:234
-msgid "N/A"
 msgstr ""
 
 #: templates/scheme_detail.html:229
-msgid "Maximum Age"
-msgstr "कमाल वय"
-
-#: templates/scheme_detail.html:233
-msgid "Income Limit"
-msgstr "उत्पन्न मर्यादा"
-
-#: templates/scheme_detail.html:234
-msgid "Rs"
-msgstr ""
-
-#: templates/scheme_detail.html:234
-msgid "year"
-msgstr ""
-
-#: templates/scheme_detail.html:238
-msgid "All"
-msgstr ""
-
-#: templates/scheme_detail.html:243
-msgid "Please check official guidelines for complete eligibility details."
-msgstr ""
-
-#: templates/scheme_detail.html:248
-msgid "Required Documents"
-msgstr "आवश्यक कागदपत्रे"
-
-#: templates/scheme_detail.html:250
-msgid ""
-"Required documents vary by applicant profile. Please verify on the official "
-"website before applying."
-msgstr ""
-
-#: templates/scheme_detail.html:268
 msgid ""
 "You can view all scheme details freely. Login is required only for applying."
 msgstr ""
 
-#: templates/state_dashboard.html:71
-msgid "AI-powered state analytics"
-msgstr "एआय-आधारित राज्य विश्लेषण"
+#: venv/lib/python3.12/site-packages/django/contrib/messages/apps.py:16
+msgid "Messages"
+msgstr ""
 
-#: templates/state_dashboard.html:74
+#: venv/lib/python3.12/site-packages/django/contrib/sitemaps/apps.py:8
+msgid "Site Maps"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/contrib/staticfiles/apps.py:9
+#, fuzzy
+#| msgid "State Details"
+msgid "Static Files"
+msgstr "राज्याचे तपशील"
+
+#: venv/lib/python3.12/site-packages/django/contrib/syndication/apps.py:7
+#, fuzzy
+#| msgid "Education"
+msgid "Syndication"
+msgstr "शिक्षण"
+
+#. Translators: String used to replace omitted page numbers in elided page
+#. range generated by paginators, e.g. [1, 2, '…', 5, 6, 7, '…', 9, 10].
+#: venv/lib/python3.12/site-packages/django/core/paginator.py:33
+msgid "…"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/core/paginator.py:35
+msgid "That page number is not an integer"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/core/paginator.py:36
+msgid "That page number is less than 1"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/core/paginator.py:37
+msgid "That page contains no results"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/core/validators.py:22
+msgid "Enter a valid value."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/core/validators.py:70
+msgid "Enter a valid domain name."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/core/validators.py:153
+#: venv/lib/python3.12/site-packages/django/forms/fields.py:773
+msgid "Enter a valid URL."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/core/validators.py:200
+msgid "Enter a valid integer."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/core/validators.py:211
+msgid "Enter a valid email address."
+msgstr ""
+
+#. Translators: "letters" means latin letters: a-z and A-Z.
+#: venv/lib/python3.12/site-packages/django/core/validators.py:289
+msgid ""
+"Enter a valid “slug” consisting of letters, numbers, underscores or hyphens."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/core/validators.py:297
+msgid ""
+"Enter a valid “slug” consisting of Unicode letters, numbers, underscores, or "
+"hyphens."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/core/validators.py:309
+#: venv/lib/python3.12/site-packages/django/core/validators.py:318
+#: venv/lib/python3.12/site-packages/django/core/validators.py:332
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:2220
 #, python-format
-msgid "%(state)s Analytics Dashboard"
-msgstr "%(state)s विश्लेषण डॅशबोर्ड"
+msgid "Enter a valid %(protocol)s address."
+msgstr ""
 
-#: templates/state_dashboard.html:75
+#: venv/lib/python3.12/site-packages/django/core/validators.py:311
+msgid "IPv4"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/core/validators.py:320
+#: venv/lib/python3.12/site-packages/django/utils/ipv6.py:43
+msgid "IPv6"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/core/validators.py:334
+msgid "IPv4 or IPv6"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/core/validators.py:375
+msgid "Enter only digits separated by commas."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/core/validators.py:381
+#, python-format
+msgid "Ensure this value is %(limit_value)s (it is %(show_value)s)."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/core/validators.py:416
+#, python-format
+msgid "Ensure this value is less than or equal to %(limit_value)s."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/core/validators.py:425
+#, python-format
+msgid "Ensure this value is greater than or equal to %(limit_value)s."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/core/validators.py:434
+#, python-format
+msgid "Ensure this value is a multiple of step size %(limit_value)s."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/core/validators.py:441
 #, python-format
 msgid ""
-"Comprehensive government scheme intelligence and beneficiary analytics for "
-"%(state)s."
-msgstr "%(state)s साठी शासकीय योजनांची सविस्तर माहिती आणि लाभार्थी विश्लेषण."
+"Ensure this value is a multiple of step size %(limit_value)s, starting from "
+"%(offset)s, e.g. %(offset)s, %(valid_value1)s, %(valid_value2)s, and so on."
+msgstr ""
 
-#: templates/state_dashboard.html:92
-msgid "Top Category"
-msgstr "प्रमुख श्रेणी"
-
-#: templates/state_dashboard.html:93
-msgid "Loading..."
-msgstr "लोड होत आहे..."
-
-#: templates/state_dashboard.html:101
-msgid "Scheme Category Distribution"
-msgstr "योजना श्रेणींचे वितरण"
-
-#: templates/state_dashboard.html:107
-msgid "Central vs State Schemes"
-msgstr "केंद्र व राज्य योजना"
-
-#: templates/state_dashboard.html:119
+#: venv/lib/python3.12/site-packages/django/core/validators.py:473
 #, python-format
-msgid "Government Programs in %(state)s"
-msgstr "%(state)s मधील शासकीय योजना"
+msgid ""
+"Ensure this value has at least %(limit_value)d character (it has "
+"%(show_value)d)."
+msgid_plural ""
+"Ensure this value has at least %(limit_value)d characters (it has "
+"%(show_value)d)."
+msgstr[0] ""
+msgstr[1] ""
 
-#: templates/state_dashboard.html:131
-msgid "Natural voice assistant"
-msgstr "नैसर्गिक आवाज सहाय्यक"
+#: venv/lib/python3.12/site-packages/django/core/validators.py:491
+#, python-format
+msgid ""
+"Ensure this value has at most %(limit_value)d character (it has "
+"%(show_value)d)."
+msgid_plural ""
+"Ensure this value has at most %(limit_value)d characters (it has "
+"%(show_value)d)."
+msgstr[0] ""
+msgstr[1] ""
 
-#: templates/state_dashboard.html:132
-msgid "Listen to scheme details"
-msgstr "योजनेचा तपशील ऐका"
+#: venv/lib/python3.12/site-packages/django/core/validators.py:514
+#: venv/lib/python3.12/site-packages/django/forms/fields.py:364
+#: venv/lib/python3.12/site-packages/django/forms/fields.py:403
+msgid "Enter a number."
+msgstr ""
 
-#: templates/state_dashboard.html:135 templates/state_dashboard.html:174
+#: venv/lib/python3.12/site-packages/django/core/validators.py:516
+#, python-format
+msgid "Ensure that there are no more than %(max)s digit in total."
+msgid_plural "Ensure that there are no more than %(max)s digits in total."
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.12/site-packages/django/core/validators.py:521
+#, python-format
+msgid "Ensure that there are no more than %(max)s decimal place."
+msgid_plural "Ensure that there are no more than %(max)s decimal places."
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.12/site-packages/django/core/validators.py:526
+#, python-format
+msgid ""
+"Ensure that there are no more than %(max)s digit before the decimal point."
+msgid_plural ""
+"Ensure that there are no more than %(max)s digits before the decimal point."
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.12/site-packages/django/core/validators.py:597
+#, python-format
+msgid ""
+"File extension “%(extension)s” is not allowed. Allowed extensions are: "
+"%(allowed_extensions)s."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/core/validators.py:659
+msgid "Null characters are not allowed."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/base.py:1633
+#: venv/lib/python3.12/site-packages/django/forms/models.py:932
+msgid "and"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/base.py:1635
+#, python-format
+msgid "%(model_name)s with this %(field_labels)s already exists."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/constraints.py:20
+#, python-format
+msgid "Constraint “%(name)s” is violated."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:134
+#, python-format
+msgid "Value %(value)r is not a valid choice."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:135
+msgid "This field cannot be null."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:136
+msgid "This field cannot be blank."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:137
+#, python-format
+msgid "%(model_name)s with this %(field_label)s already exists."
+msgstr ""
+
+#. Translators: The 'lookup_type' is one of 'date', 'year' or
+#. 'month'. Eg: "Title must be unique for pub_date year"
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:141
+#, python-format
+msgid ""
+"%(field_label)s must be unique for %(date_field_label)s %(lookup_type)s."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:180
+#, python-format
+msgid "Field of type: %(field_type)s"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1161
+#, python-format
+msgid "“%(value)s” value must be either True or False."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1162
+#, python-format
+msgid "“%(value)s” value must be either True, False, or None."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1164
+msgid "Boolean (Either True or False)"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1214
+#, python-format
+msgid "String (up to %(max_length)s)"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1216
+msgid "String (unlimited)"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1325
+msgid "Comma-separated integers"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1426
+#, python-format
+msgid ""
+"“%(value)s” value has an invalid date format. It must be in YYYY-MM-DD "
+"format."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1430
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1565
+#, python-format
+msgid ""
+"“%(value)s” value has the correct format (YYYY-MM-DD) but it is an invalid "
+"date."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1434
+msgid "Date (without time)"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1561
+#, python-format
+msgid ""
+"“%(value)s” value has an invalid format. It must be in YYYY-MM-DD HH:MM[:ss[."
+"uuuuuu]][TZ] format."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1569
+#, python-format
+msgid ""
+"“%(value)s” value has the correct format (YYYY-MM-DD HH:MM[:ss[.uuuuuu]]"
+"[TZ]) but it is an invalid date/time."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1574
+msgid "Date (with time)"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1701
+#, python-format
+msgid "“%(value)s” value must be a decimal number."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1703
+msgid "Decimal number"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1864
+#, python-format
+msgid ""
+"“%(value)s” value has an invalid format. It must be in [DD] [[HH:]MM:]ss[."
+"uuuuuu] format."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1868
+#, fuzzy
+#| msgid "Education"
+msgid "Duration"
+msgstr "शिक्षण"
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1920
+msgid "Email address"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1945
+msgid "File path"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:2023
+#, python-format
+msgid "“%(value)s” value must be a float."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:2025
+#, fuzzy
+#| msgid "Application Number"
+msgid "Floating point number"
+msgstr "अर्ज क्रमांक"
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:2065
+#, python-format
+msgid "“%(value)s” value must be an integer."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:2067
+msgid "Integer"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:2163
+msgid "Big (8 byte) integer"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:2180
+msgid "Small integer"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:2188
+msgid "IPv4 address"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:2219
+msgid "IP address"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:2310
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:2311
+#, python-format
+msgid "“%(value)s” value must be either None, True or False."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:2313
+msgid "Boolean (Either True, False or None)"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:2364
+msgid "Positive big integer"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:2379
+#, fuzzy
+#| msgid "Active Volunteers"
+msgid "Positive integer"
+msgstr "सक्रिय स्वयंसेवक"
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:2394
+msgid "Positive small integer"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:2410
+#, python-format
+msgid "Slug (up to %(max_length)s)"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:2446
+msgid "Text"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:2526
+#, python-format
+msgid ""
+"“%(value)s” value has an invalid format. It must be in HH:MM[:ss[.uuuuuu]] "
+"format."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:2530
+#, python-format
+msgid ""
+"“%(value)s” value has the correct format (HH:MM[:ss[.uuuuuu]]) but it is an "
+"invalid time."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:2534
+#, fuzzy
+#| msgid "Timeline"
+msgid "Time"
+msgstr "टाइमलाइन"
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:2642
+msgid "URL"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:2666
+msgid "Raw binary data"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:2731
+#, python-format
+msgid "“%(value)s” is not a valid UUID."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:2733
+msgid "Universally unique identifier"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/files.py:244
+msgid "File"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/files.py:420
+msgid "Image"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/json.py:24
+msgid "A JSON object"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/json.py:26
+msgid "Value must be valid JSON."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/related.py:978
+#, python-format
+msgid "%(model)s instance with %(field)s %(value)r is not a valid choice."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/related.py:981
+msgid "Foreign Key (type determined by related field)"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/related.py:1275
+msgid "One-to-one relationship"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/related.py:1332
+#, python-format
+msgid "%(from)s-%(to)s relationship"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/related.py:1334
+#, python-format
+msgid "%(from)s-%(to)s relationships"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/db/models/fields/related.py:1382
+msgid "Many-to-many relationship"
+msgstr ""
+
+#. Translators: If found as last label character, these punctuation
+#. characters will prevent the default label_suffix to be appended to
+#. the label
+#: venv/lib/python3.12/site-packages/django/forms/boundfield.py:188
+msgid ":?.!"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/fields.py:91
+msgid "This field is required."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/fields.py:313
+msgid "Enter a whole number."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/fields.py:484
+#: venv/lib/python3.12/site-packages/django/forms/fields.py:1241
+msgid "Enter a valid date."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/fields.py:507
+#: venv/lib/python3.12/site-packages/django/forms/fields.py:1242
+msgid "Enter a valid time."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/fields.py:534
+msgid "Enter a valid date/time."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/fields.py:568
+msgid "Enter a valid duration."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/fields.py:569
+#, python-brace-format
+msgid "The number of days must be between {min_days} and {max_days}."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/fields.py:638
+msgid "No file was submitted. Check the encoding type on the form."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/fields.py:639
+msgid "No file was submitted."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/fields.py:640
+msgid "The submitted file is empty."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/fields.py:642
+#, python-format
+msgid "Ensure this filename has at most %(max)d character (it has %(length)d)."
+msgid_plural ""
+"Ensure this filename has at most %(max)d characters (it has %(length)d)."
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.12/site-packages/django/forms/fields.py:647
+msgid "Please either submit a file or check the clear checkbox, not both."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/fields.py:715
+msgid ""
+"Upload a valid image. The file you uploaded was either not an image or a "
+"corrupted image."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/fields.py:862
+#: venv/lib/python3.12/site-packages/django/forms/fields.py:949
+#: venv/lib/python3.12/site-packages/django/forms/models.py:1621
+#, python-format
+msgid "Select a valid choice. %(value)s is not one of the available choices."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/fields.py:951
+#: venv/lib/python3.12/site-packages/django/forms/fields.py:1070
+#: venv/lib/python3.12/site-packages/django/forms/models.py:1619
+msgid "Enter a list of values."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/fields.py:1071
+msgid "Enter a complete value."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/fields.py:1313
+msgid "Enter a valid UUID."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/fields.py:1343
+msgid "Enter a valid JSON."
+msgstr ""
+
+#. Translators: This is the default suffix added to form field labels
+#: venv/lib/python3.12/site-packages/django/forms/forms.py:97
+msgid ":"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/forms.py:239
+#, python-format
+msgid "(Hidden field %(name)s) %(error)s"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/formsets.py:61
+#, python-format
+msgid ""
+"ManagementForm data is missing or has been tampered with. Missing fields: "
+"%(field_names)s. You may need to file a bug report if the issue persists."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/formsets.py:65
+#, python-format
+msgid "Please submit at most %(num)d form."
+msgid_plural "Please submit at most %(num)d forms."
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.12/site-packages/django/forms/formsets.py:70
+#, python-format
+msgid "Please submit at least %(num)d form."
+msgid_plural "Please submit at least %(num)d forms."
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.12/site-packages/django/forms/formsets.py:484
+#: venv/lib/python3.12/site-packages/django/forms/formsets.py:491
+msgid "Order"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/formsets.py:499
+msgid "Delete"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/models.py:925
+#, python-format
+msgid "Please correct the duplicate data for %(field)s."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/models.py:930
+#, python-format
+msgid "Please correct the duplicate data for %(field)s, which must be unique."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/models.py:937
+#, python-format
+msgid ""
+"Please correct the duplicate data for %(field_name)s which must be unique "
+"for the %(lookup)s in %(date_field)s."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/models.py:946
+msgid "Please correct the duplicate values below."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/models.py:1383
+msgid "The inline value did not match the parent instance."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/models.py:1474
+msgid "Select a valid choice. That choice is not one of the available choices."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/models.py:1623
+#, python-format
+msgid "“%(pk)s” is not a valid value."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/utils.py:229
+#, python-format
+msgid ""
+"%(datetime)s couldn’t be interpreted in time zone %(current_timezone)s; it "
+"may be ambiguous or it may not exist."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/widgets.py:528
+#, fuzzy
+#| msgid "Clear all"
+msgid "Clear"
+msgstr "सर्व साफ करा"
+
+#: venv/lib/python3.12/site-packages/django/forms/widgets.py:529
+msgid "Currently"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/widgets.py:530
+msgid "Change"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/widgets.py:869
+msgid "Unknown"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/widgets.py:870
+msgid "Yes"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/forms/widgets.py:871
+msgid "No"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/tasks/base.py:34
+msgctxt "Task"
 msgid "Ready"
-msgstr "तयार"
+msgstr ""
 
-#: templates/state_dashboard.html:146
-msgid "Play"
-msgstr "प्ले"
+#: venv/lib/python3.12/site-packages/django/tasks/base.py:36
+msgctxt "Task"
+msgid "Running"
+msgstr ""
 
-#: templates/state_dashboard.html:147
-msgid "Pause"
-msgstr "थांबवा"
+#: venv/lib/python3.12/site-packages/django/tasks/base.py:38
+msgctxt "Task"
+msgid "Failed"
+msgstr ""
 
-#: templates/state_dashboard.html:148
-msgid "Stop"
-msgstr "बंद करा"
+#: venv/lib/python3.12/site-packages/django/tasks/base.py:40
+msgctxt "Task"
+msgid "Successful"
+msgstr ""
 
-#: templates/state_dashboard.html:152
-msgid "Volume"
-msgstr "ध्वनी पातळी"
+#. Translators: Please do not add spaces around commas.
+#: venv/lib/python3.12/site-packages/django/template/defaultfilters.py:878
+msgid "yes,no,maybe"
+msgstr ""
 
-#: templates/state_dashboard.html:155
-msgid "Tap Listen on any card to play the natural Indian voice version."
-msgstr "नैसर्गिक भारतीय आवाजात ऐकण्यासाठी कोणत्याही कार्डवरील ऐका दाबा."
+#: venv/lib/python3.12/site-packages/django/template/defaultfilters.py:908
+#: venv/lib/python3.12/site-packages/django/template/defaultfilters.py:925
+#, python-format
+msgid "%(size)d byte"
+msgid_plural "%(size)d bytes"
+msgstr[0] ""
+msgstr[1] ""
 
-#: templates/state_dashboard.html:166
-msgid "English"
-msgstr "इंग्रजी"
+#: venv/lib/python3.12/site-packages/django/template/defaultfilters.py:927
+#, python-format
+msgid "%s KB"
+msgstr ""
 
-#: templates/state_dashboard.html:167
-msgid "Hindi"
-msgstr "हिंदी"
+#: venv/lib/python3.12/site-packages/django/template/defaultfilters.py:929
+#, python-format
+msgid "%s MB"
+msgstr ""
 
-#: templates/state_dashboard.html:168
-msgid "Marathi"
-msgstr "मराठी"
+#: venv/lib/python3.12/site-packages/django/template/defaultfilters.py:931
+#, python-format
+msgid "%s GB"
+msgstr ""
 
-#: templates/state_dashboard.html:169
-msgid "Telugu"
-msgstr "तेलुगू"
+#: venv/lib/python3.12/site-packages/django/template/defaultfilters.py:933
+#, python-format
+msgid "%s TB"
+msgstr ""
 
-#: templates/state_dashboard.html:171
-#, python-brace-format
-msgid "Preparing audio in {language}..."
-msgstr "{language} मध्ये ऑडिओ तयार होत आहे..."
+#: venv/lib/python3.12/site-packages/django/template/defaultfilters.py:935
+#, python-format
+msgid "%s PB"
+msgstr ""
 
-#: templates/state_dashboard.html:172
-msgid "Finished speaking"
-msgstr "बोलणे पूर्ण झाले"
+#: venv/lib/python3.12/site-packages/django/utils/dateformat.py:74
+msgid "p.m."
+msgstr ""
 
-#: templates/state_dashboard.html:173
-msgid "Speaking"
-msgstr "बोलले जात आहे"
+#: venv/lib/python3.12/site-packages/django/utils/dateformat.py:75
+msgid "a.m."
+msgstr ""
 
-#: templates/state_dashboard.html:176
-msgid "Translating"
-msgstr "भाषांतर सुरू आहे"
+#: venv/lib/python3.12/site-packages/django/utils/dateformat.py:80
+msgid "PM"
+msgstr ""
 
-#: templates/state_dashboard.html:177
-msgid "Paused. Press Play to resume."
-msgstr "थांबवले आहे. पुन्हा सुरू करण्यासाठी प्ले दाबा."
+#: venv/lib/python3.12/site-packages/django/utils/dateformat.py:81
+msgid "AM"
+msgstr ""
 
-#: templates/state_dashboard.html:178
-msgid "Audio is already playing."
-msgstr "ऑडिओ आधीपासून सुरू आहे."
+#: venv/lib/python3.12/site-packages/django/utils/dateformat.py:153
+msgid "midnight"
+msgstr ""
 
-#: templates/state_dashboard.html:179
-msgid "Resuming playback..."
-msgstr "प्लेबॅक पुन्हा सुरू होत आहे..."
+#: venv/lib/python3.12/site-packages/django/utils/dateformat.py:155
+msgid "noon"
+msgstr ""
 
-#: templates/state_dashboard.html:180
-msgid "Audio stopped."
-msgstr "ऑडिओ थांबवला."
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:7
+msgid "Monday"
+msgstr ""
 
-#: templates/state_dashboard.html:181
-msgid "Choose a language and press Listen on a scheme card to start audio."
-msgstr "ऑडिओ सुरू करण्यासाठी भाषा निवडा आणि योजनेच्या कार्डवरील ऐका दाबा."
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:8
+msgid "Tuesday"
+msgstr ""
 
-#: templates/state_dashboard.html:182
-msgid "No schemes available for this state."
-msgstr "या राज्यासाठी कोणतीही योजना उपलब्ध नाही."
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:9
+msgid "Wednesday"
+msgstr ""
 
-#: templates/state_dashboard.html:183
-msgid "Benefits"
-msgstr "लाभ"
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:10
+msgid "Thursday"
+msgstr ""
 
-#: templates/state_dashboard.html:185
-msgid "Documents"
-msgstr "कागदपत्रे"
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:11
+msgid "Friday"
+msgstr ""
 
-#: templates/state_dashboard.html:186
-msgid "Not specified."
-msgstr "नमूद केलेले नाही."
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:12
+msgid "Saturday"
+msgstr ""
 
-#: templates/state_dashboard.html:187
-msgid "No description provided."
-msgstr "वर्णन दिलेले नाही."
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:13
+msgid "Sunday"
+msgstr ""
 
-#: templates/state_dashboard.html:188
-msgid "General"
-msgstr "सामान्य"
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:16
+msgid "Mon"
+msgstr ""
 
-#: templates/state_dashboard.html:190
-msgid "Official Site"
-msgstr "अधिकृत संकेतस्थळ"
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:17
+msgid "Tue"
+msgstr ""
 
-#: templates/state_dashboard.html:193
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:18
+msgid "Wed"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:19
+msgid "Thu"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:20
+msgid "Fri"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:21
 #, fuzzy
-#| msgid "Website language"
-msgid "Listen Language"
-msgstr "ऐकण्याची भाषा"
+#| msgid "State"
+msgid "Sat"
+msgstr "राज्य"
 
-#: templates/state_dashboard.html:194
-#, python-brace-format
-msgid "{count} schemes available"
-msgstr "{count} योजना उपलब्ध"
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:22
+msgid "Sun"
+msgstr ""
 
-#: templates/state_dashboard.html:195
-msgid "Error loading data"
-msgstr "माहिती लोड करताना त्रुटी"
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:25
+msgid "January"
+msgstr ""
 
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:26
+msgid "February"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:27
 #, fuzzy
-#~| msgid "Contact"
-#~ msgid "oct"
-#~ msgstr "संपर्क"
+#| msgid "Search"
+msgid "March"
+msgstr "शोधा"
 
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:28
+msgid "April"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:29
+msgid "May"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:30
+msgid "June"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:31
+msgid "July"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:32
+msgid "August"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:33
+msgid "September"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:34
+msgid "October"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:35
+msgid "November"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:36
+msgid "December"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:39
+msgid "jan"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:40
+msgid "feb"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:41
+msgid "mar"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:42
+msgid "apr"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:43
+msgid "may"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:44
+msgid "jun"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:45
+msgid "jul"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:46
+msgid "aug"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:47
+msgid "sep"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:48
+#, fuzzy
+#| msgid "Contact"
+msgid "oct"
+msgstr "संपर्क"
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:49
+msgid "nov"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:50
+msgid "dec"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:53
+msgctxt "abbrev. month"
+msgid "Jan."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:54
+msgctxt "abbrev. month"
+msgid "Feb."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:55
+#, fuzzy
+#| msgid "Search"
+msgctxt "abbrev. month"
+msgid "March"
+msgstr "शोधा"
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:56
+msgctxt "abbrev. month"
+msgid "April"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:57
+msgctxt "abbrev. month"
+msgid "May"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:58
+msgctxt "abbrev. month"
+msgid "June"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:59
+msgctxt "abbrev. month"
+msgid "July"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:60
+msgctxt "abbrev. month"
+msgid "Aug."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:61
+msgctxt "abbrev. month"
+msgid "Sept."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:62
+msgctxt "abbrev. month"
+msgid "Oct."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:63
+msgctxt "abbrev. month"
+msgid "Nov."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:64
+msgctxt "abbrev. month"
+msgid "Dec."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:67
+msgctxt "alt. month"
+msgid "January"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:68
+msgctxt "alt. month"
+msgid "February"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:69
+#, fuzzy
+#| msgid "Search"
+msgctxt "alt. month"
+msgid "March"
+msgstr "शोधा"
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:70
+msgctxt "alt. month"
+msgid "April"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:71
+msgctxt "alt. month"
+msgid "May"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:72
+msgctxt "alt. month"
+msgid "June"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:73
+msgctxt "alt. month"
+msgid "July"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:74
+msgctxt "alt. month"
+msgid "August"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:75
+msgctxt "alt. month"
+msgid "September"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:76
+msgctxt "alt. month"
+msgid "October"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:77
+msgctxt "alt. month"
+msgid "November"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/dates.py:78
+msgctxt "alt. month"
+msgid "December"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/ipv6.py:20
+msgid "This is not a valid IPv6 address."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/text.py:76
+#, python-format
+msgctxt "String to return when truncating text"
+msgid "%(truncated_text)s…"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/text.py:282
+msgid "or"
+msgstr ""
+
+#. Translators: This string is used as a separator between list elements
+#: venv/lib/python3.12/site-packages/django/utils/text.py:301
+#: venv/lib/python3.12/site-packages/django/utils/timesince.py:135
+msgid ", "
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/utils/timesince.py:8
+#, python-format
+msgid "%(num)d year"
+msgid_plural "%(num)d years"
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.12/site-packages/django/utils/timesince.py:9
+#, python-format
+msgid "%(num)d month"
+msgid_plural "%(num)d months"
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.12/site-packages/django/utils/timesince.py:10
+#, python-format
+msgid "%(num)d week"
+msgid_plural "%(num)d weeks"
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.12/site-packages/django/utils/timesince.py:11
+#, python-format
+msgid "%(num)d day"
+msgid_plural "%(num)d days"
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.12/site-packages/django/utils/timesince.py:12
+#, python-format
+msgid "%(num)d hour"
+msgid_plural "%(num)d hours"
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.12/site-packages/django/utils/timesince.py:13
+#, python-format
+msgid "%(num)d minute"
+msgid_plural "%(num)d minutes"
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.12/site-packages/django/views/csrf.py:29
+msgid "Forbidden"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/views/csrf.py:30
+msgid "CSRF verification failed. Request aborted."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/views/csrf.py:34
+msgid ""
+"You are seeing this message because this HTTPS site requires a “Referer "
+"header” to be sent by your web browser, but none was sent. This header is "
+"required for security reasons, to ensure that your browser is not being "
+"hijacked by third parties."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/views/csrf.py:40
+msgid ""
+"If you have configured your browser to disable “Referer” headers, please re-"
+"enable them, at least for this site, or for HTTPS connections, or for “same-"
+"origin” requests."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/views/csrf.py:45
+msgid ""
+"If you are using the <meta name=\"referrer\" content=\"no-referrer\"> tag or "
+"including the “Referrer-Policy: no-referrer” header, please remove them. The "
+"CSRF protection requires the “Referer” header to do strict referer checking. "
+"If you’re concerned about privacy, use alternatives like <a "
+"rel=\"noreferrer\" …> for links to third-party sites."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/views/csrf.py:54
+msgid ""
+"You are seeing this message because this site requires a CSRF cookie when "
+"submitting forms. This cookie is required for security reasons, to ensure "
+"that your browser is not being hijacked by third parties."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/views/csrf.py:60
+msgid ""
+"If you have configured your browser to disable cookies, please re-enable "
+"them, at least for this site, or for “same-origin” requests."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/views/csrf.py:66
+msgid "More information is available with DEBUG=True."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/views/generic/dates.py:44
+msgid "No year specified"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/views/generic/dates.py:64
+#: venv/lib/python3.12/site-packages/django/views/generic/dates.py:115
+#: venv/lib/python3.12/site-packages/django/views/generic/dates.py:214
+msgid "Date out of range"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/views/generic/dates.py:94
+msgid "No month specified"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/views/generic/dates.py:147
+msgid "No day specified"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/views/generic/dates.py:194
+msgid "No week specified"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/views/generic/dates.py:353
+#: venv/lib/python3.12/site-packages/django/views/generic/dates.py:384
+#, python-format
+msgid "No %(verbose_name_plural)s available"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/views/generic/dates.py:680
+#, python-format
+msgid ""
+"Future %(verbose_name_plural)s not available because %(class_name)s."
+"allow_future is False."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/views/generic/dates.py:720
+#, python-format
+msgid "Invalid date string “%(datestr)s” given format “%(format)s”"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/views/generic/detail.py:56
+#, python-format
+msgid "No %(verbose_name)s found matching the query"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/views/generic/list.py:70
+msgid "Page is not “last”, nor can it be converted to an int."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/views/generic/list.py:77
+#, python-format
+msgid "Invalid page (%(page_number)s): %(message)s"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/views/generic/list.py:173
+#, python-format
+msgid "Empty list and “%(class_name)s.allow_empty” is False."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/views/static.py:49
+msgid "Directory indexes are not allowed here."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/views/static.py:51
+#, python-format
+msgid "“%(path)s” does not exist"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/views/static.py:68
+#: venv/lib/python3.12/site-packages/django/views/templates/directory_index.html:8
+#: venv/lib/python3.12/site-packages/django/views/templates/directory_index.html:11
+#, python-format
+msgid "Index of %(directory)s"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/views/templates/default_urlconf.html:7
+#: venv/lib/python3.12/site-packages/django/views/templates/default_urlconf.html:204
+msgid "The install worked successfully! Congratulations!"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/views/templates/default_urlconf.html:206
+#, python-format
+msgid ""
+"View <a href=\"https://docs.djangoproject.com/en/%(version)s/releases/\" "
+"target=\"_blank\" rel=\"noopener\">release notes</a> for Django %(version)s"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/views/templates/default_urlconf.html:208
+#, python-format
+msgid ""
+"You are seeing this page because <a href=\"https://docs.djangoproject.com/en/"
+"%(version)s/ref/settings/#debug\" target=\"_blank\" "
+"rel=\"noopener\">DEBUG=True</a> is in your settings file and you have not "
+"configured any URLs."
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/views/templates/default_urlconf.html:217
+msgid "Django Documentation"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/views/templates/default_urlconf.html:218
+msgid "Topics, references, &amp; how-to’s"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/views/templates/default_urlconf.html:226
+msgid "Tutorial: A Polling App"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/views/templates/default_urlconf.html:227
+msgid "Get started with Django"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/views/templates/default_urlconf.html:235
+msgid "Django Community"
+msgstr ""
+
+#: venv/lib/python3.12/site-packages/django/views/templates/default_urlconf.html:236
+msgid "Connect, get help, or contribute"
+msgstr ""
+
+# ============================================================
+# BASE.HTML — FOOTER
+# ============================================================
 #~ msgid "Inclusive Digital Platform for Government Welfare Schemes"
-#~ msgstr "शासकीय कल्याणकारी योजनांसाठी समावेशक डिजिटल व्यासपीठ"
+#~ msgstr "सरकारी कल्याणकारी योजनांसाठी सर्वसमावेशक डिजिटल व्यासपीठ"
 
 #~ msgid "Empowering citizens through digital inclusion"
-#~ msgstr "डिजिटल समावेशनाद्वारे नागरिकांना सक्षम बनवत आहोत"
+#~ msgstr "डिजिटल समावेशाद्वारे नागरिकांचे सक्षमीकरण"
 
 #~ msgid "All rights reserved."
 #~ msgstr "सर्व हक्क राखीव."
 
 #~ msgid "Empowering Citizens Through Digital Inclusion"
-#~ msgstr "डिजिटल समावेशनाद्वारे नागरिकांना सक्षम बनवत आहोत"
+#~ msgstr "डिजिटल समावेशाद्वारे नागरिकांचे सक्षमीकरण"
+
+#~ msgid "Get Started"
+#~ msgstr "सुरू करा"
+
+#~ msgid "Pending Applications"
+#~ msgstr "प्रलंबित अर्ज"

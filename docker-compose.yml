@@ -1,0 +1,11 @@
+version: "3.8"
+
+services:
+  web:
+    image: smartassist-kisan:test-localization
+    container_name: smartassist-compose-test
+    restart: unless-stopped
+    ports:
+      - "8003:8000"
+    volumes:
+      - /home/pavan-botla/smartassist-backups/smartassist-compose-test.sqlite3:/app/db.sqlite3

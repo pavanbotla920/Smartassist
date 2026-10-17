@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Reports & Analytics - SmartAssist" %}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-5 fw-bold text-center mb-4">
+                <i class="fas fa-chart-bar text-primary"></i>
+                {% trans "Reports & Analytics" %}
+            </h1>
+            <p class="lead text-center text-muted">
+                {% trans "Comprehensive insights into scheme applications and community impact" %}
+            </p>
+        </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="row mb-4">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie"></i>
+                        {% trans "Application Status Distribution" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="statusChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar"></i>
+                        {% trans "Applications by State" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="stateChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="row mb-4">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line"></i>
+                        {% trans "Scheme-wise Applications" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="schemeChart" width="800" height="400"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-users fa-2x mb-2"></i>
+                    <h4 id="totalCitizens">-</h4>
+                    <small>{% trans "Total Citizens" %}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-check-circle fa-2x mb-2"></i>
+                    <h4 id="totalApproved">-</h4>
+                    <small>{% trans "Approved Applications" %}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-file-alt fa-2x mb-2"></i>
+                    <h4 id="totalSchemes">-</h4>
+                    <small>{% trans "Available Schemes" %}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-users-cog fa-2x mb-2"></i>
+                    <h4 id="totalVolunteers">-</h4>
+                    <small>{% trans "Active Volunteers" %}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Options -->
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-download"></i>
+                        {% trans "Export Reports" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <button class="btn btn-primary w-100" onclick="exportPDF()">
+                                <i class="fas fa-file-pdf"></i>
+                                {% trans "Export PDF" %}
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-success w-100" onclick="exportExcel()">
+                                <i class="fas fa-file-excel"></i>
+                                {% trans "Export Excel" %}
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-info w-100" onclick="exportCSV()">
+                                <i class="fas fa-file-csv"></i>
+                                {% trans "Export CSV" %}
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-secondary w-100" onclick="printReport()">
+                                <i class="fas fa-print"></i>
+                                {% trans "Print Report" %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Status Chart
+const statusCtx = document.getElementById('statusChart').getContext('2d');
+const statusData = {{ status_data|safe }};
+
+new Chart(statusCtx, {
+    type: 'pie',
+    data: {
+        labels: statusData.map(item => item.status),
+        datasets: [{
+            data: statusData.map(item => item.count),
+            backgroundColor: [
+                '#17a2b8', // Submitted
+                '#ffc107', // Under Review
+                '#007bff', // Applied
+                '#28a745', // Approved
+                '#dc3545'  // Rejected
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom',
+            }
+        }
+    }
+});
+
+// State Chart
+const stateCtx = document.getElementById('stateChart').getContext('2d');
+const stateData = {{ state_data|safe }};
+
+new Chart(stateCtx, {
+    type: 'bar',
+    data: {
+        labels: stateData.map(item => item.state),
+        datasets: [{
+            label: 'Applications',
+            data: stateData.map(item => item.count),
+            backgroundColor: '#007bff'
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// Scheme Chart
+const schemeCtx = document.getElementById('schemeChart').getContext('2d');
+const schemeData = {{ scheme_data|safe }};
+
+new Chart(schemeCtx, {
+    type: 'horizontalBar',
+    data: {
+        labels: schemeData.map(item => item.scheme__scheme_name),
+        datasets: [{
+            label: 'Applications',
+            data: schemeData.map(item => item.count),
+            backgroundColor: '#28a745'
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            x: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// Update summary numbers (these would come from backend)
+document.getElementById('totalCitizens').textContent = '1,250';
+document.getElementById('totalApproved').textContent = '380';
+document.getElementById('totalSchemes').textContent = '25';
+document.getElementById('totalVolunteers').textContent = '15';
+
+function exportPDF() {
+    alert('{% trans "PDF export functionality would be implemented here" %}');
+}
+
+function exportExcel() {
+    alert('{% trans "Excel export functionality would be implemented here" %}');
+}
+
+function exportCSV() {
+    alert('{% trans "CSV export functionality would be implemented here" %}');
+}
+
+function printReport() {
+    window.print();
+}
+</script>
+{% endblock %}

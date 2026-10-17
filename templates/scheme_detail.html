@@ -1,0 +1,386 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{{ scheme.scheme_name }} - SmartAssist{% endblock %}
+
+{% block extra_head %}
+<style>
+    .sa-detail-bg {
+        background: var(--sa-paper);
+        min-height: calc(100vh - 72px);
+        padding: 3rem 1rem 5rem;
+    }
+    
+    .sa-detail-card {
+        max-width: 1000px;
+        margin: 0 auto;
+        background: var(--sa-card);
+        border: 1px solid var(--sa-line);
+        border-radius: var(--sa-radius-lg);
+        box-shadow: var(--sa-shadow-lg);
+        overflow: hidden;
+    }
+
+    /* THE GREEN DIVIDING BOX */
+    .sa-detail-header {
+        background: linear-gradient(115deg, var(--sa-ink) 0%, var(--sa-emerald) 100%);
+        padding: 3rem;
+        color: #fff;
+        position: relative;
+        border-bottom: 4px solid var(--sa-gold);
+    }
+    .sa-detail-header::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 100%;
+        background: radial-gradient(circle at 100% 0%, rgba(217,168,78,0.15) 0%, transparent 60%);
+        pointer-events: none;
+    }
+
+    .sa-breadcrumb {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 1.5rem;
+        font-weight: 600;
+        position: relative;
+        z-index: 2;
+    }
+    .sa-breadcrumb a {
+        color: var(--sa-gold-soft);
+        text-decoration: none;
+    }
+    .sa-breadcrumb a:hover {
+        text-decoration: underline;
+        color: #fff;
+    }
+
+    .sa-detail-badges {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.2rem;
+        flex-wrap: wrap;
+        position: relative;
+        z-index: 2;
+    }
+    .sa-badge {
+        display: inline-flex; padding: 0.3rem 0.8rem; border-radius: 99px;
+        font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    /* Make badges pop on the dark green background */
+    .sa-badge.central { background: rgba(31,169,113,0.2); color: #8affd0; border: 1px solid rgba(31,169,113,0.4); }
+    .sa-badge.state { background: rgba(217,168,78,0.2); color: var(--sa-gold-soft); border: 1px solid rgba(217,168,78,0.4); }
+    .sa-badge.location { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); }
+
+    .sa-detail-title {
+        font-family: var(--sa-font-display);
+        font-size: clamp(2rem, 4vw, 2.8rem);
+        font-weight: 700;
+        color: #fff;
+        line-height: 1.2;
+        margin-bottom: 0.5rem;
+        position: relative;
+        z-index: 2;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    .sa-detail-dept {
+        font-size: 1.05rem;
+        color: rgba(255, 255, 255, 0.85);
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .sa-action-row {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        position: relative;
+        z-index: 2;
+    }
+
+    /* Voice / Listen Section */
+    .sa-voice-box {
+        margin-top: 2rem;
+        padding: 1rem 1.2rem;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: var(--sa-radius-sm);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        position: relative;
+        z-index: 2;
+        backdrop-filter: blur(8px);
+    }
+    .sa-voice-box select {
+        padding: 0.5rem 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: var(--sa-radius-sm);
+        background: rgba(0, 0, 0, 0.3);
+        color: #fff;
+        font-weight: 600;
+        outline: none;
+    }
+    .sa-voice-box select option {
+        background: var(--sa-ink);
+        color: #fff;
+    }
+
+    /* Content Sections */
+    .sa-detail-body {
+        padding: 3rem;
+    }
+    .sa-content-section {
+        margin-bottom: 3rem;
+    }
+    .sa-content-section:last-child {
+        margin-bottom: 0;
+    }
+    .sa-section-title {
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: var(--sa-ink);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid rgba(11, 46, 36, 0.06);
+    }
+    .sa-section-title i {
+        color: var(--sa-gold);
+        font-size: 1.2rem;
+    }
+    
+    .sa-text-content {
+        font-size: 1.05rem;
+        color: var(--sa-text);
+        line-height: 1.8;
+        white-space: pre-line;
+    }
+
+    /* Eligibility Grid */
+    .sa-elig-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.2rem;
+        margin-bottom: 2rem;
+    }
+    .sa-elig-card {
+        background: var(--sa-paper);
+        border: 1px solid var(--sa-line);
+        border-radius: var(--sa-radius-sm);
+        padding: 1.5rem;
+        text-align: center;
+        transition: var(--sa-ease);
+    }
+    .sa-elig-card:hover {
+        border-color: var(--sa-gold);
+        box-shadow: 0 4px 12px rgba(11, 46, 36, 0.05);
+    }
+    .sa-elig-icon { font-size: 1.5rem; color: var(--sa-emerald); margin-bottom: 0.5rem; }
+    .sa-elig-label {
+        font-size: 0.75rem;
+        font-weight: 800;
+        color: var(--sa-gold-deep);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.4rem;
+    }
+    .sa-elig-value {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: var(--sa-ink);
+    }
+
+    @media (max-width: 768px) {
+        .sa-detail-header, .sa-detail-body { padding: 2rem 1.5rem; }
+        .sa-action-row { flex-direction: column; }
+        .sa-action-row .sa-btn, .sa-action-row button { width: 100%; justify-content: center; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sa-detail-bg">
+    <div class="sa-detail-card">
+        
+        <!-- The Green Header Box -->
+        <header class="sa-detail-header">
+            <div class="sa-breadcrumb">
+                <a href="{% url 'home' %}">{% trans "Home" %}</a> / 
+                <a href="{% url 'scheme_awareness' %}">{% trans "Schemes" %}</a> / 
+                <span>{{ scheme.scheme_name|truncatechars:40 }}</span>
+            </div>
+
+            <div class="sa-detail-badges">
+                <span class="sa-badge {% if scheme.scheme_type == 'Central' %}central{% else %}state{% endif %}">
+                    {% if scheme.scheme_type == 'Central' %}🏛️ {% trans "Central Scheme" %}{% else %}🗺️ {% trans "State Scheme" %}{% endif %}
+                </span>
+                {% if scheme.category %}
+                <span class="sa-badge location" style="background: rgba(217,168,78,0.3); color: #fff; border-color: var(--sa-gold);">
+                    🏷️ {{ scheme.category }}
+                </span>
+                {% endif %}
+                {% if scheme.state %}
+                <span class="sa-badge location">
+                    📍 {{ scheme.state }}
+                </span>
+                {% endif %}
+            </div>
+
+            <h1 class="sa-detail-title">{{ scheme.scheme_name }}</h1>
+            <div class="sa-detail-dept">
+                <i class="fas fa-building" style="color: var(--sa-gold);"></i> 
+                {{ scheme.department|default:_("Department Not Available") }}
+            </div>
+
+            <div class="sa-action-row">
+                {% if user.is_authenticated %}
+                <a href="{% url 'apply_assistance' %}?scheme_id={{ scheme.id }}" class="sa-btn sa-btn-gold">
+                    <i class="fas fa-check-circle"></i> {% trans "Apply Now" %}
+                </a>
+                {% else %}
+                <button class="sa-btn sa-btn-gold" data-apply-url="{% url 'apply_assistance' %}?scheme_id={{ scheme.id }}" onclick="handleApplyNow('{{ scheme.id }}', this.dataset.applyUrl)">
+                    <i class="fas fa-lock"></i> {% trans "Login to Apply" %}
+                </button>
+                {% endif %}
+
+                {% if scheme.official_website %}
+                <a href="{{ scheme.official_website }}" target="_blank" rel="noopener noreferrer" class="sa-btn sa-btn-ghost-light">
+                    <i class="fas fa-globe"></i> {% trans "Official Website" %}
+                </a>
+                {% endif %}
+            </div>
+
+            <!-- Voice Assistant -->
+            <div class="sa-voice-box">
+                <div style="font-weight: 700; color: #fff; font-size: 0.95rem;">
+                    <i class="fas fa-volume-up" style="color: var(--sa-gold);"></i> {% trans "Listen" %}:
+                </div>
+                <select id="scheme-listen-language" data-voice-language style="flex-grow: 1; max-width: 150px;">
+                    <option value="en" {% if LANGUAGE_CODE == 'en' %}selected{% endif %}>English</option>
+                    <option value="hi" {% if LANGUAGE_CODE == 'hi' %}selected{% endif %}>हिन्दी</option>
+                    <option value="mr" {% if LANGUAGE_CODE == 'mr' %}selected{% endif %}>मराठी</option>
+                    <option value="te" {% if LANGUAGE_CODE == 'te' %}selected{% endif %}>తెలుగు</option>
+                </select>
+                <button id="scheme-listen-button" type="button" class="sa-btn sa-btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;"
+                    data-scheme-id="{{ scheme.id }}"
+                    data-scheme-name="{{ scheme.scheme_name }}"
+                    data-scheme-description="{{ scheme.description|default:'' }}"
+                    data-scheme-eligibility="{{ scheme.eligibility|default:'' }}"
+                    data-scheme-documents="{{ scheme.documents_required|default:'' }}">
+                    <i class="fas fa-play"></i> {% trans "Play Audio" %}
+                </button>
+                <span id="scheme-listen-status" style="font-size: 0.85rem; color: var(--sa-gold-soft); width: 100%;"></span>
+            </div>
+        </header>
+
+        <!-- Body Content -->
+        <div class="sa-detail-body">
+            
+            <!-- Description -->
+            <section class="sa-content-section">
+                <h2 class="sa-section-title">
+                    <i class="fas fa-file-alt"></i> {% trans "About this Scheme" %}
+                </h2>
+                <div class="sa-text-content">
+                    {{ scheme.description|default:"No detailed description available for this scheme." }}
+                </div>
+            </section>
+
+            <!-- Eligibility -->
+            <section class="sa-content-section">
+                <h2 class="sa-section-title">
+                    <i class="fas fa-check-circle"></i> {% trans "Eligibility Criteria" %}
+                </h2>
+                
+                <div class="sa-elig-grid">
+                    <div class="sa-elig-card">
+                        <div class="sa-elig-icon"><i class="fas fa-user-clock"></i></div>
+                        <div class="sa-elig-label">{% trans "Age Limit" %}</div>
+                        <div class="sa-elig-value">
+                            {% if scheme.min_age or scheme.max_age %}
+                                {{ scheme.min_age|default:"Any" }} - {{ scheme.max_age|default:"Any" }} yrs
+                            {% else %}
+                                {% trans "No Limit" %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="sa-elig-card">
+                        <div class="sa-elig-icon"><i class="fas fa-wallet"></i></div>
+                        <div class="sa-elig-label">{% trans "Income Limit" %}</div>
+                        <div class="sa-elig-value">
+                            {% if scheme.income_limit %}
+                                ≤ ₹{{ scheme.income_limit|floatformat:0 }}
+                            {% else %}
+                                {% trans "No Limit" %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="sa-elig-card">
+                        <div class="sa-elig-icon"><i class="fas fa-users"></i></div>
+                        <div class="sa-elig-label">{% trans "Category" %}</div>
+                        <div class="sa-elig-value">{{ scheme.category|default:"All" }}</div>
+                    </div>
+                </div>
+
+                <div class="sa-text-content" style="background: var(--sa-paper); padding: 1.5rem; border-radius: var(--sa-radius-sm); border: 1px solid var(--sa-line);">
+                    {{ scheme.eligibility|default:"Please check official guidelines for complete eligibility details." }}
+                </div>
+            </section>
+
+            <!-- Documents -->
+            <section class="sa-content-section">
+                <h2 class="sa-section-title">
+                    <i class="fas fa-folder-open"></i> {% trans "Required Documents" %}
+                </h2>
+                <div class="sa-text-content" style="background: var(--sa-paper); padding: 1.5rem; border-radius: var(--sa-radius-sm); border: 1px solid var(--sa-line);">
+                    {{ scheme.documents_required|default:"Required documents vary by applicant profile. Please verify on the official website before applying." }}
+                </div>
+            </section>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/scheme-voice.js' %}"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const listenButton = document.getElementById('scheme-listen-button');
+        const listenLanguage = document.getElementById('scheme-listen-language');
+        const listenStatus = document.getElementById('scheme-listen-status');
+
+        if (listenButton && listenLanguage && window.SmartAssistVoice) {
+            listenButton.addEventListener('click', async function() {
+                listenButton.disabled = true;
+                listenButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+                listenStatus.textContent = "Preparing audio...";
+                
+                try {
+                    const played = await window.SmartAssistVoice.speak(
+                        listenButton.dataset.schemeId,
+                        listenLanguage.value,
+                        { onStatus: (message) => { listenStatus.textContent = message; } }
+                    );
+                    if (played) listenStatus.textContent = 'Playback finished.';
+                } catch (error) {
+                    listenStatus.textContent = error.message;
+                } finally {
+                    listenButton.disabled = false;
+                    listenButton.innerHTML = '<i class="fas fa-play"></i> Play Audio';
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

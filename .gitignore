@@ -1,0 +1,46 @@
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# Django
+*.log
+db.sqlite3*
+/media/
+
+# Keep static assets in version control
+/static/*
+!/static/
+!/static/css/
+!/static/css/**
+!/static/js/
+!/static/js/**
+!/static/images/
+!/static/images/**
+!/static/india_states.geojson
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env.local

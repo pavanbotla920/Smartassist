@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+{% load static i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:,">
+    <title>{% block title %}{% trans "SmartAssist - Inclusive Government Scheme Platform" %}{% endblock %}</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- ADD THIS LINE HERE -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <!-- Custom CSS -->
+    <style>
+        .navbar-brand {
+            font-weight: bold;
+            color: #2c3e50 !important;
+        }
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 100px 0;
+        }
+        .card-scheme {
+            transition: transform 0.3s;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .card-scheme:hover {
+            transform: translateY(-5px);
+        }
+        .status-badge {
+            font-size: 0.8em;
+            padding: 0.375rem 0.75rem;
+        }
+        .status-submitted { background-color: #17a2b8; }
+        .status-under-review { background-color: #ffc107; color: #000; }
+        .status-applied { background-color: #007bff; }
+        .status-approved { background-color: #28a745; }
+        .status-rejected { background-color: #dc3545; }
+        .language-switcher {
+            margin-left: auto;
+        }
+        .site-language-selector {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            margin-left: auto;
+        }
+        .site-language-label {
+            margin: 0;
+            color: #334155;
+            font-size: 0.82rem;
+            white-space: nowrap;
+        }
+        .site-language-select {
+            max-width: 175px;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.5rem;
+            background: #fff;
+            color: #0f172a;
+            padding: 0.45rem 0.6rem;
+        }
+        @media (max-width: 900px) {
+            .site-language-selector { margin: 0.75rem 0; }
+        }
+        .awareness-message {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+                /* --- FOOTER GREEN OVERRIDE --- */
+        .gov-footer {
+            position: relative;
+            margin-top: 56px;
+            color: rgba(255, 255, 255, 0.8);
+            background: var(--sa-ink); /* Deep Green */
+            border-top: 1px solid rgba(217, 168, 78, 0.35); /* Gold border */
+            overflow: hidden;
+        }
+
+        .gov-footer::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--sa-gold), var(--sa-leaf), var(--sa-gold));
+            background-size: 300% 100%;
+            animation: footerNeon 6s linear infinite;
+        }
+
+        @keyframes footerNeon {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 300% 50%; }
+        }
+
+        .gov-footer .footer-grid {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 44px 18px 28px;
+            display: grid;
+            grid-template-columns: 1.3fr 1fr 1fr;
+            gap: 24px;
+        }
+
+        .footer-title {
+            font-size: 1.55rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            color: #ffffff;
+            letter-spacing: 0.3px;
+        }
+
+        .footer-subtext {
+            color: rgba(255, 255, 255, 0.7);
+            max-width: 360px;
+            line-height: 1.65;
+            font-size: 0.96rem;
+            margin-bottom: 16px;
+        }
+
+        .footer-socials {
+            display: flex;
+            gap: 10px;
+        }
+
+        .footer-socials a {
+            width: 38px; height: 38px;
+            border-radius: 10px;
+            display: inline-flex; align-items: center; justify-content: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            transition: all 0.25s ease;
+            text-decoration: none;
+        }
+
+        .footer-socials a:hover {
+            color: var(--sa-ink);
+            background: var(--sa-gold);
+            border-color: var(--sa-gold);
+            transform: translateY(-2px) scale(1.04);
+        }
+
+        .footer-col h6 {
+            color: var(--sa-gold); /* Gold headers */
+            font-weight: 700;
+            margin-bottom: 14px;
+            font-size: 1.02rem;
+        }
+
+        .quick-links {
+            list-style: none; margin: 0; padding: 0; display: grid; gap: 10px;
+        }
+
+        .quick-links a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            display: inline-flex; align-items: center; gap: 8px;
+            transition: all 0.25s ease;
+            width: fit-content;
+        }
+
+        .quick-links a::before {
+            content: '>';
+            color: var(--sa-gold);
+            font-weight: 700;
+            transition: transform 0.25s ease;
+        }
+
+        .quick-links a:hover {
+            color: #ffffff;
+            transform: translateX(6px);
+        }
+
+        .useful-grid { display: grid; gap: 10px; }
+
+        .gov-link-card {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px; border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff; text-decoration: none;
+            transition: transform 0.25s ease, border-color 0.25s ease;
+        }
+
+        .gov-link-card:hover {
+            transform: translateY(-3px) scale(1.01);
+            border-color: var(--sa-gold);
+            color: var(--sa-gold);
+        }
+
+        .gov-footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.9rem;
+            padding: 12px 10px 16px;
+        }
+
+        @media (max-width: 900px) {
+            .gov-footer .footer-grid { grid-template-columns: 1fr; gap: 20px; padding-top: 36px; }
+        }
+    </style>
+
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+        <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
+        <div class="container">
+            <!-- White SmartAssist Brand -->
+            <a class="navbar-brand" href="{% url 'home' %}" style="color: #ffffff !important; font-weight: 800; font-size: 1.4rem;">
+                <i class="fas fa-hand-holding-heart" style="color: var(--sa-gold) !important;"></i>
+                SmartAssist
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-label="{% trans 'Toggle navigation' %}">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    
+                    <!-- 1. Home (Always Visible) -->
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/' or request.path == '/en/' %}active-tab{% endif %}" href="{% url 'home' %}">{% trans "Home" %}</a>
+                    </li>
+                    
+                    <!-- 2. Schemes (Always Visible) -->
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'schemes' in request.path %}active-tab{% endif %}" href="{% url 'scheme_awareness' %}">{% trans "Schemes" %}</a>
+                    </li>
+
+                    <!-- LOGGED IN TABS ONLY -->
+                    {% if user.is_authenticated %}
+                        {% if user.userprofile.role == 'citizen' %}
+                            
+                            <!-- My Status -->
+                            <li class="nav-item">
+                                <a class="nav-link {% if 'status' in request.path or 'my-applications' in request.path %}active-tab{% endif %}" href="{% url 'application_status' %}">{% trans "My Status" %}</a>
+                            </li>
+                            
+                            <!-- Dashboard -->
+                            <li class="nav-item">
+                                <a class="nav-link {% if 'dashboard' in request.path %}active-tab{% endif %}" href="{% url 'dashboard' %}">{% trans "Dashboard" %}</a>
+                            </li>
+
+                        {% elif user.userprofile.role == 'volunteer' or user.userprofile.role == 'admin' %}
+                            
+                            <!-- Admin Dashboard -->
+                            <li class="nav-item">
+                                <a class="nav-link {% if 'admin-dashboard' in request.path %}active-tab{% endif %}" href="{% url 'admin_dashboard' %}">{% trans "Admin Dashboard" %}</a>
+                            </li>
+                            
+                            <!-- Manage Schemes -->
+                            <li class="nav-item">
+                                <a class="nav-link {% if 'manage-schemes' in request.path %}active-tab{% endif %}" href="{% url 'manage_schemes' %}">{% trans "Manage Schemes" %}</a>
+                            </li>
+                            
+                            <!-- Reports -->
+                            <li class="nav-item">
+                                <a class="nav-link {% if 'reports' in request.path %}active-tab{% endif %}" href="{% url 'reports' %}">{% trans "Reports" %}</a>
+                            </li>
+                        {% endif %}
+                    {% endif %}
+                </ul>
+
+                <!-- Language Switcher -->
+                {% include "partials/language_selector.html" %}
+
+                {% if user.is_authenticated %}
+                    <div class="dropdown ms-3">
+                        <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user"></i> {{ user.username }}
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item {% if 'profile' in request.path %}active-tab{% endif %}" href="{% url 'profile' %}"><i class="fas fa-user-circle" style="width: 20px;"></i> {% trans "Profile" %}</a></li>
+                            <li><a class="dropdown-item {% if 'settings' in request.path %}active-tab{% endif %}" href="{% url 'settings' %}"><i class="fas fa-cog" style="width: 20px;"></i> {% trans "Settings" %}</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt" style="width: 20px;"></i> {% trans "Logout" %}</a></li>
+                        </ul>
+                    </div>
+                {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-primary ms-3">{% trans "Login" %}</a>
+                    <a href="{% url 'register' %}" class="btn btn-outline-primary ms-2">{% trans "Register" %}</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    
+
+    <!-- Footer -->
+    <footer class="gov-footer" id="govFooter">
+        <div class="footer-grid">
+            <div class="footer-col">
+                <h5 class="footer-title">SmartAssist</h5>
+                <p class="footer-subtext">{% trans "AI-powered platform to discover government schemes easily" %}</p>
+                <div class="footer-socials">
+                    <a href="#" aria-label="{% trans 'Facebook' %}"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" aria-label="{% trans 'Twitter' %}"><i class="fab fa-twitter"></i></a>
+                    <a href="#" aria-label="{% trans 'Instagram' %}"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+
+            <div class="footer-col">
+                <h6>{% trans "Quick Links" %}</h6>
+                <ul class="quick-links">
+                    <li><a href="#">{% trans "About Us" %}</a></li>
+                    <li><a href="#">{% trans "Contact Us" %}</a></li>
+                    <li><a href="#">{% trans "Accessibility" %}</a></li>
+                    <li><a href="#">{% trans "FAQ" %}</a></li>
+                    <li><a href="#">{% trans "Terms & Conditions" %}</a></li>
+                    <li><a href="#">{% trans "Disclaimer" %}</a></li>
+                    <li><a href="{% url 'dashboard' %}">{% trans "Dashboard" %}</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <h6>{% trans "Useful Links" %}</h6>
+                <div class="useful-grid">
+                    <a href="https://www.digitalindia.gov.in/" target="_blank" rel="noopener" class="gov-link-card">
+                        <span class="gov-link-icon" aria-hidden="true">🇮🇳</span>
+                        <span>{% trans "Digital India" %}</span>
+                    </a>
+                    <a href="https://www.india.gov.in/" target="_blank" rel="noopener" class="gov-link-card">
+                        <span class="gov-link-icon" aria-hidden="true">🏛️</span>
+                        <span>india.gov.in</span>
+                    </a>
+                    <a href="https://www.data.gov.in/" target="_blank" rel="noopener" class="gov-link-card">
+                        <span class="gov-link-icon" aria-hidden="true">📊</span>
+                        <span>data.gov.in</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="gov-footer-bottom">&copy; 2026 SmartAssist | {% trans "Version" %} v1.0</div>
+    </footer>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js for analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{% static 'js/language-switcher.js' %}"></script>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', function() {
+            const footer = document.getElementById('govFooter');
+            if (!footer) return;
+            requestAnimationFrame(function() {
+                footer.classList.add('visible');
+            });
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

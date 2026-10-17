@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Admin Dashboard - SmartAssist" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-5 fw-bold">
+                <i class="fas fa-tachometer-alt text-primary"></i>
+                {% trans "Admin Dashboard" %}
+            </h1>
+            <p class="text-muted">{% trans "Manage citizen applications and government schemes" %}</p>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-clipboard-list fa-2x mb-2"></i>
+                    <h4>{{ total_applications }}</h4>
+                    <small>{% trans "Total Applications" %}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock fa-2x mb-2"></i>
+                    <h4>{{ pending }}</h4>
+                    <small>{% trans "Pending" %}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-search fa-2x mb-2"></i>
+                    <h4>{{ under_review }}</h4>
+                    <small>{% trans "Under Review" %}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-check-circle fa-2x mb-2"></i>
+                    <h4>{{ applied }}</h4>
+                    <small>{% trans "Applied" %}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-thumbs-up fa-2x mb-2"></i>
+                    <h4>{{ approved }}</h4>
+                    <small>{% trans "Approved" %}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-danger text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-times-circle fa-2x mb-2"></i>
+                    <h4>{{ rejected }}</h4>
+                    <small>{% trans "Rejected" %}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Applications -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list"></i>
+                        {% trans "Recent Applications" %}
+                    </h5>
+                    <a href="#all-applications" class="btn btn-sm btn-outline-primary">{% trans "View All" %}</a>
+                </div>
+                <div class="card-body">
+                    {% if applications %}
+                        <div class="list-group list-group-flush">
+                            {% for app in applications %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ app.name }}</h6>
+                                    <p class="mb-1 text-muted small">
+                                        {{ app.state }}, {{ app.district }} • {{ app.mobile }}
+                                    </p>
+                                    <small class="text-muted">{{ app.created_at|date:"M d, Y" }}</small>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge status-badge status-{{ app.status|lower|cut:' ' }} mb-2">
+                                        {{ app.get_status_display }}
+                                    </span>
+                                    <br>
+                                    <a href="{% url 'update_status' app.id %}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-edit"></i> {% trans "Update" %}
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-center text-muted py-4">{% trans "No applications yet" %}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt"></i>
+                        {% trans "Quick Actions" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'manage_schemes' %}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i>
+                            {% trans "Add New Scheme" %}
+                        </a>
+                        <a href="{% url 'reports' %}" class="btn btn-success">
+                            <i class="fas fa-chart-bar"></i>
+                            {% trans "View Reports" %}
+                        </a>
+                        <button class="btn btn-info" onclick="exportData()">
+                            <i class="fas fa-download"></i>
+                            {% trans "Export Data" %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history"></i>
+                        {% trans "Recent Activity" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-success"></div>
+                            <div class="timeline-content">
+                                <small>{% trans "Application #123 approved" %}</small>
+                                <br><small class="text-muted">2 hours ago</small>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-primary"></div>
+                            <div class="timeline-content">
+                                <small>{% trans "New scheme added: PM Kisan" %}</small>
+                                <br><small class="text-muted">1 day ago</small>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-warning"></div>
+                            <div class="timeline-content">
+                                <small>{% trans "5 applications under review" %}</small>
+                                <br><small class="text-muted">2 days ago</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.status-submitted { background-color: #17a2b8; }
+.status-underreview { background-color: #ffc107; color: #000; }
+.status-applied { background-color: #007bff; }
+.status-approved { background-color: #28a745; }
+.status-rejected { background-color: #dc3545; }
+
+.timeline {
+    position: relative;
+    padding-left: 20px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e9ecef;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -17px;
+    top: 5px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.timeline-content small {
+    font-size: 0.75rem;
+}
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function exportData() {
+    // This would typically trigger a download
+    alert('{% trans "Data export functionality would be implemented here" %}');
+}
+</script>
+{% endblock %}

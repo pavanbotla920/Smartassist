@@ -1,0 +1,1299 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "SmartAssist - AI-Powered Agriculture Scheme Platform" %}{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Page-specific styles ONLY. Design tokens come from base.html. */
+
+    .sa-home { background: var(--sa-paper); }
+
+    /* ---------- Hero ---------- */
+    .sa-hero {
+        position: relative;
+        min-height: calc(100vh - 72px);
+        overflow: hidden;
+        background: linear-gradient(150deg, var(--sa-ink) 0%, var(--sa-emerald) 60%, var(--sa-ink) 100%);
+    }
+
+    .sa-slide-wrap { position: absolute; inset: 0; }
+
+    .sa-slide {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        transition: opacity 1s ease;
+    }
+    .sa-slide.active { opacity: 1; }
+
+    .sa-slide img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform: scale(1.08);
+        transition: transform 7s var(--sa-ease);
+        filter: saturate(1.05) contrast(1.03);
+    }
+    .sa-slide.active img { transform: scale(1); }
+
+    .sa-overlay {
+        position: absolute;
+        inset: 0;
+        background:
+            radial-gradient(circle at 12% 18%, rgba(217, 168, 78, 0.18), transparent 42%),
+            radial-gradient(circle at 85% 72%, rgba(31, 169, 113, 0.20), transparent 44%),
+            linear-gradient(120deg, rgba(6, 30, 22, 0.90) 0%, rgba(9, 43, 32, 0.74) 45%, rgba(5, 26, 19, 0.88) 100%);
+    }
+
+    .sa-hero-content {
+        position: relative;
+        z-index: 2;
+        min-height: calc(100vh - 72px);
+        display: grid;
+        align-items: center;
+        padding: 2rem 0;
+    }
+
+    .sa-hero-grid {
+        max-width: 1240px;
+        margin: 0 auto;
+        width: 100%;
+        padding: 0 1rem;
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 1.6rem;
+        align-items: center;
+    }
+
+    .sa-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        border-radius: 999px;
+        border: 1px solid rgba(217, 168, 78, 0.55);
+        background: rgba(217, 168, 78, 0.14);
+        color: var(--sa-gold-soft);
+        padding: 0.38rem 0.95rem;
+        font-size: 0.74rem;
+        font-weight: 800;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        margin-bottom: 1.15rem;
+    }
+
+    .sa-title {
+        font-family: var(--sa-font-display);
+        font-size: clamp(2.1rem, 5vw, 3.9rem);
+        line-height: 1.06;
+        font-weight: 600;
+        color: #fff;
+        margin-bottom: 1.1rem;
+        text-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+        animation: saFadeUp 0.7s ease both;
+    }
+    .sa-title span { font-style: italic; color: var(--sa-gold); }
+
+    .sa-sub {
+        max-width: 680px;
+        color: rgba(255, 255, 255, 0.92);
+        font-size: 1.05rem;
+        line-height: 1.75;
+        margin-bottom: 1.5rem;
+        animation: saFadeUp 0.7s 0.1s ease both;
+    }
+
+    .sa-btn-row {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        animation: saFadeUp 0.7s 0.18s ease both;
+    }
+
+    .sa-hero-note {
+        margin-top: 1.1rem;
+        font-size: 0.8rem;
+        color: rgba(244, 232, 206, 0.78);
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        animation: saFadeUp 0.7s 0.26s ease both;
+    }
+    .sa-hero-note i { color: var(--sa-gold); }
+
+    .sa-hero-card {
+        align-self: center;
+        justify-self: center;
+        width: 100%;
+        max-width: 420px;
+        background: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 20px;
+        padding: 1.15rem;
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        box-shadow: 0 22px 44px rgba(3, 22, 16, 0.45);
+        color: #fff;
+        animation: saFadeUp 0.75s 0.28s ease both;
+    }
+    .sa-hero-card h5 {
+        font-family: var(--sa-font-body);
+        font-weight: 800;
+        margin-bottom: 0.85rem;
+        font-size: 0.95rem;
+        color: var(--sa-gold);
+        letter-spacing: 0.03em;
+    }
+
+    .sa-mini-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 0.5rem;
+    }
+    .sa-mini-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.55rem;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.13);
+        border-radius: 12px;
+        padding: 0.6rem 0.72rem;
+        font-size: 0.84rem;
+        line-height: 1.45;
+    }
+    .sa-mini-list li i { color: #8FE8BC; margin-top: 0.15rem; }
+
+    .sa-dot-nav {
+        position: absolute;
+        left: 50%;
+        bottom: 1rem;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 0.42rem;
+        z-index: 3;
+    }
+    .sa-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 99px;
+        border: none;
+        background: rgba(255, 255, 255, 0.45);
+        transition: width 0.24s ease, background 0.24s ease;
+    }
+    .sa-dot.active { width: 24px; background: var(--sa-gold); }
+
+    /* ---------- Trust strip ---------- */
+    .sa-trust {
+        background: var(--sa-ivory);
+        border-bottom: 1px solid var(--sa-line);
+    }
+    .sa-trust-inner {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 1.1rem 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1.4rem;
+        flex-wrap: wrap;
+    }
+    .sa-trust-label {
+        font-size: 0.72rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--sa-gold-deep);
+    }
+    .sa-trust-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: var(--sa-ink);
+        padding: 0.4rem 0.85rem;
+        border-radius: 999px;
+        border: 1px solid var(--sa-line);
+        background: #fff;
+        text-decoration: none;
+        transition: transform 0.22s var(--sa-ease), box-shadow 0.22s var(--sa-ease), border-color 0.22s ease;
+    }
+    .sa-trust-item:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--sa-shadow);
+        border-color: var(--sa-gold);
+        color: var(--sa-ink);
+    }
+    .sa-trust-item i { color: var(--sa-leaf); }
+
+    /* ---------- Marquee ---------- */
+    .sa-marquee {
+        background: linear-gradient(115deg, var(--sa-ink), var(--sa-emerald));
+        border-top: 1px solid rgba(217, 168, 78, 0.35);
+        border-bottom: 1px solid rgba(217, 168, 78, 0.35);
+        color: #fff;
+        overflow: hidden;
+        position: relative;
+        padding: 0.95rem 0;
+    }
+    .sa-marquee::before,
+    .sa-marquee::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 80px;
+        z-index: 2;
+        pointer-events: none;
+    }
+    .sa-marquee::before {
+        left: 0;
+        background: linear-gradient(90deg, var(--sa-ink) 0%, transparent 100%);
+    }
+    .sa-marquee::after {
+        right: 0;
+        background: linear-gradient(270deg, var(--sa-ink) 0%, transparent 100%);
+    }
+    .sa-marquee-track {
+        display: flex;
+        align-items: center;
+        gap: 2.4rem;
+        width: max-content;
+        animation: saScrollRight 32s linear infinite;
+        will-change: transform;
+    }
+    .sa-marquee:hover .sa-marquee-track {
+        animation-play-state: paused;
+    }
+    .sa-marquee-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-size: 0.9rem;
+        font-weight: 700;
+        white-space: nowrap;
+        color: rgba(255, 255, 255, 0.94);
+        letter-spacing: 0.01em;
+    }
+    .sa-marquee-item i {
+        color: var(--sa-gold);
+        font-size: 0.85rem;
+        flex-shrink: 0;
+    }
+    .sa-marquee-sep {
+        color: rgba(217, 168, 78, 0.55);
+        font-size: 0.5rem;
+        flex-shrink: 0;
+    }
+
+    @keyframes saScrollRight {
+        0%   { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+    }
+
+    /* ---------- Steps ---------- */
+    .sa-cards {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 0 1rem;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1.1rem;
+    }
+    .sa-step-num {
+        position: absolute;
+        top: 1rem;
+        right: 1.2rem;
+        font-family: var(--sa-font-display);
+        font-size: 2.2rem;
+        font-weight: 600;
+        color: rgba(11, 46, 36, 0.08);
+        line-height: 1;
+    }
+    .sa-card--step { position: relative; animation: saFadeUp 0.65s ease both; }
+    .sa-card--step h4 {
+        font-family: var(--sa-font-display);
+        font-size: 1.15rem;
+        font-weight: 600;
+        margin-bottom: 0.45rem;
+    }
+
+    /* ---------- Features ---------- */
+    .sa-section--alt { background: var(--sa-ivory); }
+    .sa-features {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 0 1rem;
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 1rem;
+    }
+    .sa-feature {
+        grid-column: span 2;
+        background: var(--sa-card);
+        border: 1px solid var(--sa-line);
+        border-radius: var(--sa-radius);
+        padding: 1.3rem;
+        box-shadow: var(--sa-shadow);
+        transition: transform 0.24s var(--sa-ease), box-shadow 0.24s var(--sa-ease);
+        animation: saFadeUp 0.65s ease both;
+        display: flex;
+        flex-direction: column;
+    }
+    .sa-feature:nth-child(4), .sa-feature:nth-child(5) { grid-column: span 3; }
+    .sa-feature:hover { transform: translateY(-5px); box-shadow: var(--sa-shadow-lg); }
+    .sa-feature .sa-card-icon { margin-bottom: 0.8rem; }
+    .sa-feature h4 {
+        font-family: var(--sa-font-display);
+        font-size: 1.06rem;
+        font-weight: 600;
+        margin-bottom: 0.4rem;
+    }
+    .sa-feature p { color: var(--sa-muted); margin: 0 0 0.85rem; font-size: 0.88rem; line-height: 1.6; flex-grow: 1; }
+    .sa-feature .sa-solves {
+        border-top: 1px dashed var(--sa-line);
+        padding-top: 0.7rem;
+        font-size: 0.78rem;
+        line-height: 1.5;
+        color: var(--sa-text);
+    }
+    .sa-feature .sa-solves strong {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        color: var(--sa-gold-deep);
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        margin-bottom: 0.25rem;
+    }
+    .sa-feature .sa-solves strong i { font-size: 0.72rem; }
+
+    /* ---------- Featured schemes ---------- */
+    .sa-scheme-card {
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        background: var(--sa-card);
+        border: 1px solid var(--sa-line);
+        border-top: 4px solid var(--sa-gold);
+        border-radius: var(--sa-radius);
+        padding: 1.35rem;
+        box-shadow: var(--sa-shadow);
+        transition: transform 0.24s var(--sa-ease), box-shadow 0.24s var(--sa-ease);
+        animation: saFadeUp 0.65s ease both;
+    }
+    .sa-scheme-card:hover { transform: translateY(-6px); box-shadow: var(--sa-shadow-lg); }
+    .sa-scheme-card .sa-scheme-cat {
+        font-size: 0.72rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--sa-gold-deep);
+        margin-bottom: 0.55rem;
+    }
+    .sa-scheme-card h4 {
+        font-family: var(--sa-font-display);
+        font-size: 1.12rem;
+        font-weight: 600;
+        margin: 0 0 0.3rem;
+    }
+    .sa-scheme-card p { color: var(--sa-muted); font-size: 0.9rem; line-height: 1.6; margin: 0 0 0.9rem; flex-grow: 1; }
+    .sa-scheme-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.9rem; }
+    .sa-scheme-meta {
+        margin-top: auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.6rem;
+        border-top: 1px dashed var(--sa-line);
+        padding-top: 0.75rem;
+    }
+    .sa-scheme-type {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.76rem;
+        font-weight: 800;
+        padding: 0.28rem 0.7rem;
+        border-radius: 999px;
+    }
+    .sa-scheme-type--central { background: rgba(31, 169, 113, 0.12); color: #0E6B48; }
+    .sa-scheme-type--state { background: rgba(217, 168, 78, 0.16); color: var(--sa-gold-deep); }
+    .sa-scheme-state { font-size: 0.8rem; font-weight: 700; color: var(--sa-muted); display: inline-flex; align-items: center; gap: 0.35rem; }
+    .sa-scheme-more { text-align: center; margin-top: 1.6rem; }
+
+    /* Scheme detail modal */
+    .sa-modal .modal-content {
+        border: none;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: var(--sa-shadow-lg);
+    }
+    .sa-modal .modal-header {
+        background: linear-gradient(115deg, var(--sa-ink), var(--sa-emerald));
+        border: none;
+        padding: 1.3rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    .sa-modal .modal-header h5 {
+        font-family: var(--sa-font-display);
+        color: #fff;
+        font-weight: 600;
+        font-size: 1.35rem;
+        margin: 0;
+        margin-right: auto;
+    }
+    .sa-modal .btn-close { filter: invert(1); opacity: 0.8; }
+    .sa-modal .modal-body { padding: 1.4rem 1.5rem; background: var(--sa-paper); }
+    .sa-modal-chips { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 1rem; }
+    .sa-modal-label {
+        font-size: 0.72rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--sa-gold-deep);
+        margin-bottom: 0.3rem;
+    }
+    .sa-modal-text { color: var(--sa-text); font-size: 0.94rem; line-height: 1.7; margin-bottom: 1.1rem; }
+    .sa-modal-list { list-style: none; margin: 0 0 1.1rem; padding: 0; display: grid; gap: 0.45rem; }
+    .sa-modal-list li { display: flex; gap: 0.5rem; font-size: 0.9rem; line-height: 1.55; color: var(--sa-text); }
+    .sa-modal-list li i { color: var(--sa-leaf); margin-top: 0.2rem; }
+    .sa-modal-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 1.2rem;
+    }
+
+    /* ---------- Impact ---------- */
+    .sa-impact {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 0 1rem;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.1rem;
+        align-items: stretch;
+    }
+    .sa-impact-left h3 {
+        font-size: clamp(1.6rem, 3.2vw, 2.4rem);
+        font-weight: 600;
+        margin: 0.4rem 0 1.1rem;
+    }
+    .sa-sdg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.72rem; }
+    .sa-sdg-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: var(--sa-card);
+        border: 1px solid var(--sa-line);
+        border-left: 4px solid var(--sa-gold);
+        border-radius: var(--sa-radius-sm);
+        padding: 0.9rem 1rem;
+        box-shadow: 0 10px 20px rgba(11, 46, 36, 0.07);
+        transition: transform 0.22s var(--sa-ease);
+    }
+    .sa-sdg-item:hover { transform: translateX(4px); }
+    .sa-sdg-item i { font-size: 1.4rem; color: var(--sa-leaf); }
+    .sa-sdg-item strong { display: block; font-size: 1rem; line-height: 1.15; }
+    .sa-sdg-item span { display: block; color: var(--sa-muted); font-size: 0.9rem; }
+
+    .sa-mission {
+        background: var(--sa-card);
+        border: 1px solid var(--sa-line);
+        border-radius: var(--sa-radius);
+        padding: 1.4rem 1.5rem;
+        box-shadow: var(--sa-shadow);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .sa-mission h4 {
+        font-family: var(--sa-font-display);
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 0 0 0.6rem;
+    }
+    .sa-mission p { margin: 0; color: var(--sa-text); line-height: 1.65; font-size: 0.98rem; }
+
+    .sa-mission-stats {
+        margin-top: 1.3rem;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.8rem;
+        text-align: center;
+        border-top: 1px solid var(--sa-line);
+        padding-top: 1.1rem;
+    }
+    .sa-mission-stats strong {
+        display: block;
+        font-family: var(--sa-font-display);
+        font-size: 1.9rem;
+        line-height: 1;
+        font-weight: 600;
+    }
+    .sa-mission-stats span { color: var(--sa-muted); font-size: 0.82rem; }
+
+    /* ---------- Voices + Awareness ---------- */
+    .sa-testimonials {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 0 1rem;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1.1rem;
+    }
+    .sa-testimonial {
+        background: var(--sa-card);
+        border: 1px solid var(--sa-line);
+        border-left: 4px solid var(--sa-gold);
+        border-radius: var(--sa-radius-sm);
+        padding: 1.4rem;
+        box-shadow: 0 10px 20px rgba(11, 46, 36, 0.07);
+        position: relative;
+        animation: saFadeUp 0.65s ease both;
+    }
+    .sa-testimonial::before {
+        content: '\201C';
+        position: absolute;
+        top: 0.4rem;
+        right: 1.1rem;
+        font-family: var(--sa-font-display);
+        font-size: 4rem;
+        line-height: 1;
+        color: var(--sa-gold-soft);
+    }
+    .sa-testimonial p { margin: 0 0 1rem; font-size: 0.94rem; line-height: 1.65; color: var(--sa-text); }
+    .sa-testimonial-who { display: flex; align-items: center; gap: 0.7rem; }
+    .sa-testimonial-who .sa-avatar {
+        width: 40px; height: 40px;
+        border-radius: 50%;
+        background: var(--sa-gold-soft);
+        color: var(--sa-ink);
+        display: inline-flex; align-items: center; justify-content: center;
+        font-weight: 800; font-size: 0.95rem;
+        border: 1px solid rgba(217, 168, 78, 0.4);
+    }
+    .sa-testimonial-who strong { display: block; font-size: 0.92rem; }
+    .sa-testimonial-who span { display: block; color: var(--sa-muted); font-size: 0.78rem; }
+
+    .sa-awareness { max-width: 1240px; margin: 2.2rem auto 0; padding: 0 1rem; }
+    .sa-awareness-box {
+        display: flex;
+        align-items: center;
+        gap: 0.9rem;
+        background: var(--sa-card);
+        border: 1px solid var(--sa-line);
+        border-left: 4px solid var(--sa-gold);
+        border-radius: var(--sa-radius-sm);
+        padding: 1rem 1.2rem;
+        box-shadow: 0 10px 20px rgba(11, 46, 36, 0.07);
+        animation: saFadeUp 0.65s 0.28s ease both;
+    }
+    .sa-awareness-box .sa-bullhorn {
+        flex-shrink: 0;
+        width: 46px; height: 46px;
+        border-radius: 12px;
+        background: var(--sa-gold-soft);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.15rem;
+        color: var(--sa-gold-deep);
+        border: 1px solid rgba(217, 168, 78, 0.4);
+    }
+    .sa-awareness-box strong { font-size: 0.98rem; color: var(--sa-ink); display: block; }
+    .sa-awareness-box p { margin: 0.2rem 0 0; color: var(--sa-muted); font-size: 0.88rem; line-height: 1.55; }
+
+    /* ---------- Final CTA ---------- */
+    .sa-cta {
+        margin-top: 4.5rem;
+        padding: 0 1rem;
+    }
+    .sa-cta-box {
+        max-width: 1240px;
+        margin: 0 auto;
+        text-align: center;
+        color: #fff;
+        background: linear-gradient(120deg, var(--sa-ink) 0%, var(--sa-emerald) 55%, var(--sa-ink) 100%);
+        border: 1px solid rgba(217, 168, 78, 0.35);
+        border-radius: 22px;
+        padding: 3.2rem 2.4rem;
+        box-shadow: 0 24px 48px rgba(11, 46, 36, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    .sa-cta-box::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background:
+            radial-gradient(circle at 15% 25%, rgba(217, 168, 78, 0.16), transparent 40%),
+            radial-gradient(circle at 85% 80%, rgba(31, 169, 113, 0.2), transparent 42%);
+        pointer-events: none;
+    }
+    .sa-cta-box > * { position: relative; }
+    .sa-cta-box h2 {
+        font-family: var(--sa-font-display);
+        font-size: clamp(1.8rem, 3.8vw, 2.8rem);
+        font-weight: 600;
+        margin: 0 0 1.1rem;
+        color: #fff;
+    }
+    .sa-cta-box h2 em { color: var(--sa-gold); font-style: italic; }
+    .sa-cta-box p {
+        color: rgba(255, 255, 255, 0.88);
+        margin: 0 auto 0.9rem;
+        font-size: 1.02rem;
+        line-height: 1.75;
+        max-width: 780px;
+    }
+    .sa-cta-box p.sa-cta-highlight {
+        color: var(--sa-gold-soft);
+        font-weight: 700;
+        margin-top: 1.2rem;
+        margin-bottom: 1.8rem;
+        font-size: 1.05rem;
+    }
+    .sa-cta-btns { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; }
+
+    @keyframes saFadeUp {
+        from { opacity: 0; transform: translateY(15px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 992px) {
+        .sa-hero-grid { grid-template-columns: 1fr; }
+        .sa-hero-card { justify-self: stretch; }
+        .sa-cards { grid-template-columns: 1fr 1fr; }
+        .sa-feature { grid-column: span 3 !important; }
+        .sa-testimonials { grid-template-columns: 1fr; }
+        .sa-impact { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 768px) {
+        .sa-cards { grid-template-columns: 1fr; }
+        .sa-sdg-grid { grid-template-columns: 1fr; }
+        .sa-mission-stats strong { font-size: 1.5rem; }
+        .sa-awareness-box { flex-direction: column; align-items: flex-start; }
+        .sa-cta-box { padding: 2.2rem 1.4rem; }
+        .sa-modal-grid { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sa-home">
+<!-- ============ HERO ============ -->
+<section class="sa-hero">
+    <div class="sa-slide-wrap" id="saSlideWrap">
+        <div class="sa-slide active"><img src="/static/images/farmer_1.jpg" alt="farmer 1" onerror="this.src='https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=1920&q=80&fit=crop'"></div>
+        <div class="sa-slide"><img src="/static/images/farmer_2.jpg" alt="farmer 2" onerror="this.src='https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1920&q=80&fit=crop'"></div>
+        <div class="sa-slide"><img src="/static/images/farmer_3.jpg" alt="farmer 3" onerror="this.src='https://images.unsplash.com/photo-1560493676-04071c5f467b?w=1920&q=80&fit=crop'"></div>
+        <div class="sa-slide"><img src="/static/images/farmer_4.jpg" alt="farmer 4" onerror="this.src='https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=1920&q=80&fit=crop'"></div>
+        <div class="sa-slide"><img src="/static/images/farmer_5.jpg" alt="farmer 5" onerror="this.src='https://images.unsplash.com/photo-1536657464919-892534f60d6e?w=1920&q=80&fit=crop'"></div>
+        <div class="sa-slide"><img src="/static/images/farmer_6.jpg" alt="farmer 6" onerror="this.src='https://images.unsplash.com/photo-1592982537447-7440770cbfc9?w=1920&q=80&fit=crop'"></div>
+        <div class="sa-slide"><img src="/static/images/farmer_7.jpg" alt="farmer 7" onerror="this.src='https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=1920&q=80&fit=crop'"></div>
+    </div>
+    <div class="sa-overlay"></div>
+
+    <div class="sa-hero-content">
+        <div class="sa-hero-grid">
+            <div>
+                <div class="sa-badge"><i class="fas fa-leaf"></i> AI + Government Schemes</div>
+                <h1 class="sa-title">{% trans "AI-Powered" %} <span>{% trans "Government Scheme Platform" %}</span></h1>
+                <p class="sa-sub">{% trans "SmartAssist bridges the digital divide by connecting citizens with government welfare schemes through dedicated volunteers and administrators." %}</p>
+                <div class="sa-btn-row">
+                    <a href="{% url 'scheme_awareness' %}" class="sa-btn sa-btn-gold"><i class="fas fa-search"></i> {% trans "Explore Schemes" %}</a>
+                    {% if not user.is_authenticated %}
+                    <a href="{% url 'register' %}" class="sa-btn sa-btn-ghost-light"><i class="fas fa-user-plus"></i> {% trans "Get Started" %}</a>
+                    {% else %}
+                    <a href="{% url 'dashboard' %}" class="sa-btn sa-btn-ghost-light"><i class="fas fa-gauge"></i> {% trans "Dashboard" %}</a>
+                    {% endif %}
+                </div>
+                <div class="sa-hero-note">
+                    <i class="fas fa-shield-halved"></i>
+                    {% trans "Free to use. Assisted by verified volunteers. Available in 20+ languages." %}
+                </div>
+            </div>
+
+            <div class="sa-hero-card">
+                <h5><i class="fas fa-tractor"></i> {% trans "Live Platform Highlights" %}</h5>
+                <ul class="sa-mini-list">
+                    <li><i class="fas fa-check"></i> {% trans "Find Central and State Schemes Quickly" %}</li>
+                    <li><i class="fas fa-bullseye"></i> {% trans "AI-based recommendations for better matching" %}</li>
+                    <li><i class="fas fa-clipboard-list"></i> {% trans "Volunteer-assisted application support" %}</li>
+                    <li><i class="fas fa-mobile-screen"></i> {% trans "Mobile-friendly and multilingual access" %}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="sa-dot-nav" id="saDots"></div>
+</section>
+
+<!-- ============ TRUST STRIP ============ -->
+<section class="sa-trust">
+    <div class="sa-trust-inner">
+        <span class="sa-trust-label">{% trans "In alignment with" %}</span>
+        <a class="sa-trust-item" href="https://www.digitalindia.gov.in/" target="_blank" rel="noopener"><i class="fas fa-flag"></i> Digital India</a>
+        <a class="sa-trust-item" href="https://www.india.gov.in/" target="_blank" rel="noopener"><i class="fas fa-landmark"></i> india.gov.in</a>
+        <a class="sa-trust-item" href="https://www.data.gov.in/" target="_blank" rel="noopener"><i class="fas fa-database"></i> data.gov.in</a>
+        <a class="sa-trust-item" href="https://www.myscheme.gov.in/" target="_blank" rel="noopener"><i class="fas fa-handshake-angle"></i> myScheme</a>
+    </div>
+</section>
+
+<!-- ============ SCHEME MARQUEE ============ -->
+<section class="sa-marquee" aria-label="{% trans 'Popular Government Schemes' %}">
+    <div class="sa-marquee-track">
+        <!-- Set 1 -->
+        <span class="sa-marquee-item"><i class="fas fa-landmark"></i> PM-KISAN</span>
+        <span class="sa-marquee-sep">◆</span>
+        <span class="sa-marquee-item"><i class="fas fa-wheat-awn"></i> PM Fasal Bima Yojana</span>
+        <span class="sa-marquee-sep">◆</span>
+        <span class="sa-marquee-item"><i class="fas fa-droplet"></i> Magel Tyala Shet Tale</span>
+        <span class="sa-marquee-sep">◆</span>
+        <span class="sa-marquee-item"><i class="fas fa-seedling"></i> PM Krishi Sinchayee Yojana</span>
+        <span class="sa-marquee-sep">◆</span>
+        <span class="sa-marquee-item"><i class="fas fa-cow"></i> Rashtriya Gokul Mission</span>
+        <span class="sa-marquee-sep">◆</span>
+        <span class="sa-marquee-item"><i class="fas fa-tractor"></i> Kisan Credit Card</span>
+        <span class="sa-marquee-sep">◆</span>
+        <span class="sa-marquee-item"><i class="fas fa-solar-panel"></i> PM-KUSUM</span>
+        <span class="sa-marquee-sep">◆</span>
+        <span class="sa-marquee-item"><i class="fas fa-warehouse"></i> PM Kisan SAMPADA Yojana</span>
+        <span class="sa-marquee-sep">◆</span>
+        <span class="sa-marquee-item"><i class="fas fa-flask"></i> Soil Health Card Scheme</span>
+        <span class="sa-marquee-sep">◆</span>
+        <span class="sa-marquee-item"><i class="fas fa-store"></i> e-NAM (National Agriculture Market)</span>
+        <span class="sa-marquee-sep">◆</span>
+        <span class="sa-marquee-item"><i class="fas fa-money-bill-wave"></i> PM Kisan Maan Dhan Yojana</span>
+        <span class="sa-marquee-sep">◆</span>
+        <span class="sa-marquee-item"><i class="fas fa-leaf"></i> Paramparagat Krishi Vikas Yojana</span>
+        <span class="sa-marquee-sep">◆</span>
+        <span class="sa-marquee-item"><i class="fas fa-apple-alt"></i> MIDH (Horticulture)</span>
+        <span class="sa-marquee-sep">◆</span>
+        <span class="sa-marquee-item"><i class="fas fa-fish"></i> PM Matsya Sampada Yojana</span>
+        <span class="sa-marquee-sep">◆</span>
+        <span class="sa-marquee-item"><i class="fas fa-dna"></i> National Livestock Mission</span>
+        <span class="sa-marquee-sep">◆</span>
+
+        <!-- Set 2 (duplicate for seamless loop) -->
+        <span class="sa-marquee-item"><i class="fas fa-landmark"></i> PM-KISAN</span>
+        <span class="sa-marquee-sep">◆</span>
+        <span class="sa-marquee-item"><i class="fas fa-wheat-awn"></i> PM Fasal Bima Yojana</span>
+        <span class="sa-marquee-sep">◆</span>
+        <span class="sa-marquee-item"><i class="fas fa-droplet"></i> Magel Tyala Shet Tale</span>
+        <span class="sa-marquee-sep">◆</span>
+        <span class="sa-marquee-item"><i class="fas fa-seedling"></i> PM Krishi Sinchayee Yojana</span>
+        <span class="sa-marquee-sep">◆</span>
+        <span class="sa-marquee-item"><i class="fas fa-cow"></i> Rashtriya Gokul Mission</span>
+        <span class="sa-marquee-sep">◆</span>
+        <span class="sa-marquee-item"><i class="fas fa-tractor"></i> Kisan Credit Card</span>
+        <span class="sa-marquee-sep">◆</span>
+        <span class="sa-marquee-item"><i class="fas fa-solar-panel"></i> PM-KUSUM</span>
+        <span class="sa-marquee-sep">◆</span>
+        <span class="sa-marquee-item"><i class="fas fa-warehouse"></i> PM Kisan SAMPADA Yojana</span>
+        <span class="sa-marquee-sep">◆</span>
+        <span class="sa-marquee-item"><i class="fas fa-flask"></i> Soil Health Card Scheme</span>
+        <span class="sa-marquee-sep">◆</span>
+        <span class="sa-marquee-item"><i class="fas fa-store"></i> e-NAM (National Agriculture Market)</span>
+        <span class="sa-marquee-sep">◆</span>
+        <span class="sa-marquee-item"><i class="fas fa-money-bill-wave"></i> PM Kisan Maan Dhan Yojana</span>
+        <span class="sa-marquee-sep">◆</span>
+        <span class="sa-marquee-item"><i class="fas fa-leaf"></i> Paramparagat Krishi Vikas Yojana</span>
+        <span class="sa-marquee-sep">◆</span>
+        <span class="sa-marquee-item"><i class="fas fa-apple-alt"></i> MIDH (Horticulture)</span>
+        <span class="sa-marquee-sep">◆</span>
+        <span class="sa-marquee-item"><i class="fas fa-fish"></i> PM Matsya Sampada Yojana</span>
+        <span class="sa-marquee-sep">◆</span>
+        <span class="sa-marquee-item"><i class="fas fa-dna"></i> National Livestock Mission</span>
+        <span class="sa-marquee-sep">◆</span>
+    </div>
+</section>
+
+<!-- ============ HOW IT WORKS ============ -->
+<section class="sa-section">
+    <div class="sa-section-head">
+        <div class="sa-kicker">{% trans "Process" %}</div>
+        <h2>{% trans "How It Works" %}</h2>
+        <p>{% trans "Simple steps to access government welfare schemes" %}</p>
+    </div>
+
+    <div class="sa-cards">
+        <div class="sa-card sa-card--step" style="animation-delay:0.04s;">
+            <span class="sa-step-num">01</span>
+            <span class="sa-card-icon"><i class="fas fa-user-plus"></i></span>
+            <h4>{% trans "Register" %}</h4>
+            <p>{% trans "Create your account with basic details. No complex forms required." %}</p>
+        </div>
+
+        <div class="sa-card sa-card--step" style="animation-delay:0.12s;">
+            <span class="sa-step-num">02</span>
+            <span class="sa-card-icon"><i class="fas fa-hands-helping"></i></span>
+            <h4>{% trans "Get Assistance" %}</h4>
+            <p>{% trans "Our volunteers review your details and apply for suitable schemes on your behalf." %}</p>
+        </div>
+
+        <div class="sa-card sa-card--step" style="animation-delay:0.2s;">
+            <span class="sa-step-num">03</span>
+            <span class="sa-card-icon"><i class="fas fa-check-circle"></i></span>
+            <h4>{% trans "Track & Receive" %}</h4>
+            <p>{% trans "Track your application status and receive benefits when approved." %}</p>
+        </div>
+    </div>
+</section>
+
+<!-- ============ FEATURES ============ -->
+<section class="sa-section sa-section--alt">
+    <div class="sa-section-head">
+        <div class="sa-kicker">{% trans "Platform" %}</div>
+        <h2>{% trans "What SmartAssist Does" %}</h2>
+        <p>{% trans "Five capabilities, each built to remove one barrier between citizens and their entitlements" %}</p>
+    </div>
+
+    <div class="sa-features">
+        <div class="sa-feature" style="animation-delay:0.04s;">
+            <span class="sa-card-icon"><i class="fas fa-language"></i></span>
+            <h4>{% trans "Multilingual & Voice-Enabled Scheme Awareness" %}</h4>
+            <p>{% trans "Regional language support (Marathi, Hindi, English) with voice input and an AI chatbot for hands-free assistance." %}</p>
+            <div class="sa-solves">
+                <strong><i class="fas fa-circle-check"></i> {% trans "Solves" %}</strong>
+                {% trans "Digital divide, language barrier, low digital literacy." %}
+            </div>
+        </div>
+        <div class="sa-feature" style="animation-delay:0.1s;">
+            <span class="sa-card-icon"><i class="fas fa-brain"></i></span>
+            <h4>{% trans "AI-Powered Eligibility Matching" %}</h4>
+            <p>{% trans "Automatically matches farmers to schemes they qualify for based on landholding, crop, and location." %}</p>
+            <div class="sa-solves">
+                <strong><i class="fas fa-circle-check"></i> {% trans "Solves" %}</strong>
+                {% trans "Unawareness of eligible schemes; scattered, fragmented information." %}
+            </div>
+        </div>
+        <div class="sa-feature" style="animation-delay:0.16s;">
+            <span class="sa-card-icon"><i class="fas fa-users"></i></span>
+            <h4>{% trans "Assisted Application Workflow" %}</h4>
+            <p>{% trans "Volunteers and admins submit applications on behalf of farmers through a guided process." %}</p>
+            <div class="sa-solves">
+                <strong><i class="fas fa-circle-check"></i> {% trans "Solves" %}</strong>
+                {% trans "Complex application processes and dependency on exploitative middlemen." %}
+            </div>
+        </div>
+        <div class="sa-feature" style="animation-delay:0.22s;">
+            <span class="sa-card-icon"><i class="fas fa-clock-rotate-left"></i></span>
+            <h4>{% trans "Real-Time Tracking & Notifications" %}</h4>
+            <p>{% trans "Live application status (Pending, Approved, Rejected) with SMS and email alerts, plus offline sync." %}</p>
+            <div class="sa-solves">
+                <strong><i class="fas fa-circle-check"></i> {% trans "Solves" %}</strong>
+                {% trans "Opacity, delays, and lack of trust in the system." %}
+            </div>
+        </div>
+        <div class="sa-feature" style="animation-delay:0.28s;">
+            <span class="sa-card-icon"><i class="fas fa-chart-column"></i></span>
+            <h4>{% trans "Analytics & Governance Dashboard" %}</h4>
+            <p>{% trans "Admin dashboards with scheme-wise and district-wise adoption insights and exportable reports." %}</p>
+            <div class="sa-solves">
+                <strong><i class="fas fa-circle-check"></i> {% trans "Solves" %}</strong>
+                {% trans "No visibility for policymakers; enables data-driven outreach and gap identification." %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============ FEATURED SCHEMES ============ -->
+<section class="sa-section">
+    <div class="sa-section-head">
+        <div class="sa-kicker">{% trans "Schemes" %}</div>
+        <h2>{% trans "Popular Schemes Right Now" %}</h2>
+        <p>{% trans "Click any scheme to see full details" %}</p>
+    </div>
+
+    <div class="sa-cards">
+        <div class="sa-scheme-card" style="animation-delay:0.04s;"
+             data-scheme-name="PM-KISAN"
+             data-scheme-type="Central"
+             data-scheme-state="All India"
+             data-scheme-support="Financial Aid"
+             data-scheme-audience="Farmers"
+             data-scheme-desc="Direct income support of Rs. 6,000 per year to eligible farmer families, paid in three equal instalments directly to bank accounts."
+             data-scheme-benefits="Rs. 6,000 per year in three instalments|Direct bank transfer, no intermediaries|Covers all landholding farmers"
+             data-scheme-eligibility="Landholding farmer families|Adult members with valid Aadhaar and bank account|Excludes institutional farmers and income-tax payers"
+             data-scheme-dates="Registration open throughout the year|Instalments credited every four months|Verify cut-off dates on the official portal"
+             data-scheme-docs="Aadhaar card|Land record (7/12 extract or equivalent)|Bank passbook|Mobile number linked to Aadhaar"
+             data-scheme-process="Register on the PM-KISAN portal|Complete eKYC with Aadhaar|Link your bank account|Verification by local land records office|Benefit credited directly to your account">
+            <div class="sa-scheme-cat">{% trans "Income Support" %}</div>
+            <h4>PM-KISAN</h4>
+            <p>{% trans "Direct income support of Rs. 6,000 per year to eligible farmer families." %}</p>
+            <div class="sa-scheme-tags">
+                <span class="sa-chip"><i class="fas fa-user-group"></i> {% trans "Farmers" %}</span>
+                <span class="sa-chip"><i class="fas fa-indian-rupee-sign"></i> {% trans "Financial Aid" %}</span>
+            </div>
+            <div class="sa-scheme-meta">
+                <span class="sa-scheme-type sa-scheme-type--central"><i class="fas fa-landmark"></i> {% trans "Central" %}</span>
+                <span class="sa-scheme-state"><i class="fas fa-location-dot"></i> All India</span>
+            </div>
+        </div>
+
+        <div class="sa-scheme-card" style="animation-delay:0.12s;"
+             data-scheme-name="PM Fasal Bima Yojana"
+             data-scheme-type="Central"
+             data-scheme-state="All India"
+             data-scheme-support="Insurance"
+             data-scheme-audience="Farmers"
+             data-scheme-desc="Affordable crop insurance protecting farmers against natural calamities, pests, and diseases, with premiums as low as 2% for Kharif crops."
+             data-scheme-benefits="Full sum-insured payout on crop loss|Low premium: 2% Kharif, 1.5% Rabi|Covers prevented sowing and post-harvest losses"
+             data-scheme-eligibility="All farmers growing notified crops|Sharecroppers and tenant farmers with valid land records|Enrolment through banks or CSC centres"
+             data-scheme-dates="Enrolment before each crop season cut-off|Kharif and Rabi season windows announced by state|Claim intimation within 72 hours of loss"
+             data-scheme-docs="Aadhaar card|Land record or tenancy agreement|Sowing certificate|Bank passbook|Crop details and survey number"
+             data-scheme-process="Approach your bank, PACS or CSC|Fill the crop insurance proposal form|Pay the applicable premium|Insurer verifies land and crop details|Claim settled after joint loss assessment">
+            <div class="sa-scheme-cat">{% trans "Insurance" %}</div>
+            <h4>{% trans "PM Fasal Bima Yojana" %}</h4>
+            <p>{% trans "Affordable crop insurance protecting farmers against natural calamities, pests, and diseases." %}</p>
+            <div class="sa-scheme-tags">
+                <span class="sa-chip"><i class="fas fa-wheat-awn"></i> {% trans "Crops" %}</span>
+                <span class="sa-chip"><i class="fas fa-shield-halved"></i> {% trans "Risk Cover" %}</span>
+            </div>
+            <div class="sa-scheme-meta">
+                <span class="sa-scheme-type sa-scheme-type--central"><i class="fas fa-landmark"></i> {% trans "Central" %}</span>
+                <span class="sa-scheme-state"><i class="fas fa-location-dot"></i> All India</span>
+            </div>
+        </div>
+
+        <div class="sa-scheme-card" style="animation-delay:0.2s;"
+             data-scheme-name="Magel Tyala Shet Tale"
+             data-scheme-type="State"
+             data-scheme-state="Maharashtra"
+             data-scheme-support="Subsidy"
+             data-scheme-audience="Maharashtra Farmers"
+             data-scheme-desc="Maharashtra state scheme providing drip irrigation and farm pond support, with subsidies of up to 50-55% for on-farm water storage and efficient irrigation."
+             data-scheme-benefits="Up to 50-55% subsidy on drip irrigation|Farm pond assistance for water storage|Priority for drought-prone talukas"
+             data-scheme-eligibility="Maharashtra farmers with own or leased land|Water source availability at the site|Applied through the district agriculture office"
+             data-scheme-dates="Applications accepted as per state announcement|Sanction rounds conducted periodically|Check current status at the district agriculture office"
+             data-scheme-docs="Aadhaar card|7/12 extract of the land|Water source proof|Bank passbook|Quotation from an approved drip agency"
+             data-scheme-process="Apply at the district or taluka agriculture office|Submit land and water source documents|Technical inspection of the site|Subsidy sanctioned after approval|Benefit credited after work verification">
+            <div class="sa-scheme-cat">{% trans "Irrigation" %}</div>
+            <h4>{% trans "Magel Tyala Shet Tale" %}</h4>
+            <p>{% trans "Maharashtra scheme for on-farm water storage and drip irrigation with subsidies of up to 55%." %}</p>
+            <div class="sa-scheme-tags">
+                <span class="sa-chip"><i class="fas fa-droplet"></i> {% trans "Water" %}</span>
+                <span class="sa-chip"><i class="fas fa-percent"></i> {% trans "Subsidy" %}</span>
+            </div>
+            <div class="sa-scheme-meta">
+                <span class="sa-scheme-type sa-scheme-type--state"><i class="fas fa-map-location-dot"></i> {% trans "State" %}</span>
+                <span class="sa-scheme-state"><i class="fas fa-location-dot"></i> Maharashtra</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="sa-scheme-more">
+        <a href="{% url 'scheme_awareness' %}" class="sa-btn sa-btn-primary"><i class="fas fa-arrow-right"></i> {% trans "View All Schemes" %}</a>
+    </div>
+</section>
+
+<!-- ============ SCHEME DETAIL MODAL ============ -->
+<div class="modal fade sa-modal" id="schemeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="schemeModalTitle">Scheme</h5>
+                <a href="{% if user.is_authenticated %}{% url 'apply_assistance' %}{% else %}{% url 'register' %}{% endif %}" class="sa-btn sa-btn-gold">
+                    <i class="fas fa-clipboard-check"></i> {% trans "Check Eligibility" %}
+                </a>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+            </div>
+            <div class="modal-body">
+                <div class="sa-modal-chips" id="schemeModalChips"></div>
+                <div class="sa-modal-label">{% trans "Description" %}</div>
+                <p class="sa-modal-text" id="schemeModalDesc"></p>
+                <div class="sa-modal-grid">
+                    <div>
+                        <div class="sa-modal-label">{% trans "Key Benefits" %}</div>
+                        <ul class="sa-modal-list" id="schemeModalBenefits"></ul>
+                    </div>
+                    <div>
+                        <div class="sa-modal-label">{% trans "Important Dates" %}</div>
+                        <ul class="sa-modal-list" id="schemeModalDates"></ul>
+                    </div>
+                    <div>
+                        <div class="sa-modal-label">{% trans "Required Documents" %}</div>
+                        <ul class="sa-modal-list" id="schemeModalDocs"></ul>
+                    </div>
+                    <div>
+                        <div class="sa-modal-label">{% trans "Application Process" %}</div>
+                        <ul class="sa-modal-list" id="schemeModalProcess"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ SDG IMPACT + MISSION ============ -->
+<section class="sa-section sa-section--alt">
+    <div class="sa-impact">
+        <div class="sa-impact-left">
+            <div class="sa-kicker">{% trans "Global Goals" %}</div>
+            <h3>{% trans "SDG Impact" %}</h3>
+            <div class="sa-sdg-grid">
+                <div class="sa-sdg-item">
+                    <i class="fas fa-users"></i>
+                    <div>
+                        <strong>SDG 1</strong>
+                        <span>{% trans "No Poverty" %}</span>
+                    </div>
+                </div>
+                <div class="sa-sdg-item">
+                    <i class="fas fa-graduation-cap"></i>
+                    <div>
+                        <strong>SDG 4</strong>
+                        <span>{% trans "Quality Education" %}</span>
+                    </div>
+                </div>
+                <div class="sa-sdg-item">
+                    <i class="fas fa-venus-mars"></i>
+                    <div>
+                        <strong>SDG 5</strong>
+                        <span>{% trans "Gender Equality" %}</span>
+                    </div>
+                </div>
+                <div class="sa-sdg-item">
+                    <i class="fas fa-handshake"></i>
+                    <div>
+                        <strong>SDG 17</strong>
+                        <span>{% trans "Partnerships" %}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sa-mission">
+            <h4>{% trans "Our Mission" %}</h4>
+            <p>{% trans "To create an inclusive digital ecosystem where every citizen, regardless of literacy level or digital skills, can access government welfare schemes and contribute to community development." %}</p>
+            <div class="sa-mission-stats">
+                <div>
+                    <strong style="color: var(--sa-ink);">10K+</strong>
+                    <span>{% trans "Citizens Helped" %}</span>
+                </div>
+                <div>
+                    <strong style="color: var(--sa-leaf);">500+</strong>
+                    <span>{% trans "Volunteers" %}</span>
+                </div>
+                <div>
+                    <strong style="color: var(--sa-gold-deep);">50+</strong>
+                    <span>{% trans "Schemes" %}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============ VOICES + AWARENESS ============ -->
+<section class="sa-section">
+    <div class="sa-section-head">
+        <div class="sa-kicker">{% trans "Voices" %}</div>
+        <h2>{% trans "Stories From The Community" %}</h2>
+        <p>{% trans "Real experiences from citizens who found their entitlements" %}</p>
+    </div>
+
+    <div class="sa-testimonials">
+        <div class="sa-testimonial" style="animation-delay:0.04s;">
+            <p>{% trans "I had no idea my family was eligible for three different schemes. A volunteer helped me apply within a week, and the first instalment arrived the next month." %}</p>
+            <div class="sa-testimonial-who">
+                <span class="sa-avatar">RS</span>
+                <div>
+                    <strong>Ramesh S.</strong>
+                    <span>{% trans "Farmer, Maharashtra" %}</span>
+                </div>
+            </div>
+        </div>
+        <div class="sa-testimonial" style="animation-delay:0.12s;">
+            <p>{% trans "The platform works in my language. I could read every scheme detail myself for the first time instead of depending on someone else to explain it." %}</p>
+            <div class="sa-testimonial-who">
+                <span class="sa-avatar">LK</span>
+                <div>
+                    <strong>Lakshmi K.</strong>
+                    <span>{% trans "Citizen, Karnataka" %}</span>
+                </div>
+            </div>
+        </div>
+        <div class="sa-testimonial" style="animation-delay:0.2s;">
+            <p>{% trans "As a volunteer, I can see exactly which applications need my help. SmartAssist turned scattered paperwork into one clear queue." %}</p>
+            <div class="sa-testimonial-who">
+                <span class="sa-avatar">AP</span>
+                <div>
+                    <strong>Anita P.</strong>
+                    <span>{% trans "Volunteer, Gujarat" %}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="sa-awareness">
+        <div class="sa-awareness-box">
+            <span class="sa-bullhorn"><i class="fas fa-bullhorn"></i></span>
+            <div>
+                <strong>{% trans "Community Awareness Initiative" %}</strong>
+                <p>{% trans "After receiving benefits, please inform your family members, friends, and neighbors about government schemes. Together, we can build an aware and empowered community!" %}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ FINAL CTA ============ -->
+    <div class="sa-cta">
+        <div class="sa-cta-box">
+            <h2>{% trans "The Support You Deserve Starts Here." %}</h2>
+            <p>{% trans "Thousands of farmers miss out on government support simply because they don't know what they're eligible for. Don't let valuable benefits pass you by." %}</p>
+            <p class="sa-cta-highlight">{% trans "Discover the schemes made for you. Check your eligibility. Take the first step today." %}</p>
+            <div class="sa-cta-btns">
+                {% if not user.is_authenticated %}
+                <a href="{% url 'register' %}" class="sa-btn sa-btn-gold"><i class="fas fa-user-plus"></i> {% trans "Create Free Account" %}</a>
+                <a href="{% url 'scheme_awareness' %}" class="sa-btn sa-btn-ghost-light"><i class="fas fa-search"></i> {% trans "Browse Schemes" %}</a>
+                {% else %}
+                <a href="{% url 'apply_assistance' %}" class="sa-btn sa-btn-gold"><i class="fas fa-paper-plane"></i> {% trans "Apply for Assistance" %}</a>
+                <a href="{% url 'dashboard' %}" class="sa-btn sa-btn-ghost-light"><i class="fas fa-gauge"></i> {% trans "Go to Dashboard" %}</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    // ---- Hero slideshow ----
+    const slides = document.querySelectorAll('.sa-slide');
+    const dotsWrap = document.getElementById('saDots');
+    let current = 0;
+    let timer = null;
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (slides.length && dotsWrap) {
+        slides.forEach((_, i) => {
+            const dot = document.createElement('button');
+            dot.className = 'sa-dot' + (i === 0 ? ' active' : '');
+            dot.type = 'button';
+            dot.setAttribute('aria-label', 'Slide ' + (i + 1));
+            dot.addEventListener('click', function() { go(i); });
+            dotsWrap.appendChild(dot);
+        });
+
+        function go(next) {
+            slides[current].classList.remove('active');
+            dotsWrap.children[current].classList.remove('active');
+            current = next;
+            slides[current].classList.add('active');
+            dotsWrap.children[current].classList.add('active');
+        }
+
+        function nextSlide() { go((current + 1) % slides.length); }
+
+        function start() {
+            if (reduceMotion) return;
+            timer = setInterval(nextSlide, 4200);
+        }
+
+        function stop() { clearInterval(timer); }
+
+        const hero = document.querySelector('.sa-hero');
+        if (hero) {
+            hero.addEventListener('mouseenter', stop);
+            hero.addEventListener('mouseleave', start);
+        }
+
+        if (!reduceMotion) {
+            window.addEventListener('scroll', function() {
+                if (window.scrollY > window.innerHeight) return;
+                const y = window.scrollY * 0.1;
+                slides.forEach(function(slide) {
+                    const img = slide.querySelector('img');
+                    if (img) img.style.transform = 'scale(1.05) translateY(' + y + 'px)';
+                });
+            }, { passive: true });
+        }
+
+        start();
+    }
+
+    // ---- Scheme detail modal ----
+    const modalEl = document.getElementById('schemeModal');
+    if (modalEl && typeof bootstrap !== 'undefined') {
+        const modal = new bootstrap.Modal(modalEl);
+
+        document.querySelectorAll('.sa-scheme-card').forEach(function(card) {
+            card.setAttribute('role', 'button');
+            card.setAttribute('tabindex', '0');
+            card.addEventListener('click', function() { openSchemeModal(card); });
+            card.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    openSchemeModal(card);
+                }
+            });
+        });
+
+        function fillList(id, value, icon) {
+            const ul = document.getElementById(id);
+            ul.innerHTML = '';
+            (value || '').split('|').filter(Boolean).forEach(function(item) {
+                const li = document.createElement('li');
+                li.innerHTML = '<i class="fas ' + icon + '"></i> ' + item.trim();
+                ul.appendChild(li);
+            });
+        }
+
+        function openSchemeModal(card) {
+            const d = card.dataset;
+            document.getElementById('schemeModalTitle').textContent = d.schemeName || '';
+
+            const chips = document.getElementById('schemeModalChips');
+            chips.innerHTML = '';
+            if (d.schemeType) {
+                const typeClass = d.schemeType === 'Central' ? 'sa-scheme-type--central' : 'sa-scheme-type--state';
+                const t = document.createElement('span');
+                t.className = 'sa-scheme-type ' + typeClass;
+                t.textContent = d.schemeType;
+                chips.appendChild(t);
+            }
+            if (d.schemeState) {
+                const s = document.createElement('span');
+                s.className = 'sa-chip';
+                s.innerHTML = '<i class="fas fa-location-dot"></i> ' + d.schemeState;
+                chips.appendChild(s);
+            }
+            if (d.schemeSupport) {
+                const sp = document.createElement('span');
+                sp.className = 'sa-chip';
+                sp.innerHTML = '<i class="fas fa-hand-holding-heart"></i> ' + d.schemeSupport;
+                chips.appendChild(sp);
+            }
+            if (d.schemeAudience) {
+                const au = document.createElement('span');
+                au.className = 'sa-chip';
+                au.innerHTML = '<i class="fas fa-user-group"></i> ' + d.schemeAudience;
+                chips.appendChild(au);
+            }
+
+            document.getElementById('schemeModalDesc').textContent = d.schemeDesc || '';
+
+            fillList('schemeModalBenefits', d.schemeBenefits, 'fa-check');
+            fillList('schemeModalDates', d.schemeDates, 'fa-calendar-days');
+            fillList('schemeModalDocs', d.schemeDocs, 'fa-file-lines');
+            fillList('schemeModalProcess', d.schemeProcess, 'fa-list-ol');
+
+            modal.show();
+        }
+    }
+})();
+</script>
+{% endblock %}

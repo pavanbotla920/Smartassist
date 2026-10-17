@@ -1,0 +1,466 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Application Status - SmartAssist" %}{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* =====================================================
+       STATUS PAGE STYLES
+       ===================================================== */
+    
+    .sa-status-bg {
+        background: var(--sa-paper);
+        min-height: calc(100vh - 72px);
+        padding: 3rem 1rem 5rem;
+    }
+
+    .sa-page-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .sa-page-header h1 {
+        font-family: var(--sa-font-display);
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--sa-ink);
+        margin-bottom: 0.5rem;
+    }
+    .sa-page-header p {
+        color: var(--sa-muted);
+        font-size: 1.1rem;
+    }
+
+    /* Filter Bar */
+    .sa-filter-bar {
+        display: flex;
+        justify-content: center;
+        gap: 0.8rem;
+        margin-bottom: 3rem;
+        flex-wrap: wrap;
+    }
+    .sa-filter-btn {
+        padding: 0.6rem 1.5rem;
+        border-radius: 99px;
+        border: 1.5px solid var(--sa-line);
+        background: #fff;
+        color: var(--sa-muted);
+        font-size: 0.9rem;
+        font-weight: 700;
+        text-decoration: none;
+        transition: var(--sa-ease);
+        cursor: pointer;
+    }
+    .sa-filter-btn:hover {
+        border-color: var(--sa-gold);
+        color: var(--sa-ink);
+    }
+    .sa-filter-btn.active {
+        background: var(--sa-ink);
+        border-color: var(--sa-ink);
+        color: #fff;
+    }
+
+    /* Application Card */
+    .sa-app-card {
+        background: var(--sa-card);
+        border: 1px solid var(--sa-line);
+        border-radius: var(--sa-radius);
+        box-shadow: var(--sa-shadow);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+        transition: var(--sa-ease);
+    }
+    .sa-app-card:hover {
+        box-shadow: var(--sa-shadow-lg);
+        border-color: rgba(217,168,78,0.4);
+    }
+
+    .sa-app-header {
+        background: rgba(250, 247, 239, 0.6);
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--sa-line);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .sa-app-title {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: var(--sa-ink);
+        margin: 0 0 0.3rem;
+    }
+
+    .sa-status-badge {
+        padding: 0.4rem 1rem;
+        border-radius: 99px;
+        font-size: 0.8rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .sa-status-badge.approved { background: rgba(31,169,113,0.15); color: #0E6B48; }
+    .sa-status-badge.rejected { background: rgba(220,53,69,0.12); color: #b91c1c; }
+    .sa-status-badge.applied { background: rgba(59,130,246,0.12); color: #1d4ed8; }
+    .sa-status-badge.submitted { background: rgba(139,92,246,0.12); color: #6d28d9; }
+    .sa-status-badge.pending { background: rgba(217,168,78,0.16); color: var(--sa-gold-deep); }
+
+    .sa-app-body {
+        padding: 1.5rem;
+    }
+
+    .sa-data-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1.2rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .sa-data-item label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: var(--sa-muted);
+        margin-bottom: 0.2rem;
+        letter-spacing: 0.5px;
+    }
+    .sa-data-item span {
+        display: block;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--sa-text);
+    }
+
+    .sa-app-footer {
+        background: #fff;
+        padding: 1rem 1.5rem;
+        border-top: 1px solid var(--sa-line);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .sa-app-footer small {
+        color: var(--sa-muted);
+        font-weight: 500;
+    }
+
+    /* Timeline Modal Styles */
+    .sa-timeline {
+        position: relative;
+        padding-left: 2rem;
+    }
+    .sa-timeline::before {
+        content: '';
+        position: absolute;
+        left: 0.6rem;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: var(--sa-line);
+    }
+    .sa-timeline-item {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+    .sa-timeline-marker {
+        position: absolute;
+        left: -2rem;
+        top: 0.2rem;
+        width: 1.2rem;
+        height: 1.2rem;
+        border-radius: 50%;
+        background: var(--sa-gold);
+        border: 3px solid #fff;
+        box-shadow: 0 0 0 1px var(--sa-line);
+    }
+    .sa-timeline-content {
+        background: var(--sa-paper);
+        padding: 1rem;
+        border-radius: var(--sa-radius-sm);
+        border: 1px solid var(--sa-line);
+    }
+    .sa-timeline-content h6 {
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+        color: var(--sa-ink);
+    }
+    .sa-timeline-content p {
+        margin: 0;
+        font-size: 0.85rem;
+        color: var(--sa-muted);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sa-status-bg">
+    <div class="container" style="max-width: 1000px;">
+        
+        <!-- Header -->
+        <div class="sa-page-header">
+            <h1><i class="fas fa-chart-line" style="color: var(--sa-gold);"></i> {% trans "My Application Status" %}</h1>
+            <p>{% trans "Track the progress of your scheme applications" %}</p>
+        </div>
+
+        <!-- Dynamic Filter Bar -->
+        <div class="sa-filter-bar">
+            <a href="{% url 'application_status' %}" class="sa-filter-btn" data-status="all">
+                {% trans "All Applications" %}
+            </a>
+            <a href="?status=Approved" class="sa-filter-btn" data-status="approved">
+                <i class="fas fa-check-circle"></i> {% trans "Approved" %}
+            </a>
+            <a href="?status=Pending" class="sa-filter-btn" data-status="pending">
+                <i class="fas fa-clock"></i> {% trans "Pending" %}
+            </a>
+            <a href="?status=Rejected" class="sa-filter-btn" data-status="rejected">
+                <i class="fas fa-times-circle"></i> {% trans "Rejected" %}
+            </a>
+        </div>
+
+        <!-- Applications List -->
+        {% if applications %}
+            <div id="applications-list">
+                {% for application in applications %}
+                
+                <!-- We add data-status to the card so JS can filter it -->
+                <div class="sa-app-card" data-app-status="{{ application.status|lower }}">
+                    
+                    <div class="sa-app-header">
+                        <div>
+                            <h5 class="sa-app-title">
+                                {% if application.scheme %}
+                                    {{ application.scheme.scheme_name }}
+                                {% else %}
+                                    {% trans "General Assistance Request" %}
+                                {% endif %}
+                            </h5>
+                            <div style="font-size: 0.85rem; color: var(--sa-muted); font-weight: 600;">
+                                <i class="fas fa-user-circle"></i> {{ application.name }} &nbsp;•&nbsp; 
+                                <i class="fas fa-calendar-alt"></i> {{ application.created_at|date:"M d, Y" }}
+                            </div>
+                        </div>
+                        
+                        <div>
+                            {% if application.status == 'Approved' %}
+                                <span class="sa-status-badge approved"><i class="fas fa-check-circle"></i> {% trans "Approved" %}</span>
+                            {% elif application.status == 'Rejected' %}
+                                <span class="sa-status-badge rejected"><i class="fas fa-times-circle"></i> {% trans "Rejected" %}</span>
+                            {% elif application.status == 'Applied' %}
+                                <span class="sa-status-badge applied"><i class="fas fa-check-double"></i> {% trans "Applied" %}</span>
+                            {% elif application.status == 'Submitted' %}
+                                <span class="sa-status-badge submitted"><i class="fas fa-paper-plane"></i> {% trans "Submitted" %}</span>
+                            {% else %}
+                                <span class="sa-status-badge pending"><i class="fas fa-clock"></i> {{ application.status }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="sa-app-body">
+                        <div class="sa-data-grid">
+                            <div class="sa-data-item">
+                                <label>{% trans "State" %}</label>
+                                <span>{{ application.state|default:"-" }}</span>
+                            </div>
+                            <div class="sa-data-item">
+                                <label>{% trans "District" %}</label>
+                                <span>{{ application.district|default:"-" }}</span>
+                            </div>
+                            <div class="sa-data-item">
+                                <label>{% trans "Age" %}</label>
+                                <span>{{ application.age|default:"-" }}</span>
+                            </div>
+                            <div class="sa-data-item">
+                                <label>{% trans "Mobile" %}</label>
+                                <span>{{ application.mobile|default:"-" }}</span>
+                            </div>
+                            <div class="sa-data-item">
+                                <label>{% trans "Category" %}</label>
+                                <span>{{ application.category|default:"-" }}</span>
+                            </div>
+                        </div>
+
+                        {% if application.application_number %}
+                        <div style="background: var(--sa-paper); border: 1px dashed rgba(11,46,36,0.2); padding: 0.75rem 1rem; border-radius: var(--sa-radius-sm); font-size: 0.85rem; font-weight: 700; color: var(--sa-ink);">
+                            <i class="fas fa-hashtag" style="color: var(--sa-gold);"></i>
+                            {% trans "Application Number:" %} {{ application.application_number }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="sa-app-footer">
+                        <small>
+                            {% if application.applied_by %}
+                                <i class="fas fa-user-shield"></i> {% trans "Handled by:" %} {{ application.applied_by.get_full_name|default:application.applied_by.username }}
+                            {% else %}
+                                <i class="fas fa-spinner fa-spin"></i> {% trans "Awaiting volunteer assignment" %}
+                            {% endif %}
+                        </small>
+                        
+                        <button class="sa-btn sa-btn-primary timeline-btn" 
+        data-application-id="{{ application.id }}" 
+        data-status="{{ application.status }}" 
+        data-date="{{ application.created_at|date:'M d, Y' }}" 
+        style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+                            <i class="fas fa-history"></i> {% trans "View Timeline" %}
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Empty Filter State (Hidden by default) -->
+            <div id="empty-filter-state" class="text-center py-5" style="display: none;">
+                <i class="fas fa-filter fa-3x mb-3" style="color: var(--sa-line);"></i>
+                <h4 style="color: var(--sa-ink); font-weight: 700;">{% trans "No applications match this filter" %}</h4>
+                <p style="color: var(--sa-muted);">{% trans "Try selecting a different status from the filter above." %}</p>
+            </div>
+
+        {% else %}
+            <!-- Global Empty State -->
+            <div class="text-center py-5">
+                <i class="fas fa-clipboard-list fa-4x mb-4" style="color: rgba(11,46,36,0.15);"></i>
+                <h3 style="color: var(--sa-ink); font-weight: 700;">{% trans "No Applications Yet" %}</h3>
+                <p style="color: var(--sa-muted); margin-bottom: 2rem;">{% trans "You haven't submitted any applications for assistance yet." %}</p>
+                <a href="{% url 'apply_assistance' %}" class="sa-btn sa-btn-gold">
+                    <i class="fas fa-plus"></i> {% trans "Apply Now" %}
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Timeline Modal -->
+<div class="modal fade" id="timelineModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: var(--sa-radius-lg); border: none; box-shadow: var(--sa-shadow-lg);">
+            <div class="modal-header" style="background: var(--sa-ink); color: white; border-radius: var(--sa-radius-lg) var(--sa-radius-lg) 0 0;">
+                <h5 class="modal-title" style="font-family: var(--sa-font-display); font-weight: 700;">
+                    <i class="fas fa-history"></i> {% trans "Application Timeline" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="timelineContent" style="padding: 2rem; background: var(--sa-paper);">
+                <!-- Timeline content will be injected via JS -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // ==========================================
+        // 1. FILTERING LOGIC
+        // ==========================================
+        const urlParams = new URLSearchParams(window.location.search);
+        const statusFilter = urlParams.get('status'); 
+        
+        if (statusFilter) {
+            const cards = document.querySelectorAll('.sa-app-card');
+            let visibleCount = 0;
+
+            document.querySelectorAll('.sa-filter-btn').forEach(btn => {
+                if (btn.dataset.status === statusFilter.toLowerCase()) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            cards.forEach(card => {
+                if (card.dataset.appStatus === statusFilter.toLowerCase()) {
+                    card.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            if (visibleCount === 0) {
+                document.getElementById('empty-filter-state').style.display = 'block';
+            }
+        } else {
+            document.querySelector('.sa-filter-btn[data-status="all"]').classList.add('active');
+        }
+
+        // ==========================================
+        // 2. DYNAMIC TIMELINE MODAL LOGIC
+        // ==========================================
+        function viewTimeline(applicationId, actualStatus, dateSubmitted) {
+            // Helper to build timeline steps
+            const buildStep = (title, desc, isActive, isCompleted, isLast) => {
+                let markerColor = isCompleted ? 'var(--sa-emerald)' : (isActive ? 'var(--sa-gold)' : '#ccc');
+                let opacity = isCompleted || isActive ? '1' : '0.5';
+                let borderStyle = isActive ? 'solid' : (isCompleted ? 'solid' : 'dashed');
+                
+                return `
+                    <div class="sa-timeline-item" style="opacity: ${opacity};">
+                        <div class="sa-timeline-marker" style="background: ${markerColor};"></div>
+                        <div class="sa-timeline-content" style="border-style: ${borderStyle};">
+                            <h6>${title}</h6>
+                            <p>${desc}</p>
+                            ${isActive ? `<small style="color: var(--sa-gold-deep); font-weight: 700; margin-top: 0.5rem; display: block;">Current Stage</small>` : ''}
+                            ${isCompleted ? `<small style="color: var(--sa-muted); margin-top: 0.5rem; display: block;">Completed</small>` : ''}
+                        </div>
+                    </div>
+                `;
+            };
+
+            let html = '<div class="sa-timeline">';
+            
+            // Step 1: Always Submitted
+            html += buildStep("Application Submitted", `Your application was received on ${dateSubmitted}.`, false, true);
+
+            // Step 2, 3, 4 based on status
+            if (actualStatus === 'Submitted') {
+                html += buildStep("Under Review", "A volunteer is currently reviewing your documents and verifying eligibility.", true, false);
+                html += buildStep("Submitted to Department", "Awaiting final review from the government department.", false, false);
+            } 
+            else if (actualStatus === 'Under Review') {
+                html += buildStep("Under Review", "A volunteer is currently reviewing your documents and verifying eligibility.", false, true);
+                html += buildStep("Submitted to Department", "Awaiting final review from the government department.", true, false);
+            }
+            else if (actualStatus === 'Applied') {
+                html += buildStep("Under Review", "Document verification completed.", false, true);
+                html += buildStep("Submitted to Department", "Application has been submitted to the government portal. Awaiting approval.", true, false);
+            }
+            else if (actualStatus === 'Approved') {
+                html += buildStep("Under Review", "Document verification completed.", false, true);
+                html += buildStep("Submitted to Department", "Application submitted successfully.", false, true);
+                html += buildStep("Approved", "Congratulations! Your application has been approved and benefits will be disbursed shortly.", false, true);
+            }
+            else if (actualStatus === 'Rejected') {
+                html += buildStep("Under Review", "Document verification completed.", false, true);
+                html += buildStep("Rejected", "Unfortunately, your application was rejected. Please contact support for more details.", false, true);
+            }
+
+            html += '</div>';
+            
+            document.getElementById('timelineContent').innerHTML = html;
+            new bootstrap.Modal(document.getElementById('timelineModal')).show();
+        }
+
+        // Attach data to buttons so JS can read it
+        document.querySelectorAll('.timeline-btn').forEach(function (button) {
+            button.addEventListener('click', function () {
+                const appId = this.dataset.applicationId;
+                const actualStatus = this.dataset.status;
+                const dateSubmitted = this.dataset.date;
+                viewTimeline(appId, actualStatus, dateSubmitted);
+            });
+        });
+    });
+</script>
+{% endblock %}

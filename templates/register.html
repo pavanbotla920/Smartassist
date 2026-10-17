@@ -1,0 +1,482 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Create Account - SmartAssist" %}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .sa-register {
+        min-height: calc(100vh - 72px);
+        display: grid;
+        grid-template-columns: 1fr 1.1fr;
+        align-items: stretch;
+    }
+
+    .sa-reg-side {
+        position: relative;
+        overflow: hidden;
+        background:
+            radial-gradient(circle at 15% 20%, rgba(217, 168, 78, 0.16), transparent 42%),
+            radial-gradient(circle at 85% 80%, rgba(31, 169, 113, 0.20), transparent 44%),
+            linear-gradient(155deg, var(--sa-ink) 0%, var(--sa-emerald) 60%, var(--sa-ink) 100%);
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 3rem 2.6rem;
+    }
+    .sa-reg-side::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image:
+            repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0 2px, transparent 2px 14px);
+        pointer-events: none;
+    }
+    .sa-reg-side > * { position: relative; }
+    .sa-reg-side .sa-kicker { color: var(--sa-gold-soft); }
+    .sa-reg-side .sa-kicker::before { background: var(--sa-gold); }
+    .sa-reg-title {
+        font-family: var(--sa-font-display);
+        font-size: clamp(1.9rem, 3.4vw, 2.8rem);
+        font-weight: 600;
+        line-height: 1.12;
+        margin: 0.9rem 0 1rem;
+        color: #fff;
+    }
+    .sa-reg-title em { color: var(--sa-gold); font-style: italic; }
+    .sa-reg-lead {
+        color: rgba(255, 255, 255, 0.88);
+        line-height: 1.75;
+        max-width: 420px;
+        font-size: 0.98rem;
+        margin-bottom: 1.8rem;
+    }
+    .sa-reg-points { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.65rem; }
+    .sa-reg-points li {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.92);
+    }
+    .sa-reg-points li i {
+        width: 26px; height: 26px;
+        border-radius: 8px;
+        background: rgba(217, 168, 78, 0.16);
+        border: 1px solid rgba(217, 168, 78, 0.4);
+        color: var(--sa-gold);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.72rem;
+        flex-shrink: 0;
+    }
+
+    .sa-reg-main {
+        background: var(--sa-paper);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 1.4rem;
+    }
+    .sa-reg-card {
+        width: 100%;
+        max-width: 460px;
+        background: var(--sa-card);
+        border: 1px solid var(--sa-line);
+        border-radius: 20px;
+        padding: 2.2rem 2rem 1.8rem;
+        box-shadow: var(--sa-shadow-lg);
+        animation: saRegIn 0.65s var(--sa-ease) both;
+    }
+    @keyframes saRegIn {
+        from { opacity: 0; transform: translateY(16px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .sa-reg-card h1 {
+        font-family: var(--sa-font-display);
+        font-size: 1.75rem;
+        font-weight: 600;
+        margin: 0 0 0.3rem;
+        color: var(--sa-ink);
+    }
+    .sa-reg-card .sa-reg-sub { color: var(--sa-muted); font-size: 0.92rem; margin: 0 0 1.6rem; }
+
+    .sa-reg-form p { margin: 0 0 1.05rem; position: relative; }
+    .sa-reg-form label {
+        display: block;
+        font-size: 0.78rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--sa-gold-deep);
+        margin-bottom: 0.35rem;
+    }
+    .sa-reg-form input[type="text"],
+    .sa-reg-form input[type="email"],
+    .sa-reg-form input[type="password"],
+    .sa-reg-form select {
+        width: 100%;
+        padding: 0.72rem 0.9rem;
+        font-family: var(--sa-font-body);
+        font-size: 0.95rem;
+        color: var(--sa-text);
+        background: var(--sa-paper);
+        border: 1.5px solid var(--sa-line);
+        border-radius: var(--sa-radius-sm);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .sa-reg-form input:focus,
+    .sa-reg-form select:focus {
+        outline: none;
+        border-color: var(--sa-leaf);
+        box-shadow: 0 0 0 3px rgba(31, 169, 113, 0.14);
+    }
+    .sa-reg-form input.sa-input-error,
+    .sa-reg-form input.sa-input-error:focus {
+        border-color: #C0392B;
+        box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.12);
+    }
+    .sa-reg-form .errorlist,
+    .sa-reg-form .errors {
+        list-style: none;
+        margin: 0.3rem 0 0;
+        padding: 0;
+        color: #C0392B;
+        font-size: 0.78rem;
+        font-weight: 600;
+    }
+
+    .sa-reg-form .helptext { display: none !important; }
+
+    .sa-pw-wrap { position: relative; }
+    .sa-pw-wrap input { padding-right: 2.8rem; }
+    .sa-pw-eye {
+        position: absolute;
+        right: 0.55rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--sa-muted);
+        cursor: pointer;
+        font-size: 0.85rem;
+        padding: 0.35rem;
+        border-radius: 8px;
+    }
+    .sa-pw-eye:hover { color: var(--sa-ink); background: var(--sa-gold-soft); }
+
+    /* Live suggestion panel */
+    .sa-pw-feedback { margin-top: 0.55rem; display: none; }
+    .sa-pw-feedback.visible { display: block; }
+    .sa-pw-feedback-track {
+        height: 6px;
+        border-radius: 99px;
+        background: var(--sa-line);
+        overflow: hidden;
+    }
+    .sa-pw-feedback-fill {
+        height: 100%;
+        width: 0;
+        border-radius: 99px;
+        background: #C0392B;
+        transition: width 0.3s var(--sa-ease), background 0.3s ease;
+    }
+    .sa-pw-list { list-style: none; margin: 0.45rem 0 0; padding: 0; display: grid; gap: 0.3rem; }
+    .sa-pw-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.45rem;
+        font-size: 0.78rem;
+        font-weight: 600;
+        line-height: 1.45;
+        color: #8E2B20;
+    }
+    .sa-pw-list li i { margin-top: 0.15rem; flex-shrink: 0; }
+    .sa-pw-list li.pass { color: #0E6B48; }
+    .sa-pw-list li.pass i { color: var(--sa-leaf); }
+
+    .sa-reg-submit { width: 100%; justify-content: center; margin-top: 0.4rem; }
+    .sa-reg-foot {
+        margin-top: 1.4rem;
+        text-align: center;
+        font-size: 0.88rem;
+        color: var(--sa-muted);
+    }
+    .sa-reg-foot a { color: var(--sa-gold-deep); font-weight: 700; text-decoration: none; }
+    .sa-reg-foot a:hover { text-decoration: underline; }
+
+    .sa-form-alert {
+        border: 1px solid rgba(192, 57, 43, 0.35);
+        background: rgba(192, 57, 43, 0.06);
+        color: #8E2B20;
+        border-radius: var(--sa-radius-sm);
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 1.2rem;
+        display: none;
+    }
+    .sa-form-alert.show { display: block; }
+
+    @media (max-width: 992px) {
+        .sa-register { grid-template-columns: 1fr; }
+        .sa-reg-side { display: none; }
+        .sa-reg-main { padding: 2.4rem 1rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .sa-reg-card { animation: none; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sa-register">
+
+    <aside class="sa-reg-side">
+        <div class="sa-kicker">{% trans "Join SmartAssist" %}</div>
+        <h2 class="sa-reg-title">{% trans "Your entitlements," %}<br><em>{% trans "not a maze." %}</em></h2>
+        <p class="sa-reg-lead">{% trans "One account unlocks AI-matched government schemes, volunteer-assisted applications, and real-time status tracking. Free, in your language." %}</p>
+        <ul class="sa-reg-points">
+            <li><i class="fas fa-brain"></i> {% trans "AI matches you to schemes you qualify for" %}</li>
+            <li><i class="fas fa-hands-helping"></i> {% trans "Verified volunteers help you apply" %}</li>
+            <li><i class="fas fa-shield-halved"></i> {% trans "Your data stays private and secure" %}</li>
+            <li><i class="fas fa-language"></i> {% trans "Available in 20+ Indian languages" %}</li>
+        </ul>
+    </aside>
+
+    <div class="sa-reg-main">
+        <div class="sa-reg-card">
+            <h1>{% trans "Create Account" %}</h1>
+            <p class="sa-reg-sub">{% trans "It takes less than two minutes. No documents needed to sign up." %}</p>
+
+            <div class="sa-form-alert" id="saFormAlert"></div>
+
+            <form method="POST" class="sa-reg-form" id="saRegForm" novalidate>
+                {% csrf_token %}
+                {{ form.as_p }}
+
+                <div class="sa-pw-feedback" id="saPwFeedback">
+                    <div class="sa-pw-feedback-track"><div class="sa-pw-feedback-fill" id="saPwFill"></div></div>
+                    <ul class="sa-pw-list" id="saPwList"></ul>
+                </div>
+
+                <button type="submit" class="sa-btn sa-btn-primary sa-reg-submit">
+                    <i class="fas fa-user-plus"></i> {% trans "Create Free Account" %}
+                </button>
+            </form>
+
+            <p class="sa-reg-foot">
+                {% trans "Already have an account?" %}
+                <a href="{% url 'login' %}">{% trans "Login here" %}</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    const form = document.getElementById('saRegForm');
+    if (!form) return;
+
+    const alertBox = document.getElementById('saFormAlert');
+    const pw = form.querySelector('input[type="password"]');
+    if (!pw) return;
+
+    // ---- Eye toggle ----
+    const wrap = document.createElement('div');
+    wrap.className = 'sa-pw-wrap';
+    pw.parentNode.insertBefore(wrap, pw);
+    wrap.appendChild(pw);
+
+    const eye = document.createElement('button');
+    eye.type = 'button';
+    eye.className = 'sa-pw-eye';
+    eye.setAttribute('aria-label', 'Show password');
+    eye.innerHTML = '<i class="fas fa-eye"></i>';
+    wrap.appendChild(eye);
+
+    eye.addEventListener('click', function() {
+        const show = pw.type === 'password';
+        pw.type = show ? 'text' : 'password';
+        eye.innerHTML = show ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+        eye.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+        pw.focus();
+    });
+
+    const userInput = form.querySelector('input[type="text"]');
+    const emailInput = form.querySelector('input[type="email"]');
+
+    // ---- Mirrors of the server-side validator. Keep both in sync. ----
+    const COMMON = ['password', 'admin', 'qwerty', 'letmein', 'welcome', 'iloveyou',
+                    '123456', '12345678', 'abc123', 'monkey', 'dragon', 'helloworld'];
+    const BLOCKED = ['password', 'admin', 'qwerty', 'letmein'];
+    const ROWS = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm', '1234567890', '1qaz2wsx'];
+
+    function deLeet(s) {
+        return s.replace(/@/g, 'a').replace(/0/g, 'o').replace(/\$/g, 's')
+                .replace(/1/g, 'l').replace(/3/g, 'e').replace(/!/g, 'i')
+                .replace(/5/g, 's').replace(/7/g, 't');
+    }
+
+    function stemOf(pw) {
+        return deLeet(pw.toLowerCase().replace(/[\d\W_]+$/, ''));
+    }
+
+    function gateCommon(pw) {
+        const low = deLeet(pw.toLowerCase());
+        const st = stemOf(pw);
+        if (COMMON.includes(low) || COMMON.includes(st)) return false;
+        return !BLOCKED.some(w => low.includes(w));
+    }
+
+    function gateIdentity(pw) {
+        const parts = [];
+        if (userInput && userInput.value) parts.push(userInput.value);
+        if (emailInput && emailInput.value) parts.push(emailInput.value.split('@')[0]);
+        const p = deLeet(pw.toLowerCase());
+        for (const raw of parts) {
+            const ident = deLeet(raw.toLowerCase());
+            if (ident.length >= 3 && (p.includes(ident) || p.includes(ident.split('').reverse().join('')))) return false;
+        }
+        return true;
+    }
+
+    function gateRepeat(pw) {
+        const p = pw.toLowerCase();
+        if (/(.)\1{2,}/.test(p)) return false;
+        return !/(.{2,4})\1+/.test(p);
+    }
+
+    function gateSequence(pw) {
+        const p = pw.toLowerCase();
+        const n = 4;
+        for (let i = 0; i <= p.length - n; i++) {
+            const chunk = p.slice(i, i + n);
+            const codes = [];
+            for (const c of chunk) codes.push(c.charCodeAt(0));
+            let asc = true, desc = true;
+            for (let j = 0; j < n - 1; j++) {
+                if (codes[j + 1] - codes[j] !== 1) asc = false;
+                if (codes[j + 1] - codes[j] !== -1) desc = false;
+            }
+            if (asc || desc) return false;
+            for (const row of ROWS) {
+                if (row.includes(chunk) || row.includes(chunk.split('').reverse().join(''))) return false;
+            }
+        }
+        return true;
+    }
+
+    // ---- Suggestion list: only what the password currently fails ----
+    function evaluate(pw) {
+        const v = pw.trim();
+        if (!v) return null;
+
+        const failed = [];
+        if (v.length < 8 || v.length > 128) failed.push('Use 8 to 128 characters.');
+        if (!gateCommon(v)) failed.push('Avoid common passwords or words like password, admin, qwerty.');
+        if (!gateIdentity(v)) failed.push('Do not include your username or email.');
+        if (!gateRepeat(v)) failed.push('Avoid repeated characters or blocks like aaa or abab.');
+        if (!gateSequence(v)) failed.push('Avoid sequences and keyboard walks like 1234, qwer, asdf.');
+
+        if (failed.length > 0) {
+            return { accepted: false, score: 0, band: 'Rejected', suggestions: failed };
+        }
+
+        let score = 1;
+        score += (v.length >= 8 ? 1 : 0) + (v.length >= 12 ? 1 : 0) + (v.length >= 16 ? 1 : 0);
+        score += (/[A-Z]/.test(v) ? 1 : 0) + (/[a-z]/.test(v) ? 1 : 0);
+        score += (/\d/.test(v) ? 1 : 0) + (/[^A-Za-z0-9\s]/.test(v) ? 1 : 0);
+
+        const band = score <= 4 ? 'Weak' : (score <= 6 ? 'Strong' : 'Excellent');
+        const suggestions = [];
+        if (score <= 6) {
+            if (v.length < 12) suggestions.push('Add more characters. Twelve or more earns extra strength.');
+            if (!/[A-Z]/.test(v) || !/[a-z]/.test(v)) suggestions.push('Mix upper and lower case letters.');
+            if (!/\d/.test(v)) suggestions.push('Add a digit.');
+            if (!/[^A-Za-z0-9\s]/.test(v)) suggestions.push('Add a symbol.');
+        }
+        return { accepted: score >= 5, score: score, band: band, suggestions: suggestions };
+    }
+
+    const feedback = document.getElementById('saPwFeedback');
+    const fill = document.getElementById('saPwFill');
+    const list = document.getElementById('saPwList');
+
+    // Move the feedback panel directly below the password field
+    if (feedback) {
+        const pwFieldP = pw.closest('p');
+        if (pwFieldP && pwFieldP.parentNode) {
+            pwFieldP.parentNode.insertBefore(feedback, pwFieldP.nextSibling);
+        }
+    }
+
+    function render() {
+        const v = pw.value;
+        if (!v.trim()) {
+            feedback.classList.remove('visible');
+            return;
+        }
+        feedback.classList.add('visible');
+        const r = evaluate(v);
+        list.innerHTML = '';
+
+        if (!r.accepted) {
+            fill.style.width = '25%';
+            fill.style.background = '#C0392B';
+            r.suggestions.forEach(function(s) {
+                const li = document.createElement('li');
+                li.innerHTML = '<i class="fas fa-circle-xmark"></i> ' + s;
+                list.appendChild(li);
+            });
+        } else {
+            fill.style.width = r.band === 'Excellent' ? '100%' : '70%';
+            fill.style.background = r.band === 'Excellent' ? '#0E6B48' : '#1FA971';
+            if (r.suggestions.length === 0) {
+                const li = document.createElement('li');
+                li.className = 'pass';
+                li.innerHTML = '<i class="fas fa-circle-check"></i> ' + r.band + ' password.';
+                list.appendChild(li);
+            } else {
+                r.suggestions.forEach(function(s) {
+                    const li = document.createElement('li');
+                    li.innerHTML = '<i class="fas fa-arrow-up"></i> ' + s;
+                    list.appendChild(li);
+                });
+            }
+        }
+    }
+
+    pw.addEventListener('input', render);
+    if (userInput) userInput.addEventListener('input', render);
+    if (emailInput) emailInput.addEventListener('input', render);
+
+    // ---- Submit guard: block with reasons, server remains the authority ----
+    form.addEventListener('submit', function(e) {
+        const r = evaluate(pw.value);
+        if (!r || !r.accepted) {
+            e.preventDefault();
+            const msg = r && r.suggestions.length
+                ? r.suggestions[0]
+                : 'Please enter a stronger password.';
+            alertBox.textContent = msg;
+            alertBox.classList.add('show');
+            pw.classList.add('sa-input-error');
+            pw.focus();
+        }
+    });
+
+    form.addEventListener('input', function() {
+        alertBox.classList.remove('show');
+        form.querySelectorAll('.sa-input-error').forEach(function(el) {
+            el.classList.remove('sa-input-error');
+        });
+    }, true);
+})();
+</script>
+{% endblock %}

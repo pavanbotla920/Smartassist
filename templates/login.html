@@ -1,0 +1,345 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Login - SmartAssist" %}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .sa-login {
+        min-height: calc(100vh - 72px);
+        display: grid;
+        grid-template-columns: 1fr 1.1fr;
+        align-items: stretch;
+    }
+
+    /* ---------- Left brand panel ---------- */
+    .sa-log-side {
+        position: relative;
+        overflow: hidden;
+        background:
+            radial-gradient(circle at 15% 20%, rgba(217, 168, 78, 0.16), transparent 42%),
+            radial-gradient(circle at 85% 80%, rgba(31, 169, 113, 0.20), transparent 44%),
+            linear-gradient(155deg, var(--sa-ink) 0%, var(--sa-emerald) 60%, var(--sa-ink) 100%);
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 3rem 2.6rem;
+    }
+    .sa-log-side::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image:
+            repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0 2px, transparent 2px 14px);
+        pointer-events: none;
+    }
+    .sa-log-side > * { position: relative; }
+    .sa-log-side .sa-kicker { color: var(--sa-gold-soft); }
+    .sa-log-side .sa-kicker::before { background: var(--sa-gold); }
+    .sa-log-title {
+        font-family: var(--sa-font-display);
+        font-size: clamp(1.9rem, 3.4vw, 2.8rem);
+        font-weight: 600;
+        line-height: 1.12;
+        margin: 0.9rem 0 1rem;
+        color: #fff;
+    }
+    .sa-log-title em { color: var(--sa-gold); font-style: italic; }
+    .sa-log-lead {
+        color: rgba(255, 255, 255, 0.88);
+        line-height: 1.75;
+        max-width: 420px;
+        font-size: 0.98rem;
+        margin-bottom: 1.8rem;
+    }
+    .sa-log-points { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.65rem; }
+    .sa-log-points li {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.92);
+    }
+    .sa-log-points li i {
+        width: 26px; height: 26px;
+        border-radius: 8px;
+        background: rgba(217, 168, 78, 0.16);
+        border: 1px solid rgba(217, 168, 78, 0.4);
+        color: var(--sa-gold);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.72rem;
+        flex-shrink: 0;
+    }
+
+    /* ---------- Right form panel ---------- */
+    .sa-log-main {
+        background: var(--sa-paper);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 1.4rem;
+    }
+    .sa-log-card {
+        width: 100%;
+        max-width: 440px;
+        background: var(--sa-card);
+        border: 1px solid var(--sa-line);
+        border-radius: 20px;
+        padding: 2.2rem 2rem 1.8rem;
+        box-shadow: var(--sa-shadow-lg);
+        animation: saLogIn 0.65s var(--sa-ease) both;
+    }
+    @keyframes saLogIn {
+        from { opacity: 0; transform: translateY(16px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .sa-log-card h1 {
+        font-family: var(--sa-font-display);
+        font-size: 1.75rem;
+        font-weight: 600;
+        margin: 0 0 0.3rem;
+        color: var(--sa-ink);
+    }
+    .sa-log-card .sa-log-sub { color: var(--sa-muted); font-size: 0.92rem; margin: 0 0 1.6rem; }
+
+    /* Django form restyling */
+    .sa-log-form p { margin: 0 0 1.05rem; position: relative; }
+    .sa-log-form label {
+        display: block;
+        font-size: 0.78rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--sa-gold-deep);
+        margin-bottom: 0.35rem;
+    }
+    .sa-log-form input[type="text"],
+    .sa-log-form input[type="email"],
+    .sa-log-form input[type="password"] {
+        width: 100%;
+        padding: 0.72rem 0.9rem;
+        font-family: var(--sa-font-body);
+        font-size: 0.95rem;
+        color: var(--sa-text);
+        background: var(--sa-paper);
+        border: 1.5px solid var(--sa-line);
+        border-radius: var(--sa-radius-sm);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .sa-log-form input:focus {
+        outline: none;
+        border-color: var(--sa-leaf);
+        box-shadow: 0 0 0 3px rgba(31, 169, 113, 0.14);
+    }
+    .sa-log-form input.sa-input-error,
+    .sa-log-form input.sa-input-error:focus {
+        border-color: #C0392B;
+        box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.12);
+    }
+    .sa-log-form .errorlist,
+    .sa-log-form .errors {
+        list-style: none;
+        margin: 0.3rem 0 0;
+        padding: 0;
+        color: #C0392B;
+        font-size: 0.78rem;
+        font-weight: 600;
+    }
+    .sa-log-form .helptext { display: none; }
+
+    /* Django non-field errors ("invalid credentials") */
+    .sa-log-alert {
+        border: 1px solid rgba(192, 57, 43, 0.35);
+        background: rgba(192, 57, 43, 0.06);
+        color: #8E2B20;
+        border-radius: var(--sa-radius-sm);
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 1.2rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    .sa-log-alert i { margin-top: 0.15rem; }
+
+    /* Password field with eye toggle */
+    .sa-pw-wrap { position: relative; }
+    .sa-pw-wrap input { padding-right: 2.8rem; }
+    .sa-pw-eye {
+        position: absolute;
+        right: 0.55rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--sa-muted);
+        cursor: pointer;
+        font-size: 0.85rem;
+        padding: 0.35rem;
+        border-radius: 8px;
+    }
+    .sa-pw-eye:hover { color: var(--sa-ink); background: var(--sa-gold-soft); }
+
+    /* Inline empty-field message */
+    .sa-log-empty {
+        display: none;
+        margin: 0.2rem 0 1rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #C0392B;
+    }
+    .sa-log-empty.show { display: block; }
+
+    /* Forgot row */
+    .sa-log-row {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        margin: -0.2rem 0 1.3rem;
+    }
+    .sa-log-forgot {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: var(--sa-gold-deep);
+        text-decoration: none;
+    }
+    .sa-log-forgot:hover { text-decoration: underline; }
+
+    .sa-log-submit { width: 100%; justify-content: center; }
+    .sa-log-foot {
+        margin-top: 1.4rem;
+        text-align: center;
+        font-size: 0.88rem;
+        color: var(--sa-muted);
+    }
+    .sa-log-foot a { color: var(--sa-gold-deep); font-weight: 700; text-decoration: none; }
+    .sa-log-foot a:hover { text-decoration: underline; }
+
+    @media (max-width: 992px) {
+        .sa-login { grid-template-columns: 1fr; }
+        .sa-log-side { display: none; }
+        .sa-log-main { padding: 2.4rem 1rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .sa-log-card { animation: none; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sa-login">
+
+    <!-- Brand panel -->
+    <aside class="sa-log-side">
+        <div class="sa-kicker">{% trans "Welcome back" %}</div>
+        <h2 class="sa-log-title">{% trans "Your applications," %}<br><em>{% trans "still moving." %}</em></h2>
+        <p class="sa-log-lead">{% trans "Log in to track your scheme applications in real time, see what our volunteers are doing on your behalf, and pick up exactly where you left off." %}</p>
+        <ul class="sa-log-points">
+            <li><i class="fas fa-clock-rotate-left"></i> {% trans "Live application status and history" %}</li>
+            <li><i class="fas fa-hands-helping"></i> {% trans "See volunteer actions on your requests" %}</li>
+            <li><i class="fas fa-bell"></i> {% trans "Notifications the moment a status changes" %}</li>
+            <li><i class="fas fa-key"></i> {% trans "Forgot your password? Recovery is one link away" %}</li>
+        </ul>
+    </aside>
+
+    <!-- Form panel -->
+    <div class="sa-log-main">
+        <div class="sa-log-card">
+            <h1>{% trans "Login" %}</h1>
+            <p class="sa-log-sub">{% trans "Use the account you registered with." %}</p>
+
+            {% if form.errors %}
+                <div class="sa-log-alert">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>{% trans "Invalid username or password. Please check your credentials." %}</span>
+                </div>
+            {% endif %}
+
+            <form method="POST" class="sa-log-form" id="saLoginForm" novalidate>
+                {% csrf_token %}
+                {{ form.as_p }}
+
+                <p class="sa-log-empty" id="saLogEmpty">{% trans "Please fill in both username and password." %}</p>
+
+                <div class="sa-log-row">
+                    <a href="{% url 'password_reset' %}" class="sa-log-forgot">
+                        <i class="fas fa-key"></i> {% trans "Forgot password?" %}
+                    </a>
+                </div>
+
+                <button type="submit" class="sa-btn sa-btn-primary sa-log-submit">
+                    <i class="fas fa-sign-in-alt"></i> {% trans "Login" %}
+                </button>
+            </form>
+
+            <p class="sa-log-foot">
+                {% trans "Don't have an account?" %}
+                <a href="{% url 'register' %}">{% trans "Register here" %}</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    const form = document.getElementById('saLoginForm');
+    if (!form) return;
+
+    const pw = form.querySelector('input[type="password"]');
+
+    // ---- Eye toggle on the password field ----
+    if (pw) {
+        const wrap = document.createElement('div');
+        wrap.className = 'sa-pw-wrap';
+        pw.parentNode.insertBefore(wrap, pw);
+        wrap.appendChild(pw);
+
+        const eye = document.createElement('button');
+        eye.type = 'button';
+        eye.className = 'sa-pw-eye';
+        eye.setAttribute('aria-label', 'Show password');
+        eye.innerHTML = '<i class="fas fa-eye"></i>';
+        wrap.appendChild(eye);
+
+        eye.addEventListener('click', function() {
+            const show = pw.type === 'password';
+            pw.type = show ? 'text' : 'password';
+            eye.innerHTML = show ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+            eye.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+            pw.focus();
+        });
+    }
+
+    // ---- Inline empty-field feedback (no server round-trip) ----
+    const emptyMsg = document.getElementById('saLogEmpty');
+
+    form.addEventListener('submit', function(e) {
+        const fields = form.querySelectorAll('input[type="text"], input[type="password"]');
+        let empty = null;
+        fields.forEach(function(f) {
+            if (!f.value.trim() && !empty) empty = f;
+        });
+        if (empty) {
+            e.preventDefault();
+            empty.classList.add('sa-input-error');
+            empty.focus();
+            if (emptyMsg) emptyMsg.classList.add('show');
+        }
+    });
+
+    form.querySelectorAll('input').forEach(function(f) {
+        f.addEventListener('input', function() {
+            f.classList.remove('sa-input-error');
+            if (emptyMsg) emptyMsg.classList.remove('show');
+        });
+    });
+})();
+</script>
+{% endblock %}

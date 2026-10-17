@@ -1,0 +1,23 @@
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+
+<div class="site-language-selector d-flex align-items-center gap-2 me-3">
+    <!-- Replaced text with a globe icon -->
+    <label for="site-language" class="site-language-label mb-0" style="color: #ffffff; font-size: 1.1rem;">
+        <i class="fas fa-globe" aria-hidden="true"></i>
+        <span class="visually-hidden">{% trans "Website language" %}</span>
+    </label>
+    
+    <select
+        id="site-language"
+        class="site-language-select"
+        data-site-language
+        data-set-language-url="{% url 'set_language' %}"
+        aria-label="{% trans 'Select website language' %}"
+    >
+        <option value="en" {% if LANGUAGE_CODE == 'en' %}selected{% endif %}>English</option>
+        <option value="hi" {% if LANGUAGE_CODE == 'hi' %}selected{% endif %}>हिन्दी (Hindi)</option>
+        <option value="mr" {% if LANGUAGE_CODE == 'mr' %}selected{% endif %}>मराठी (Marathi)</option>
+        <option value="te" {% if LANGUAGE_CODE == 'te' %}selected{% endif %}>తెలుగు (Telugu)</option>
+    </select>
+</div>

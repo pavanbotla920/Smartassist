@@ -1,0 +1,366 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Settings - SmartAssist" %}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .sa-settings-bg {
+        background: var(--sa-paper);
+        min-height: calc(100vh - 72px);
+        padding: 3rem 1rem 5rem;
+    }
+
+    .sa-settings-layout {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 2rem;
+        max-width: 1100px;
+        margin: 0 auto;
+        align-items: start;
+    }
+    @media (max-width: 900px) {
+        .sa-settings-layout { grid-template-columns: 1fr; }
+    }
+
+    /* Sidebar */
+    .sa-settings-sidebar {
+        background: var(--sa-card);
+        border: 1px solid var(--sa-line);
+        border-radius: var(--sa-radius);
+        padding: 1.5rem;
+        box-shadow: var(--sa-shadow);
+        position: sticky;
+        top: 100px;
+    }
+    .sa-settings-sidebar h4 {
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: var(--sa-ink);
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid rgba(11,46,36,0.06);
+    }
+
+    .sa-settings-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+    .sa-settings-nav a {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        padding: 0.8rem 1rem;
+        border-radius: var(--sa-radius-sm);
+        color: var(--sa-muted);
+        font-weight: 600;
+        text-decoration: none;
+        transition: var(--sa-ease);
+    }
+    .sa-settings-nav a:hover {
+        background: var(--sa-paper);
+        color: var(--sa-ink);
+    }
+    .sa-settings-nav a.active {
+        background: rgba(31,169,113,0.12);
+        color: var(--sa-emerald);
+        font-weight: 800;
+    }
+
+    /* Main Content Panel */
+    .sa-settings-content {
+        background: var(--sa-card);
+        border: 1px solid var(--sa-line);
+        border-radius: var(--sa-radius);
+        padding: 2.5rem;
+        box-shadow: var(--sa-shadow);
+    }
+    
+    .sa-settings-title {
+        font-family: var(--sa-font-display);
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--sa-ink);
+        margin-bottom: 0.5rem;
+    }
+    .sa-settings-subtitle {
+        font-size: 0.95rem;
+        color: var(--sa-muted);
+        margin-bottom: 2.5rem;
+    }
+
+    /* Setting Rows */
+    .sa-setting-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem;
+        background: var(--sa-paper);
+        border: 1px solid var(--sa-line);
+        border-radius: var(--sa-radius-sm);
+        margin-bottom: 1.2rem;
+        transition: var(--sa-ease);
+    }
+    .sa-setting-row:hover {
+        border-color: var(--sa-gold);
+    }
+
+    .sa-setting-info h5 {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: var(--sa-ink);
+        margin: 0 0 0.3rem;
+    }
+    .sa-setting-info p {
+        font-size: 0.85rem;
+        color: var(--sa-muted);
+        margin: 0;
+    }
+
+    /* Form Controls */
+    .sa-setting-control select,
+    .sa-setting-control input[type="range"] {
+        padding: 0.6rem 1rem;
+        border: 1px solid var(--sa-line);
+        border-radius: var(--sa-radius-sm);
+        background: #fff;
+        color: var(--sa-text);
+        font-weight: 600;
+        font-size: 0.9rem;
+        outline: none;
+        cursor: pointer;
+        min-width: 160px;
+    }
+    .sa-setting-control select:focus {
+        border-color: var(--sa-emerald);
+    }
+
+    /* Toggle Switch */
+    .sa-switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 26px;
+    }
+    .sa-switch input { 
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .sa-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 34px;
+    }
+    .sa-slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+    .sa-switch input:checked + .sa-slider {
+        background-color: var(--sa-emerald);
+    }
+    .sa-switch input:checked + .sa-slider:before {
+        transform: translateX(24px);
+    }
+
+    /* Save Button */
+    .sa-save-btn {
+        margin-top: 2rem;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    @media (max-width: 600px) {
+        .sa-setting-row { flex-direction: column; align-items: flex-start; gap: 1rem; }
+        .sa-setting-control { width: 100%; }
+        .sa-setting-control select { width: 100%; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sa-settings-bg">
+    <div class="sa-settings-layout">
+        
+        <!-- Sidebar -->
+        <aside class="sa-settings-sidebar">
+            <h4><i class="fas fa-sliders-h" style="color: var(--sa-gold);"></i> {% trans "Settings" %}</h4>
+            <nav class="sa-settings-nav">
+                <a href="#general" class="active" onclick="switchTab(event, 'general')">
+                    <i class="fas fa-cog"></i> {% trans "General" %}
+                </a>
+                <a href="#notifications" onclick="switchTab(event, 'notifications')">
+                    <i class="fas fa-bell"></i> {% trans "Notifications" %}
+                </a>
+                <a href="#voice" onclick="switchTab(event, 'voice')">
+                    <i class="fas fa-microphone"></i> {% trans "Voice & Audio" %}
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="sa-settings-content">
+            
+            <!-- GENERAL TAB -->
+            <div id="tab-general" class="sa-tab-content">
+                <h2 class="sa-settings-title">{% trans "General Settings" %}</h2>
+                <p class="sa-settings-subtitle">{% trans "Manage your language, appearance, and font preferences." %}</p>
+
+                <div class="sa-setting-row">
+                    <div class="sa-setting-info">
+                        <h5>{% trans "Language" %}</h5>
+                        <p>{% trans "Select the language for the app UI." %}</p>
+                    </div>
+                    <div class="sa-setting-control">
+                        <select>
+                            <option>English</option>
+                            <option>हिन्दी (Hindi)</option>
+                            <option>मराठी (Marathi)</option>
+                            <option>తెలుగు (Telugu)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="sa-setting-row">
+                    <div class="sa-setting-info">
+                        <h5>{% trans "Appearance" %}</h5>
+                        <p>{% trans "Choose between light and dark mode." %}</p>
+                    </div>
+                    <div class="sa-setting-control">
+                        <select>
+                            <option>Light (Default)</option>
+                            <option>Dark</option>
+                            <option>System Default</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="sa-setting-row">
+                    <div class="sa-setting-info">
+                        <h5>{% trans "Font Size" %}</h5>
+                        <p>{% trans "Adjust the text size for better readability." %}</p>
+                    </div>
+                    <div class="sa-setting-control">
+                        <select>
+                            <option>Small</option>
+                            <option selected>Normal</option>
+                            <option>Large</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="sa-save-btn">
+                    <button class="sa-btn sa-btn-primary">{% trans "Save Changes" %}</button>
+                </div>
+            </div>
+
+            <!-- NOTIFICATIONS TAB -->
+            <div id="tab-notifications" class="sa-tab-content" style="display: none;">
+                <h2 class="sa-settings-title">{% trans "Notification Settings" %}</h2>
+                <p class="sa-settings-subtitle">{% trans "Control how and when you receive alerts." %}</p>
+
+                <div class="sa-setting-row">
+                    <div class="sa-setting-info">
+                        <h5>{% trans "Email Notifications" %}</h5>
+                        <p>{% trans "Receive updates when your application status changes." %}</p>
+                    </div>
+                    <div class="sa-setting-control">
+                        <label class="sa-switch">
+                            <input type="checkbox" checked>
+                            <span class="sa-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="sa-setting-row">
+                    <div class="sa-setting-info">
+                        <h5>{% trans "SMS Alerts" %}</h5>
+                        <p>{% trans "Get text messages for urgent deadlines." %}</p>
+                    </div>
+                    <div class="sa-setting-control">
+                        <label class="sa-switch">
+                            <input type="checkbox">
+                            <span class="sa-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="sa-save-btn">
+                    <button class="sa-btn sa-btn-primary">{% trans "Save Changes" %}</button>
+                </div>
+            </div>
+
+            <!-- VOICE TAB -->
+            <div id="tab-voice" class="sa-tab-content" style="display: none;">
+                <h2 class="sa-settings-title">{% trans "Voice & Audio" %}</h2>
+                <p class="sa-settings-subtitle">{% trans "Manage the AI voice assistant settings." %}</p>
+
+                <div class="sa-setting-row">
+                    <div class="sa-setting-info">
+                        <h5>{% trans "Voice Language" %}</h5>
+                        <p>{% trans "The language the AI assistant will speak in." %}</p>
+                    </div>
+                    <div class="sa-setting-control">
+                        <select>
+                            <option>Auto Detect</option>
+                            <option>English</option>
+                            <option>Hindi</option>
+                            <option>Marathi</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="sa-setting-row">
+                    <div class="sa-setting-info">
+                        <h5>{% trans "Auto-play Responses" %}</h5>
+                        <p>{% trans "Automatically speak the AI answers out loud." %}</p>
+                    </div>
+                    <div class="sa-setting-control">
+                        <label class="sa-switch">
+                            <input type="checkbox" checked>
+                            <span class="sa-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="sa-save-btn">
+                    <button class="sa-btn sa-btn-primary">{% trans "Save Changes" %}</button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function switchTab(event, tabId) {
+        // Prevent default link behavior
+        event.preventDefault();
+        
+        // Remove active class from all links
+        document.querySelectorAll('.sa-settings-nav a').forEach(link => link.classList.remove('active'));
+        
+        // Add active class to clicked link
+        event.currentTarget.classList.add('active');
+        
+        // Hide all tabs
+        document.querySelectorAll('.sa-tab-content').forEach(tab => tab.style.display = 'none');
+        
+        // Show the selected tab
+        document.getElementById('tab-' + tabId).style.display = 'block';
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Government Schemes" %} — SmartAssist{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    .sa-schemes-bg { background: var(--sa-paper); min-height: calc(100vh - 72px); padding: 2rem 1rem 5rem; }
+    
+    /* Map Container */
+    .sa-map-container {
+        max-width: 1240px;
+        margin: 0 auto 2.5rem;
+        background: var(--sa-card);
+        border: 1px solid var(--sa-line);
+        border-radius: var(--sa-radius-lg);
+        padding: 1.5rem;
+        box-shadow: var(--sa-shadow);
+    }
+    #india-map { height: 450px; border-radius: var(--sa-radius); border: 1px solid var(--sa-line); z-index: 1; }
+    
+    /* Main Layout */
+    .sa-main-layout {
+        max-width: 1240px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 2rem;
+        align-items: start;
+    }
+    @media (max-width: 992px) {
+        .sa-main-layout { grid-template-columns: 1fr; }
+    }
+
+    /* Sidebar Filters */
+    .sa-sidebar {
+        background: var(--sa-card);
+        border: 1px solid var(--sa-line);
+        border-radius: var(--sa-radius);
+        padding: 1.5rem;
+        box-shadow: var(--sa-shadow);
+        position: sticky;
+        top: 100px;
+    }
+    .sa-sidebar h4 { font-size: 1rem; font-weight: 800; color: var(--sa-ink); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--sa-line); }
+    
+    /* Scheme Cards */
+    .sa-grid-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+    .sa-card {
+        background: var(--sa-card);
+        border: 1px solid var(--sa-line);
+        border-top: 4px solid var(--sa-gold);
+        border-radius: var(--sa-radius);
+        padding: 1.5rem;
+        box-shadow: var(--sa-shadow);
+        display: flex;
+        flex-direction: column;
+        transition: var(--sa-ease);
+    }
+    .sa-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--sa-shadow-lg);
+        border-top-color: var(--sa-emerald);
+    }
+    .sa-card-title { font-size: 1.1rem; font-weight: 800; color: var(--sa-ink); margin-bottom: 0.5rem; line-height: 1.3; }
+    .sa-card-desc { font-size: 0.85rem; color: var(--sa-muted); margin-bottom: 1rem; flex-grow: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    
+    .sa-badge {
+        display: inline-flex; padding: 0.2rem 0.6rem; border-radius: 99px;
+        font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .sa-badge.central { background: rgba(31,169,113,0.12); color: #0E6B48; }
+    .sa-badge.state { background: rgba(217,168,78,0.16); color: var(--sa-gold-deep); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sa-schemes-bg">
+    
+    <!-- Interactive Map Section -->
+    <div class="sa-map-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <h2 style="font-family: var(--sa-font-display); font-size: 1.5rem; font-weight: 700; color: var(--sa-ink); margin: 0;">
+                    <i class="fas fa-map-marker-alt" style="color: var(--sa-gold);"></i> {% trans "Explore by State" %}
+                </h2>
+                <p style="font-size: 0.9rem; color: var(--sa-muted); margin: 0;">{% trans "Click on any state to instantly filter the schemes below." %}</p>
+            </div>
+            <div style="font-size: 0.85rem; font-weight: 700; color: var(--sa-gold-deep); background: var(--sa-gold-soft); padding: 0.4rem 1rem; border-radius: 99px;">
+                <span id="map-selected-state">India</span>
+            </div>
+        </div>
+        <div id="india-map"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="sa-main-layout">
+        
+        <!-- Sidebar -->
+        <aside class="sa-sidebar">
+            <h4><i class="fas fa-filter"></i> {% trans "Filters" %}</h4>
+            <form method="GET" action="{% url 'scheme_awareness' %}" id="filterForm">
+                
+                <div style="margin-bottom: 1.2rem;">
+                    <label style="font-size: 0.8rem; font-weight: 800; color: var(--sa-muted); text-transform: uppercase;">{% trans "Search" %}</label>
+                    <input type="text" name="q" value="{{ search_query }}" placeholder="Search schemes..." style="width: 100%; padding: 0.6rem; border: 1px solid var(--sa-line); border-radius: var(--sa-radius-sm);">
+                </div>
+
+                <div style="margin-bottom: 1.2rem;">
+                    <label style="font-size: 0.8rem; font-weight: 800; color: var(--sa-muted); text-transform: uppercase;">{% trans "State" %}</label>
+                    <select name="state" id="filter-state" style="width: 100%; padding: 0.6rem; border: 1px solid var(--sa-line); border-radius: var(--sa-radius-sm);">
+                        <option value="">All States</option>
+                        {% for s in states %}
+                        <option value="{{ s }}" {% if state_filter == s %}selected{% endif %}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 1.2rem;">
+                    <label style="font-size: 0.8rem; font-weight: 800; color: var(--sa-muted); text-transform: uppercase;">{% trans "Scheme Type" %}</label>
+                    <select name="type" style="width: 100%; padding: 0.6rem; border: 1px solid var(--sa-line); border-radius: var(--sa-radius-sm);">
+                        <option value="">All Types</option>
+                        <option value="Central" {% if type_filter == 'Central' %}selected{% endif %}>Central</option>
+                        <option value="State" {% if type_filter == 'State' %}selected{% endif %}>State</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="sa-btn sa-btn-primary" style="width: 100%; justify-content: center;">{% trans "Apply Filters" %}</button>
+                <a href="{% url 'scheme_awareness' %}" style="display: block; text-align: center; margin-top: 0.8rem; font-size: 0.85rem; color: var(--sa-muted); text-decoration: none;">{% trans "Clear All" %}</a>
+            </form>
+        </aside>
+
+        <!-- Scheme List -->
+        <section>
+            <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="font-size: 1.2rem; font-weight: 800; color: var(--sa-ink); margin: 0;">
+                    {% blocktrans count count=schemes|length %}Showing {{ count }} scheme{% plural %}Showing {{ count }} schemes{% endblocktrans %}
+                </h3>
+            </div>
+
+            <div class="sa-grid-cards">
+                {% for scheme in schemes %}
+                <div class="sa-card">
+                    <div style="margin-bottom: 0.8rem;">
+                        <span class="sa-badge {% if scheme.scheme_type == 'Central' %}central{% else %}state{% endif %}">{{ scheme.scheme_type }}</span>
+                    </div>
+                    <h4 class="sa-card-title">{{ scheme.scheme_name }}</h4>
+                    <p class="sa-card-desc">{{ scheme.description|default:"Details available on the official portal." }}</p>
+                    
+                    <div style="display: flex; gap: 0.5rem; margin-top: auto;">
+                        <a href="{% url 'scheme_detail' scheme.id %}" class="sa-btn sa-btn-primary" style="flex: 1; justify-content: center; font-size: 0.85rem;">{% trans "View Details" %}</a>
+                        <a href="{% url 'apply_assistance' %}?scheme_id={{ scheme.id }}" class="sa-btn sa-btn-gold" style="flex: 1; justify-content: center; font-size: 0.85rem;">{% trans "Apply" %}</a>
+                    </div>
+                </div>
+                {% empty %}
+                <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+                    <p style="color: var(--sa-muted);">{% trans "No schemes found matching your criteria." %}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const map = L.map('india-map', {
+            center: [22.0, 79.0],
+            zoom: 5,
+            minZoom: 4,
+            maxZoom: 7,
+            scrollWheelZoom: false
+        });
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap &copy; CARTO'
+        }).addTo(map);
+
+        // This fetches your india_states.geojson file
+        fetch('{% static "india_states.geojson" %}')
+            .then(response => response.json())
+            .then(data => {
+                L.geoJSON(data, {
+                    style: {
+                        color: '#1FA971', // Green border
+                        weight: 1.5,
+                        fillColor: '#D9A84E', // Gold fill
+                        fillOpacity: 0.2
+                    },
+                    onEachFeature: function(feature, layer) {
+                        const stateName = feature.properties.name || feature.properties.ST_NM;
+                        
+                        layer.on({
+                            mouseover: function(e) {
+                                const l = e.target;
+                                l.setStyle({ fillOpacity: 0.5, weight: 2 });
+                                l.bindTooltip(stateName, { sticky: true }).openTooltip();
+                            },
+                            mouseout: function(e) {
+                                const l = e.target;
+                                l.setStyle({ fillOpacity: 0.2, weight: 1.5 });
+                            },
+                            click: function(e) {
+                                // When clicked, it changes the dropdown in the sidebar and submits the form!
+                                document.getElementById('map-selected-state').textContent = stateName;
+                                const stateSelect = document.getElementById('filter-state');
+                                stateSelect.value = stateName;
+                                document.getElementById('filterForm').submit();
+                            }
+                        });
+                    }
+                }).addTo(map);
+            })
+            .catch(err => console.error("Map data error:", err));
+    });
+</script>
+{% endblock %}

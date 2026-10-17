@@ -1,0 +1,445 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "My Profile - SmartAssist" %}{% endblock %}
+
+{% block extra_head %}
+<!-- Select2 CSS for searchable dropdowns -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
+<style>
+    .sa-profile-bg { background: var(--sa-paper); min-height: calc(100vh - 72px); padding: 3rem 1rem 5rem; }
+    .sa-profile-layout { display: grid; grid-template-columns: 320px 1fr; gap: 2rem; align-items: start; max-width: 1100px; margin: 0 auto; }
+    @media (max-width: 900px) { .sa-profile-layout { grid-template-columns: 1fr; } }
+
+    .sa-alert-box { background: rgba(220,53,69,0.1); border: 1px solid rgba(220,53,69,0.3); border-left: 4px solid #dc3545; color: #b91c1c; padding: 1rem 1.5rem; border-radius: var(--sa-radius-sm); margin-bottom: 2rem; display: flex; align-items: center; gap: 1rem; font-weight: 600; }
+    .sa-alert-box i { font-size: 1.5rem; }
+
+    .sa-summary-card { background: var(--sa-card); border: 1px solid var(--sa-line); border-radius: var(--sa-radius); box-shadow: var(--sa-shadow); padding: 2rem; text-align: center; position: sticky; top: 100px; }
+    @media (max-width: 900px) { .sa-summary-card { position: static; } }
+
+    .sa-avatar-lg { width: 110px; height: 110px; border-radius: 50%; background: linear-gradient(135deg, var(--sa-emerald), var(--sa-ink)); color: #fff; font-size: 3rem; font-weight: 700; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.2rem; box-shadow: 0 10px 25px rgba(11,46,36,0.25); border: 4px solid #fff; overflow: hidden; }
+    .sa-avatar-lg img { width: 100%; height: 100%; object-fit: cover; }
+    
+    .sa-summary-card h3 { font-family: var(--sa-font-display); font-size: 1.5rem; font-weight: 700; color: var(--sa-ink); margin-bottom: 0.2rem; }
+    .sa-user-role { display: inline-block; background: rgba(217,168,78,0.15); color: var(--sa-gold-deep); font-size: 0.75rem; font-weight: 800; text-transform: uppercase; padding: 0.3rem 0.8rem; border-radius: 99px; margin-bottom: 1.5rem; }
+    
+    .sa-completeness-box { background: var(--sa-paper); border: 1px dashed rgba(11,46,36,0.2); border-radius: var(--sa-radius-sm); padding: 1rem; text-align: left; margin-bottom: 1.5rem; }
+    .sa-completeness-box p { font-size: 0.85rem; font-weight: 600; color: var(--sa-muted); margin-bottom: 0.5rem; }
+    .sa-progress-track { height: 8px; background: rgba(11,46,36,0.1); border-radius: 99px; overflow: hidden; }
+    .sa-progress-fill { height: 100%; background: linear-gradient(90deg, var(--sa-emerald), var(--sa-leaf)); border-radius: 99px; transition: width 0.5s ease; }
+
+    .sa-photo-upload { display: flex; justify-content: center; margin-bottom: 1rem; }
+
+    .sa-form-card { background: var(--sa-card); border: 1px solid var(--sa-line); border-radius: var(--sa-radius); box-shadow: var(--sa-shadow); padding: 2.5rem; }
+    .sa-form-section { margin-bottom: 2.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid rgba(11,46,36,0.06); }
+    .sa-form-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .sa-form-section-title { font-size: 1.1rem; font-weight: 800; color: var(--sa-ink); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; }
+    .sa-form-section-title i { color: var(--sa-gold); }
+    
+    .sa-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+    @media (max-width: 600px) { .sa-form-grid { grid-template-columns: 1fr; } }
+    .sa-input-group { display: flex; flex-direction: column; }
+    .sa-required { color: #dc3545; font-weight: 800; margin-left: 2px; }
+
+    .sa-form-card label { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--sa-muted); margin-bottom: 0.4rem; }
+    .sa-form-card input, .sa-form-card select { width: 100%; padding: 0.75rem 1rem; font-family: var(--sa-font-body); font-size: 0.95rem; color: var(--sa-text); background: var(--sa-paper); border: 1.5px solid var(--sa-line); border-radius: var(--sa-radius-sm); transition: var(--sa-ease); }
+    .sa-form-card input:focus, .sa-form-card select:focus { outline: none; border-color: var(--sa-emerald); background: #fff; box-shadow: 0 0 0 3px rgba(31,169,113,0.15); }
+    .sa-form-card .errorlist { color: #dc3545; font-size: 0.75rem; font-weight: 600; margin-top: 0.3rem; list-style: none; padding: 0; }
+    .sa-btn-save { width: 100%; padding: 1rem; font-size: 1rem; font-weight: 700; margin-top: 1rem; justify-content: center; }
+
+    /* Fix Select2 dark theme visual integration */
+    .select2-container--bootstrap-5 .select2-selection {
+        background-color: var(--sa-paper) !important;
+        border: 1.5px solid var(--sa-line) !important;
+        border-radius: var(--sa-radius-sm) !important;
+        min-height: 42px !important;
+        padding: 0.35rem 1rem !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- EMBED LOCATION DATA FOR JS -->
+<script id="location-data" type="application/json">{{ location_json|safe }}</script>
+
+<div class="sa-profile-bg">
+    <div class="sa-profile-layout">
+        
+        <!-- LEFT: Summary -->
+        <div class="sa-summary-card">
+            <div class="sa-avatar-lg">
+                {% if user.userprofile.photo %}
+                    <img src="{{ user.userprofile.photo.url }}" alt="Profile Photo" id="profile-photo-img">
+                {% else %}
+                    <span id="profile-initials">{{ user.first_name|first|default:user.username|first|upper }}</span>
+                {% endif %}
+            </div>
+            <h3>{{ user.get_full_name|default:user.username }}</h3>
+            <div class="sa-user-role">{{ user.userprofile.role|default:"Citizen" }}</div>
+            
+            <div class="sa-photo-upload">
+                <label for="photo-input" class="sa-btn sa-btn-primary" style="padding: 0.5rem 1rem; font-size: 0.8rem; cursor: pointer;">
+                    <i class="fas fa-camera"></i> {% trans "Change Photo" %}
+                </label>
+            </div>
+
+            <div class="sa-completeness-box">
+                <p>{% trans "Profile Completeness" %}: <span id="completeness-text">{{ user.userprofile.get_completeness }}%</span></p>
+                <div class="sa-progress-track">
+                    <div class="sa-progress-fill" id="completeness-bar" style="width: {{ user.userprofile.get_completeness }}%;"></div>
+                </div>
+                <small style="display: block; margin-top: 0.5rem; font-size: 0.75rem; color: var(--sa-muted);">
+                    {% trans "Complete your profile to get 100% accurate AI scheme matches." %}
+                </small>
+            </div>
+
+            <div style="text-align: left; font-size: 0.9rem; color: var(--sa-text); margin-bottom: 1.5rem;">
+                <p style="margin-bottom: 0.5rem;"><i class="fas fa-envelope" style="color: var(--sa-gold); width: 20px;"></i> {{ user.email|default:"No email provided" }}</p>
+                <p style="margin-bottom: 0.5rem;"><i class="fas fa-phone" style="color: var(--sa-gold); width: 20px;"></i> {{ user.userprofile.phone|default:"No phone provided" }}</p>
+                <p style="margin-bottom: 0.5rem;"><i class="fas fa-map-marker-alt" style="color: var(--sa-gold); width: 20px;"></i> {{ user.userprofile.district|default:"Location" }}, {{ user.userprofile.state|default:"India" }}</p>
+            </div>
+        </div>
+
+        <!-- RIGHT: Form -->
+        <div class="sa-form-card">
+            
+            {% if profile_form.errors or user_form.errors %}
+            <div class="sa-alert-box">
+                <i class="fas fa-exclamation-circle"></i>
+                <div>
+                    <strong>{% trans "Please check the form below." %}</strong><br>
+                    <span style="font-size: 0.85rem; font-weight: 500;">{% trans "Some required fields are missing or invalid. Please fix them to update your profile." %}</span>
+                </div>
+            </div>
+            {% endif %}
+
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="file" id="photo-input" name="photo" accept="image/*" style="display: none;">
+
+                <!-- 1. Account Information -->
+                <div class="sa-form-section">
+                    <div class="sa-form-section-title">
+                        <i class="fas fa-user-shield"></i> {% trans "Account Information" %}
+                    </div>
+                    <div class="sa-form-grid">
+                        <div class="sa-input-group">
+                            <label>{{ user_form.username.label }} <span class="sa-required">*</span></label>
+                            {{ user_form.username }}
+                            {{ user_form.username.errors }}
+                        </div>
+                        <div class="sa-input-group">
+                            <label>{{ user_form.email.label }} <span class="sa-required">*</span></label>
+                            {{ user_form.email }}
+                            {{ user_form.email.errors }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Personal Details -->
+                <div class="sa-form-section">
+                    <div class="sa-form-section-title">
+                        <i class="fas fa-id-card"></i> {% trans "Personal Details" %}
+                    </div>
+                    <div class="sa-form-grid">
+                        <div class="sa-input-group">
+                            <label>{% trans "Full Name" %} <span class="sa-required">*</span></label>
+                            {{ profile_form.full_name }}
+                            {{ profile_form.full_name.errors }}
+                        </div>
+                        <div class="sa-input-group">
+                            <label>{% trans "Phone" %} <span class="sa-required">*</span></label>
+                            {{ profile_form.phone }}
+                            {{ profile_form.phone.errors }}
+                        </div>
+                        <div class="sa-input-group">
+                            <label>{% trans "Age" %} <span class="sa-required">*</span></label>
+                            {{ profile_form.age }}
+                            {{ profile_form.age.errors }}
+                        </div>
+                        <div class="sa-input-group">
+                            <label>{% trans "Gender" %} <span class="sa-required">*</span></label>
+                            {{ profile_form.gender }}
+                            {{ profile_form.gender.errors }}
+                        </div>
+                        <div class="sa-input-group">
+                            <label>{% trans "Education" %} <span class="sa-required">*</span></label>
+                            {{ profile_form.education }}
+                            {{ profile_form.education.errors }}
+                        </div>
+                        <div class="sa-input-group">
+                            <label>{% trans "Income Range" %} <span class="sa-required">*</span></label>
+                            {{ profile_form.income_range }}
+                            {{ profile_form.income_range.errors }}
+                        </div>
+                        <div class="sa-input-group">
+                            <label>{% trans "Category" %} <span class="sa-required">*</span></label>
+                            {{ profile_form.category }}
+                            {{ profile_form.category.errors }}
+                        </div>
+                        <div class="sa-input-group">
+                            <label>{% trans "Ration Card Type" %}</label>
+                            {{ profile_form.ration_card_type }}
+                        </div>
+                        <div class="sa-input-group">
+                            <label>{% trans "Family Size" %}</label>
+                            {{ profile_form.family_size }}
+                        </div>
+                        <div class="sa-input-group">
+                            <label>{% trans "Occupation" %}</label>
+                            {{ profile_form.occupation }}
+                        </div>
+                        <div class="sa-input-group">
+                            <label>{% trans "Disability Status" %}</label>
+                            {{ profile_form.disability_status }}
+                        </div>
+                        <div class="sa-input-group">
+                            <label>{% trans "Marital Status" %}</label>
+                            {{ profile_form.marital_status }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Location Details -->
+                <div class="sa-form-section">
+                    <div class="sa-form-section-title">
+                        <i class="fas fa-map-marker-alt"></i> {% trans "Location Details" %}
+                    </div>
+                    <div class="sa-form-grid">
+                        <div class="sa-input-group">
+                            <label>{% trans "State" %} <span class="sa-required">*</span></label>
+                            {{ profile_form.state }}
+                            {{ profile_form.state.errors }}
+                        </div>
+                        <div class="sa-input-group">
+                            <label>{% trans "District" %} <span class="sa-required">*</span></label>
+                            {{ profile_form.district }}
+                            {{ profile_form.district.errors }}
+                        </div>
+                        <div class="sa-input-group">
+                            <label>{% trans "Taluka" %}</label>
+                            {{ profile_form.taluka }}
+                        </div>
+                        <div class="sa-input-group">
+                            <label>{% trans "Village / Panchayat" %}</label>
+                            {{ profile_form.village_panchayat }}
+                        </div>
+                        <div class="sa-input-group">
+                            <label>{% trans "Rural / Urban" %}</label>
+                            {{ profile_form.rural_urban }}
+                        </div>
+                        <div class="sa-input-group">
+                            <label>{% trans "PIN Code" %}</label>
+                            {{ profile_form.pin_code }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Farm Details -->
+                <div class="sa-form-section">
+                    <div class="sa-form-section-title">
+                        <i class="fas fa-tractor"></i> {% trans "Farm Details" %}
+                    </div>
+                    <div class="sa-form-grid">
+                        <div class="sa-input-group">
+                            <label>{% trans "Landholding Size (Acres)" %}</label>
+                            {{ profile_form.landholding_size }}
+                        </div>
+                        <div class="sa-input-group">
+                            <label>{% trans "Ownership Type" %}</label>
+                            {{ profile_form.ownership_type }}
+                        </div>
+                        <div class="sa-input-group">
+                            <label>{% trans "Survey No." %}</label>
+                            {{ profile_form.survey_no }}
+                        </div>
+                        <div class="sa-input-group">
+                            <label>{% trans "Hissa No." %}</label>
+                            {{ profile_form.hissa_no }}
+                        </div>
+                        <div class="sa-input-group">
+                            <label>{% trans "Crops Grown" %}</label>
+                            {{ profile_form.crops_grown }}
+                        </div>
+                        <div class="sa-input-group">
+                            <label>{% trans "Livestock & Assets" %}</label>
+                            {{ profile_form.livestock_assets }}
+                        </div>
+                        <div class="sa-input-group">
+                            <label>{% trans "Farmer Type" %}</label>
+                            {{ profile_form.farmer_type }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. Banking (DBT) Details -->
+                <div class="sa-form-section">
+                    <div class="sa-form-section-title">
+                        <i class="fas fa-university"></i> {% trans "Banking (DBT) Details" %}
+                    </div>
+                    <div class="sa-form-grid">
+                        <div class="sa-input-group">
+                            <label>{% trans "Bank Name" %}</label>
+                            {{ profile_form.bank_name }}
+                        </div>
+                        <div class="sa-input-group">
+                            <label>{% trans "Account Number" %}</label>
+                            {{ profile_form.account_no }}
+                            {{ profile_form.account_no.errors }}
+                        </div>
+                        <div class="sa-input-group">
+                            <label>{% trans "IFSC Code" %}</label>
+                            {{ profile_form.ifsc_code }}
+                            {{ profile_form.ifsc_code.errors }}
+                        </div>
+                        <div class="sa-input-group">
+                            <label>{% trans "UPI ID" %}</label>
+                            {{ profile_form.upi_id }}
+                        </div>
+                        <div class="sa-input-group" style="flex-direction: row; align-items: center; gap: 0.5rem; margin-top: 1.5rem;">
+                            {{ profile_form.aadhaar_seeded }}
+                            <label style="margin-bottom: 0;">{% trans "Aadhaar Seeded?" %}</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Save Button -->
+                <button type="submit" class="sa-btn sa-btn-gold sa-btn-save">
+                    <i class="fas fa-save"></i> {% trans "Save Changes" %}
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- jQuery (required for Select2) -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        
+        // 1. INITIALIZE SEARCHABLE DROPDOWNS (Select2)
+        // We run this AFTER we populate the districts so the dropdown is ready.
+        
+        function initSearchableDropdowns() {
+            if (typeof jQuery !== 'undefined' && jQuery.fn.select2) {
+                // Apply to State
+                jQuery('#id_state').select2({
+                    theme: 'bootstrap-5',
+                    placeholder: 'Search for a state...',
+                    allowClear: true,
+                    width: '100%'
+                });
+
+                // Apply to District
+                jQuery('#id_district').select2({
+                    theme: 'bootstrap-5',
+                    placeholder: 'Search for a district...',
+                    allowClear: true,
+                    width: '100%'
+                });
+            } else {
+                console.warn("Select2 library not loaded properly. Falling back to standard dropdowns.");
+            }
+        }
+
+        // 2. POPULATE STATE AND DISTRICT DROPDOWNS
+        const locationDataEl = document.getElementById('location-data');
+        if (locationDataEl) {
+            try {
+                const rawText = locationDataEltextContent.trim();
+                const locationData = JSON.parse(rawText);
+                
+                console.log("Location Data Successfully Loaded. States found:", Object.keys(locationData).length);
+
+                const stateSelect = document.getElementById('id_state');
+                const districtSelect = document.getElementById('id_district');
+                const currentDistrict = "{{ profile_form.instance.district|default:'' }}";
+
+                if (stateSelect && districtSelect) {
+                    
+                    // Function to update districts based on selected state
+                    function updateDistricts() {
+                        const selectedState = stateSelect.value;
+                        districtSelect.innerHTML = ''; 
+
+                        if (selectedState && locationData[selectedState]) {
+                            const defaultOpt = document.createElement('option');
+                            defaultOpt.value = '';
+                            defaultOpt.textContent = 'Select District...';
+                            districtSelect.appendChild(defaultOpt);
+
+                            locationData[selectedState].forEach(district => {
+                                const opt = document.createElement('option');
+                                opt.value = district;
+                                opt.textContent = district;
+                                if (district === currentDistrict) opt.selected = true;
+                                districtSelect.appendChild(opt);
+                            });
+                        } else {
+                            const defaultOpt = document.createElement('option');
+                            defaultOpt.value = '';
+                            defaultOpt.textContent = selectedState ? 'No districts found' : 'Select State First';
+                            districtSelect.appendChild(defaultOpt);
+                        }
+                    }
+
+                    // Run once on page load
+                    updateDistricts();
+                    
+                    // Initialize Select2 AFTER running updateDistricts once
+                    initSearchableDropdowns();
+
+                    // Listen for changes (using jQuery because Select2 triggers its own events)
+                    if (typeof jQuery !== 'undefined') {
+                        jQuery('#id_state').on('change', function() {
+                            updateDistricts();
+                            // Refresh Select2 so it sees the new district options
+                            jQuery('#id_district').trigger('change.select2'); 
+                        });
+                    } else {
+                        stateSelect.addEventListener('change', updateDistricts);
+                    }
+                }
+            } catch (e) {
+                console.error("Error parsing Location JSON. Check if states_districts.csv is missing or malformed.", e);
+            }
+        }
+
+        // 3. PHOTO PREVIEW LOGIC
+        const photoInput = document.getElementById('photo-input');
+        const photoImg = document.getElementById('profile-photo-img');
+        const initialsSpan = document.getElementById('profile-initials');
+
+        if (photoInput) {
+            photoInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        if (photoImg) {
+                            photoImg.src = event.target.result;
+                        } else if (initialsSpan) {
+                            const newImg = document.createElement('img');
+                            newImg.src = event.target.result;
+                            newImg.style.width = '100%';
+                            newImg.style.height = '100%';
+                            newImg.style.borderRadius = '50%';
+                            newImg.style.objectFit = 'cover';
+                            newImg.id = 'profile-photo-img';
+                            initialsSpan.parentNode.replaceChild(newImg, initialsSpan);
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

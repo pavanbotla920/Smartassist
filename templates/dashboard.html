@@ -1,0 +1,509 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "My Dashboard - SmartAssist" %}{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* =====================================================
+       FARMER DASHBOARD SPECIFIC STYLES
+       ===================================================== */
+    
+    .sa-dash-bg {
+        background: var(--sa-paper);
+        min-height: calc(100vh - 72px);
+        padding: 2.5rem 1rem 4rem;
+    }
+
+    /* Welcome Banner */
+    .sa-welcome-banner {
+        background: linear-gradient(115deg, var(--sa-ink) 0%, var(--sa-emerald) 100%);
+        border-radius: var(--sa-radius-lg);
+        padding: 2.2rem 2.5rem;
+        color: #fff;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--sa-shadow-lg);
+        margin-bottom: 2rem;
+    }
+    .sa-welcome-banner::before {
+        content: '';
+        position: absolute;
+        top: -50px; right: -50px;
+        width: 250px; height: 250px;
+        background: radial-gradient(circle, rgba(217,168,78,0.2) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+    .sa-welcome-text h1 {
+        color: #fff;
+        font-family: var(--sa-font-display);
+        font-size: 2rem;
+        margin: 0 0 0.5rem;
+    }
+    .sa-welcome-text p {
+        color: rgba(255,255,255,0.85);
+        margin: 0;
+        font-size: 1rem;
+    }
+    .sa-welcome-actions {
+        display: flex;
+        gap: 1rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    /* Personalized KPI Cards */
+    .sa-kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.2rem;
+        margin-bottom: 2rem;
+    }
+    .sa-kpi-card {
+        background: var(--sa-card);
+        border: 1px solid var(--sa-line);
+        border-radius: var(--sa-radius);
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1.2rem;
+        box-shadow: var(--sa-shadow);
+        transition: var(--sa-ease);
+        text-decoration: none;
+        color: inherit;
+        position: relative;
+        overflow: hidden;
+    }
+    .sa-kpi-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--sa-shadow-lg);
+        border-color: var(--sa-gold);
+    }
+    .sa-kpi-icon {
+        width: 56px; height: 56px;
+        border-radius: 16px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+    .sa-kpi-icon.gold { background: rgba(217,168,78,0.15); color: var(--sa-gold-deep); }
+    .sa-kpi-icon.green { background: rgba(31,169,113,0.12); color: var(--sa-emerald); }
+    .sa-kpi-icon.blue { background: rgba(59,130,246,0.12); color: #2563eb; }
+    .sa-kpi-icon.grey { background: rgba(93,107,100,0.1); color: var(--sa-muted); }
+    
+    .sa-kpi-data h3 {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--sa-ink);
+        margin: 0 0 0.2rem;
+        font-family: var(--sa-font-body);
+    }
+    .sa-kpi-data p {
+        color: var(--sa-muted);
+        font-size: 0.85rem;
+        margin: 0;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* =====================================================
+       MAIN GRID LAYOUT (GRID AREAS)
+       ===================================================== */
+    .sa-dash-grid {
+        display: grid;
+        grid-template-columns: 1.6fr 1fr; /* Left wide, Right narrow */
+        grid-template-areas: 
+            "apps   profile"
+            "alerts stats"
+            "airec  airec"; /* Full width at the bottom */
+        gap: 1.5rem;
+        align-items: start;
+    }
+
+    /* Assign areas to the panels */
+    .area-apps { grid-area: apps; }
+    .area-profile { grid-area: profile; }
+    .area-alerts { grid-area: alerts; }
+    .area-stats { grid-area: stats; }
+    .area-airec { grid-area: airec; }
+
+    /* Responsive Mobile View (Stacks in exact order requested) */
+    @media (max-width: 992px) {
+        .sa-dash-grid {
+            grid-template-columns: 1fr;
+            grid-template-areas: 
+                "profile"
+                "apps"
+                "alerts"
+                "stats"
+                "airec";
+        }
+        .sa-welcome-banner { flex-direction: column; align-items: flex-start; gap: 1.5rem; }
+    }
+
+    /* Panel Base */
+    .sa-panel {
+        background: var(--sa-card);
+        border: 1px solid var(--sa-line);
+        border-radius: var(--sa-radius);
+        padding: 1.8rem;
+        box-shadow: var(--sa-shadow);
+        height: 100%; /* Make them fill their grid area equally */
+    }
+    .sa-panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid rgba(11,46,36,0.06);
+    }
+    .sa-panel-header h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--sa-ink);
+        margin: 0;
+        display: flex; align-items: center; gap: 0.5rem;
+    }
+    .sa-panel-link {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--sa-gold-deep);
+        text-decoration: none;
+    }
+    .sa-panel-link:hover { text-decoration: underline; }
+
+    /* Recommended Schemes List */
+    .sa-rec-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* Two columns for AI recommendations */
+        gap: 1rem;
+    }
+    @media (max-width: 768px) {
+        .sa-rec-grid { grid-template-columns: 1fr; }
+    }
+    .sa-rec-item {
+        display: flex;
+        gap: 1rem;
+        padding: 1.2rem;
+        border-radius: var(--sa-radius-sm);
+        background: var(--sa-paper);
+        border: 1px solid var(--sa-line);
+        transition: var(--sa-ease);
+    }
+    .sa-rec-item:hover {
+        background: #fff;
+        border-color: var(--sa-gold);
+        transform: translateY(-3px);
+        box-shadow: var(--sa-shadow);
+    }
+    .sa-rec-badge {
+        background: var(--sa-gold-soft);
+        color: var(--sa-ink);
+        font-size: 0.7rem;
+        font-weight: 800;
+        padding: 0.2rem 0.6rem;
+        border-radius: 99px;
+        display: inline-block;
+        margin-bottom: 0.4rem;
+    }
+    .sa-rec-content h4 {
+        font-size: 1.05rem;
+        margin: 0 0 0.3rem;
+        color: var(--sa-ink);
+    }
+    .sa-rec-content p {
+        font-size: 0.85rem;
+        color: var(--sa-muted);
+        margin: 0 0 1rem;
+    }
+
+    /* Applications Table */
+    .sa-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .sa-table th {
+        text-align: left;
+        padding: 1rem;
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: var(--sa-muted);
+        border-bottom: 1px solid var(--sa-line);
+    }
+    .sa-table td {
+        padding: 1rem;
+        border-bottom: 1px solid rgba(11,46,36,0.04);
+        font-size: 0.9rem;
+        color: var(--sa-text);
+    }
+    .sa-table tr:last-child td { border-bottom: none; }
+    .sa-table tr:hover { background: rgba(250, 247, 239, 0.5); }
+    
+    .sa-status {
+        padding: 0.25rem 0.75rem;
+        border-radius: 99px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        display: inline-block;
+    }
+    .sa-status.approved { background: rgba(31,169,113,0.12); color: #0E6B48; }
+    .sa-status.pending { background: rgba(217,168,78,0.16); color: var(--sa-gold-deep); }
+    .sa-status.rejected { background: rgba(220,53,69,0.1); color: #b91c1c; }
+    .sa-status.submitted { background: rgba(59,130,246,0.1); color: #1d4ed8; }
+
+    /* Farmer Profile Box */
+    .sa-profile-box {
+        background: var(--sa-paper);
+        border-radius: var(--sa-radius-sm);
+        padding: 1rem;
+        border: 1px dashed rgba(11,46,36,0.2);
+        margin-bottom: 1.5rem;
+    }
+    .sa-profile-row {
+        display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.85rem;
+    }
+    .sa-profile-row:last-child { margin-bottom: 0; }
+    .sa-profile-label { color: var(--sa-muted); font-weight: 600; }
+    .sa-profile-value { color: var(--sa-ink); font-weight: 700; }
+
+    /* Chart Container */
+    .sa-chart-wrap {
+        position: relative;
+        height: 220px;
+        width: 100%;
+    }
+
+    /* Alerts List */
+    .sa-alert-item {
+        display: flex; gap: 0.8rem; padding: 0.8rem 0; border-bottom: 1px dashed rgba(11,46,36,0.1);
+    }
+    .sa-alert-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .sa-alert-icon { color: var(--sa-gold-deep); font-size: 1.2rem; margin-top: 0.1rem; }
+    .sa-alert-content h5 { margin: 0 0 0.2rem; font-size: 0.9rem; color: var(--sa-ink); }
+    .sa-alert-content p { margin: 0; font-size: 0.8rem; color: var(--sa-muted); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sa-dash-bg">
+    <div class="container" style="max-width: 1240px; margin: 0 auto;">
+
+        <!-- WELCOME BANNER -->
+        <div class="sa-welcome-banner">
+            <div class="sa-welcome-text">
+                <h1>{% trans "Welcome back" %}, {{ user.first_name|default:user.username }}! 👋</h1>
+                <p>{% trans "Your farm is looking good. Here is your personalized scheme overview for today." %}</p>
+            </div>
+            <div class="sa-welcome-actions">
+                <a href="{% url 'recommend' %}" class="sa-btn sa-btn-gold">
+                    <i class="fas fa-wand-magic-sparkles"></i> {% trans "AI Recommendations" %}
+                </a>
+                <a href="{% url 'scheme_awareness' %}" class="sa-btn sa-btn-ghost-light">
+                    <i class="fas fa-search"></i> {% trans "Find Schemes" %}
+                </a>
+            </div>
+        </div>
+
+        <!-- KPI CARDS -->
+        <div class="sa-kpi-grid">
+            <a href="{% url 'application_status' %}" class="sa-kpi-card">
+                <div class="sa-kpi-icon blue"><i class="fas fa-file-signature"></i></div>
+                <div class="sa-kpi-data">
+                    <h3>{{ user_applications|default:"0" }}</h3>
+                    <p>{% trans "Total Applications" %}</p>
+                </div>
+            </a>
+            <a href="{% url 'application_status' %}?status=Approved" class="sa-kpi-card">
+                <div class="sa-kpi-icon green"><i class="fas fa-check-circle"></i></div>
+                <div class="sa-kpi-data">
+                    <h3>{{ user_approved|default:"0" }}</h3>
+                    <p>{% trans "Approved Schemes" %}</p>
+                </div>
+            </a>
+            <a href="{% url 'application_status' %}?status=Pending" class="sa-kpi-card">
+                <div class="sa-kpi-icon gold"><i class="fas fa-hourglass-half"></i></div>
+                <div class="sa-kpi-data">
+                    <h3>{{ pending_apps|default:"0" }}</h3>
+                    <p>{% trans "Pending Review" %}</p>
+                </div>
+            </a>
+            <a href="{% url 'scheme_awareness' %}" class="sa-kpi-card">
+                <div class="sa-kpi-icon grey"><i class="fas fa-leaf"></i></div>
+                <div class="sa-kpi-data">
+                    <h3>{{ total_schemes|default:"0" }}</h3>
+                    <p>{% trans "Available Schemes" %}</p>
+                </div>
+            </a>
+        </div>
+
+        <!-- MAIN GRID -->
+        <div class="sa-dash-grid">
+            
+            <!-- 1. RECENT APPLICATIONS (Left Top) -->
+            <div class="sa-panel area-apps">
+                <div class="sa-panel-header">
+                    <h3><i class="fas fa-history" style="color: var(--sa-leaf);"></i> {% trans "Recent Applications" %}</h3>
+                    <a href="{% url 'application_status' %}" class="sa-panel-link">{% trans "View History" %} &rarr;</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="sa-table">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Scheme Name" %}</th>
+                                <th>{% trans "Applied On" %}</th>
+                                <th>{% trans "Status" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for app in recent_applications|slice:":4" %}
+                            <tr>
+                                <td style="font-weight: 600;">{{ app.scheme.scheme_name|default:"General Assistance" }}</td>
+                                <td style="color: var(--sa-muted);">{{ app.created_at|date:"d M Y" }}</td>
+                                <td><span class="sa-status {{ app.status|lower }}">{{ app.status }}</span></td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" style="text-align: center; color: var(--sa-muted); padding: 2rem;">{% trans "No applications yet" %}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 2. MY FARM PROFILE (Right Top) -->
+            <div class="sa-panel area-profile">
+                <div class="sa-panel-header">
+                    <h3><i class="fas fa-tractor" style="color: var(--sa-emerald);"></i> {% trans "My Farm Profile" %}</h3>
+                </div>
+                <div class="sa-profile-box">
+                    <div class="sa-profile-row">
+                        <span class="sa-profile-label">{% trans "Location" %}</span>
+                        <span class="sa-profile-value"><i class="fas fa-map-marker-alt" style="color: var(--sa-gold);"></i> {{ user_profile.district|default:"Nashik" }}, {{ user_profile.state|default:"MH" }}</span>
+                    </div>
+                    <div class="sa-profile-row">
+                        <span class="sa-profile-label">{% trans "Landholding" %}</span>
+                        <span class="sa-profile-value">{{ user_profile.landholding_size|default:"4.5" }} Acres</span>
+                    </div>
+                    <div class="sa-profile-row">
+                        <span class="sa-profile-label">{% trans "Primary Crop" %}</span>
+                        <span class="sa-profile-value">{{ user_profile.crops_grown|default:"Sugarcane & Grapes" }}</span>
+                    </div>
+                </div>
+                <a href="{% url 'profile' %}" class="sa-btn sa-btn-primary w-100" style="justify-content: center; font-size: 0.85rem;">
+                    <i class="fas fa-edit"></i> {% trans "Update Profile" %}
+                </a>
+            </div>
+
+            <!-- 3. ALERTS (Left Middle) -->
+            <div class="sa-panel area-alerts">
+                <div class="sa-panel-header">
+                    <h3><i class="fas fa-bell" style="color: #dc3545;"></i> {% trans "Alerts" %}</h3>
+                </div>
+                {% if notifications %}
+                    {% for notif in notifications|slice:":3" %}
+                    <div class="sa-alert-item">
+                        <i class="fas fa-info-circle sa-alert-icon"></i>
+                        <div class="sa-alert-content">
+                            <h5>{{ notif.subject }}</h5>
+                            <p>{{ notif.message|truncatechars:80 }}</p>
+                            <small style="color: #999; font-size: 0.7rem;">{{ notif.created_at|timesince }} ago</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="sa-alert-item">
+                        <i class="fas fa-check-circle sa-alert-icon" style="color: var(--sa-emerald);"></i>
+                        <div class="sa-alert-content">
+                            <h5>{% trans "All caught up!" %}</h5>
+                            <p>{% trans "You have no new alerts." %}</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- 4. STATISTICS (Right Middle) -->
+            <div class="sa-panel area-stats">
+                <div class="sa-panel-header">
+                    <h3><i class="fas fa-chart-pie" style="color: var(--sa-gold-deep);"></i> {% trans "Statistics" %}</h3>
+                </div>
+                <div class="sa-chart-wrap">
+                    <canvas id="mixChart"></canvas>
+                </div>
+            </div>
+
+            <!-- 5. AI RECOMMENDATIONS (Full Width Bottom) -->
+            <div class="sa-panel area-airec">
+                <div class="sa-panel-header">
+                    <h3><i class="fas fa-star" style="color: var(--sa-gold);"></i> {% trans "AI Recommendations" %}</h3>
+                    <a href="{% url 'recommend' %}" class="sa-panel-link">{% trans "View All" %} &rarr;</a>
+                </div>
+                
+                <div class="sa-rec-grid">
+                    <div class="sa-rec-item">
+                        <div class="sa-rec-content w-100">
+                            <span class="sa-rec-badge">98% Match</span>
+                            <h4>PM-KISAN Samman Nidhi</h4>
+                            <p>Direct income support of ₹6,000/year to supplement the financial needs of landholding farmers.</p>
+                            <a href="{% url 'scheme_awareness' %}?q=PM-Kisan" class="sa-btn sa-btn-primary" style="padding: 0.4rem 1rem; font-size: 0.8rem;">{% trans "View Details" %}</a>
+                        </div>
+                    </div>
+                    
+                    <div class="sa-rec-item">
+                        <div class="sa-rec-content w-100">
+                            <span class="sa-rec-badge" style="background: rgba(31,169,113,0.15); color: var(--sa-emerald);">85% Match</span>
+                            <h4>PM Fasal Bima Yojana</h4>
+                            <p>Comprehensive crop insurance covering yield losses due to natural calamities and pests.</p>
+                            <a href="{% url 'scheme_awareness' %}?q=Fasal+Bima" class="sa-btn sa-btn-primary" style="padding: 0.4rem 1rem; font-size: 0.8rem;">{% trans "View Details" %}</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const ctx = document.getElementById('mixChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Financial Aid', 'Insurance', 'Equipment'],
+                datasets: [{
+                    data: [5, 3, 4],
+                    backgroundColor: ['#1FA971', '#D9A84E', '#3b82f6'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 15,
+                            font: { family: "'Segoe UI', sans-serif", size: 11, weight: '600' },
+                            color: '#5D6B64'
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

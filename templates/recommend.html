@@ -1,0 +1,409 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}AI Scheme Recommendations | SmartAssist{% endblock %}
+
+{% block extra_head %}
+<style>
+    .sa-rec-bg {
+        background: var(--sa-paper);
+        min-height: calc(100vh - 72px);
+        padding-bottom: 5rem;
+    }
+
+    /* Premium Hero Banner */
+    .sa-rec-hero {
+        background: linear-gradient(115deg, var(--sa-ink) 0%, var(--sa-emerald) 100%);
+        padding: 3.5rem 1rem;
+        text-align: center;
+        color: #fff;
+        position: relative;
+        overflow: hidden;
+        border-bottom: 4px solid var(--sa-gold);
+        margin-bottom: 2.5rem;
+    }
+    .sa-rec-hero::before {
+        content: '';
+        position: absolute;
+        top: -50px; right: -50px;
+        width: 300px; height: 300px;
+        background: radial-gradient(circle, rgba(217,168,78,0.2) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+    .sa-rec-hero h1 {
+        font-family: var(--sa-font-display);
+        font-size: clamp(2rem, 4vw, 3rem);
+        font-weight: 700;
+        margin-bottom: 0.8rem;
+        position: relative;
+        z-index: 2;
+        color: #ffffff !important; /* Forces the text to be white */
+    }
+    .sa-rec-hero h1 span { color: var(--sa-gold); }
+    .sa-rec-hero p {
+        font-size: 1.1rem;
+        color: rgba(255,255,255,0.85);
+        max-width: 600px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 2;
+    }
+
+    /* Main Layout */
+    .sa-rec-layout {
+        display: grid;
+        grid-template-columns: 1fr 1.2fr;
+        gap: 2rem;
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 0 1rem;
+        align-items: start;
+    }
+    @media (max-width: 992px) {
+        .sa-rec-layout { grid-template-columns: 1fr; }
+    }
+
+    /* Form Panel */
+    .sa-form-panel {
+        background: var(--sa-card);
+        border: 1px solid var(--sa-line);
+        border-radius: var(--sa-radius-lg);
+        padding: 2rem;
+        box-shadow: var(--sa-shadow);
+    }
+    .sa-form-panel h2 {
+        font-family: var(--sa-font-display);
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--sa-ink);
+        margin-bottom: 0.5rem;
+    }
+    .sa-form-panel .subtext {
+        color: var(--sa-muted);
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .sa-form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    .sa-form-grid .span-2 { grid-column: span 2; }
+    @media (max-width: 600px) {
+        .sa-form-grid { grid-template-columns: 1fr; }
+        .sa-form-grid .span-2 { grid-column: span 1; }
+    }
+
+    .sa-input-group label {
+        font-size: 0.8rem; font-weight: 800; text-transform: uppercase;
+        letter-spacing: 0.5px; color: var(--sa-muted); margin-bottom: 0.4rem; display: block;
+    }
+    .sa-input-group input, .sa-input-group select {
+        width: 100%; padding: 0.75rem 1rem; font-family: var(--sa-font-body);
+        font-size: 0.95rem; color: var(--sa-text); background: var(--sa-paper);
+        border: 1.5px solid var(--sa-line); border-radius: var(--sa-radius-sm); transition: var(--sa-ease);
+    }
+    .sa-input-group input:focus, .sa-input-group select:focus {
+        outline: none; border-color: var(--sa-emerald); background: #fff; box-shadow: 0 0 0 3px rgba(31,169,113,0.15);
+    }
+
+    .sa-action-row {
+        display: flex; gap: 0.8rem; margin-top: 1.5rem; flex-wrap: wrap;
+    }
+    .sa-btn-submit { flex: 1; justify-content: center; font-size: 1rem; padding: 0.8rem; }
+    .sa-btn-voice { background: rgba(217,168,78,0.15); color: var(--sa-gold-deep); border: 1px solid var(--sa-gold); }
+    .sa-btn-voice:hover { background: var(--sa-gold); color: var(--sa-ink); }
+
+    /* Result Panel */
+    .sa-result-panel {
+        background: var(--sa-card);
+        border: 1px solid var(--sa-line);
+        border-radius: var(--sa-radius-lg);
+        box-shadow: var(--sa-shadow);
+        overflow: hidden;
+    }
+    .sa-result-header {
+        padding: 1.5rem 2rem;
+        background: var(--sa-paper);
+        border-bottom: 1px solid var(--sa-line);
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .sa-result-header h3 { margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--sa-ink); }
+    
+    .sa-result-list { padding: 1.5rem; display: grid; gap: 1.2rem; }
+    
+    .sa-scheme-card {
+        border: 1px solid var(--sa-line);
+        border-left: 4px solid var(--sa-gold);
+        border-radius: var(--sa-radius-sm);
+        padding: 1.5rem;
+        background: #fff;
+        transition: var(--sa-ease);
+    }
+    .sa-scheme-card:hover {
+        border-left-color: var(--sa-emerald);
+        box-shadow: var(--sa-shadow);
+        transform: translateX(4px);
+    }
+    .sa-scheme-title { font-size: 1.1rem; font-weight: 800; color: var(--sa-ink); margin: 0 0 0.5rem; }
+    
+    .sa-score-badge {
+        background: rgba(31,169,113,0.12); color: #0E6B48; font-size: 0.8rem;
+        font-weight: 800; padding: 0.3rem 0.8rem; border-radius: 99px; white-space: nowrap;
+    }
+    .sa-score-bar { height: 6px; background: rgba(11,46,36,0.08); border-radius: 99px; margin: 1rem 0; overflow: hidden; }
+    .sa-score-fill { height: 100%; background: linear-gradient(90deg, var(--sa-leaf), var(--sa-gold)); border-radius: 99px; }
+
+    .sa-empty-state {
+        text-align: center; padding: 4rem 2rem; color: var(--sa-muted);
+    }
+    .sa-empty-state i { font-size: 3rem; color: var(--sa-line); margin-bottom: 1rem; }
+
+    /* Chatbot Floating Button */
+    .chat-fab {
+        position: fixed; right: 1.5rem; bottom: 1.5rem; z-index: 1000;
+        width: 60px; height: 60px; border-radius: 50%;
+        background: var(--sa-ink); color: var(--sa-gold); border: 2px solid var(--sa-gold);
+        font-size: 1.5rem; display: flex; align-items: center; justify-content: center;
+        cursor: pointer; box-shadow: 0 10px 24px rgba(11,46,36,0.3);
+        transition: var(--sa-ease);
+    }
+    .chat-fab:hover { transform: scale(1.1); background: var(--sa-emerald); color: #fff; }
+
+    /* Chatbot Window */
+    .chatbot-shell {
+        position: fixed; right: 1.5rem; bottom: 1.5rem; z-index: 1001;
+        width: 380px; max-width: calc(100vw - 3rem);
+        background: var(--sa-card); border: 1px solid var(--sa-line);
+        border-radius: var(--sa-radius-lg); box-shadow: var(--sa-shadow-lg);
+        display: flex; flex-direction: column; overflow: hidden;
+        transition: var(--sa-ease);
+    }
+    .chatbot-shell.collapsed { transform: scale(0); opacity: 0; pointer-events: none; transform-origin: bottom right; }
+    
+    .chat-header {
+        background: var(--sa-ink); color: #fff; padding: 1rem; font-weight: 700;
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .chat-body { height: 300px; padding: 1rem; background: var(--sa-paper); overflow-y: auto; display: flex; flex-direction: column; gap: 0.8rem; }
+    .chat-bubble { max-width: 85%; padding: 0.8rem; border-radius: 12px; font-size: 0.9rem; line-height: 1.5; }
+    .chat-bubble.bot { background: #fff; color: var(--sa-text); border: 1px solid var(--sa-line); align-self: flex-start; border-bottom-left-radius: 0; }
+    .chat-bubble.user { background: var(--sa-emerald); color: #fff; align-self: flex-end; border-bottom-right-radius: 0; }
+    .chat-input-row { display: flex; padding: 0.8rem; background: #fff; border-top: 1px solid var(--sa-line); gap: 0.5rem; }
+    .chat-input-row input { flex: 1; padding: 0.6rem; border: 1px solid var(--sa-line); border-radius: var(--sa-radius-sm); outline: none; }
+    .chat-input-row button { background: var(--sa-ink); color: #fff; border: none; padding: 0.6rem 1rem; border-radius: var(--sa-radius-sm); cursor: pointer; }
+
+    /* Voice assistant guidance */
+    .sa-voice-guide { margin-top: 1rem; padding: 1rem; background: rgba(217,168,78,0.1); border: 1px dashed var(--sa-gold); border-radius: var(--sa-radius-sm); font-size: 0.85rem; color: var(--sa-gold-deep); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sa-rec-bg">
+    
+    <!-- Hero Banner -->
+    <div class="sa-rec-hero">
+        <h1>AI-Powered <span>Scheme Discovery</span></h1>
+        <p>Share your profile details and let our smart algorithm rank the top government schemes you are eligible for.</p>
+    </div>
+
+    <div class="sa-rec-layout">
+        
+        <!-- Left: Form -->
+        <div class="sa-form-panel">
+            <h2>🌾 Your Profile Details</h2>
+            <p class="subtext">Fill in your details to get personalized recommendations.</p>
+
+            <form method="post" id="recommendForm">
+                {% csrf_token %}
+                <div class="sa-form-grid">
+                    
+                    <div class="sa-input-group">
+                        <label for="age">Age *</label>
+                        <input type="number" id="age" name="age" min="1" max="120" value="{{ form_data.age }}" placeholder="e.g. 35" required>
+                    </div>
+
+                    <div class="sa-input-group">
+                        <label for="income">Annual Income (₹) *</label>
+                        <input type="number" id="income" name="income" min="0" value="{{ form_data.income }}" placeholder="e.g. 150000" required>
+                    </div>
+
+                    <div class="sa-input-group">
+                        <label for="category">Category *</label>
+                        <select id="category" name="category" required>
+                            {% with user_category=form_data.category|default:'General' %}
+                            <option value="General" {% if user_category == 'General' %}selected{% endif %}>General</option>
+                            <option value="SC" {% if user_category == 'SC' %}selected{% endif %}>SC</option>
+                            <option value="ST" {% if user_category == 'ST' %}selected{% endif %}>ST</option>
+                            <option value="OBC" {% if user_category == 'OBC' %}selected{% endif %}>OBC</option>
+                            <option value="EWS" {% if user_category == 'EWS' %}selected{% endif %}>EWS</option>
+                            {% endwith %}
+                        </select>
+                    </div>
+
+                    <div class="sa-input-group">
+                        <label for="state">Your State *</label>
+                        <input type="text" id="state" name="state" value="{{ form_data.state }}" placeholder="e.g. Maharashtra" required>
+                    </div>
+
+                    <div class="sa-input-group span-2">
+                        <label for="education">Education Level</label>
+                        <input type="text" id="education" name="education" value="{{ form_data.education }}" placeholder="e.g. 12th / Graduate">
+                    </div>
+                </div>
+
+                <div class="sa-action-row">
+                    <button type="submit" class="sa-btn sa-btn-primary sa-btn-submit">
+                        <i class="fas fa-search"></i> Find Best Schemes
+                    </button>
+                    <button type="button" class="sa-btn sa-btn-voice" onclick="startVoiceGuide()">
+                        <i class="fas fa-microphone"></i> Voice Fill
+                    </button>
+                </div>
+
+                <div class="sa-voice-guide" id="voiceGuideText">
+                    <i class="fas fa-info-circle"></i> Click "Voice Fill" and speak your details to auto-fill the form.
+                </div>
+            </form>
+        </div>
+
+        <!-- Right: Results -->
+        <div class="sa-result-panel">
+            <div class="sa-result-header">
+                <h3><i class="fas fa-star" style="color: var(--sa-gold);"></i> Top Recommendations</h3>
+                <span style="font-size: 0.85rem; font-weight: 700; color: var(--sa-muted);">{{ schemes|length }} matches</span>
+            </div>
+
+            <div class="sa-result-list">
+                {% if schemes %}
+                    {% for item in schemes %}
+                    <div class="sa-scheme-card">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+                            <h4 class="sa-scheme-title">{{ item.scheme.scheme_name }}</h4>
+                            <span class="sa-score-badge">{{ item.score }}% Match</span>
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--sa-muted); margin-bottom: 0.5rem;">
+                            <i class="fas fa-map-marker-alt"></i> {{ item.scheme.state }} &nbsp;|&nbsp; 
+                            <i class="fas fa-building"></i> {{ item.scheme.department }}
+                        </p>
+                        <p style="font-size: 0.9rem; color: var(--sa-text); margin-bottom: 0.8rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                            {{ item.scheme.description }}
+                        </p>
+                        
+                        <div class="sa-score-bar">
+                            <div class="sa-score-fill" style="width: {{ item.score }}%;"></div>
+                        </div>
+
+                        <div style="display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap;">
+                            <a href="{% url 'scheme_detail' item.scheme.id %}" class="sa-btn sa-btn-primary" style="font-size: 0.85rem; padding: 0.5rem 1rem;">View Details</a>
+                            {% if item.official_url %}
+                            <a href="{{ item.official_url }}" target="_blank" class="sa-btn sa-btn-gold" style="font-size: 0.85rem; padding: 0.5rem 1rem;">Apply Online</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="sa-empty-state">
+                        <i class="fas fa-search"></i>
+                        <h3>No Results Yet</h3>
+                        <p>Fill in the form on the left and click "Find Best Schemes" to see your matches.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Chatbot -->
+    <button class="chat-fab" id="chatFab" onclick="toggleChatbot()"><i class="fas fa-comment-dots"></i></button>
+    
+    <div class="chatbot-shell collapsed" id="chatbotShell">
+        <div class="chat-header">
+            <span><i class="fas fa-robot"></i> SmartAssist AI</span>
+            <button onclick="toggleChatbot()" style="background: none; border: none; color: #fff; cursor: pointer;">✕</button>
+        </div>
+        <div class="chat-body" id="chatbox">
+            <div class="chat-bubble bot">
+                👋 Hi! I am your AI assistant. Ask me things like "What is PM-KISAN?" or "How do I apply for a scheme?"
+            </div>
+        </div>
+        <div class="chat-input-row">
+            <input type="text" id="userInput" placeholder="Ask a question..." onkeypress="if(event.key === 'Enter') sendMessage()">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 1. Chatbot Logic
+    function toggleChatbot() {
+        document.getElementById('chatbotShell').classList.toggle('collapsed');
+    }
+
+    function sendMessage() {
+        const input = document.getElementById('userInput');
+        const chatbox = document.getElementById('chatbox');
+        const msg = input.value.trim();
+        if(!msg) return;
+
+        chatbox.innerHTML += `<div class="chat-bubble user">${msg}</div>`;
+        input.value = '';
+        chatbox.scrollTop = chatbox.scrollHeight;
+
+        // Simulate typing
+        chatbox.innerHTML += `<div class="chat-bubble bot" id="typing">...</div>`;
+        chatbox.scrollTop = chatbox.scrollHeight;
+
+        fetch("{% url 'chatbot' %}?message=" + encodeURIComponent(msg))
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('typing').remove();
+                chatbox.innerHTML += `<div class="chat-bubble bot">${data.reply}</div>`;
+                chatbox.scrollTop = chatbox.scrollHeight;
+            })
+            .catch(() => {
+                document.getElementById('typing').remove();
+                chatbox.innerHTML += `<div class="chat-bubble bot">Sorry, I am offline right now.</div>`;
+            });
+    }
+
+    // 2. Simple Voice Fill Logic (Web Speech API)
+    function startVoiceGuide() {
+        const guide = document.getElementById('voiceGuideText');
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        
+        if (!SpeechRecognition) {
+            guide.innerHTML = '<span style="color:red;">Voice recognition is not supported in this browser.</span>';
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'en-IN';
+        recognition.start();
+        guide.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Listening... Speak now! (e.g. "age 35 income 200000")';
+
+        recognition.onresult = function(event) {
+            const text = event.results[0][0].transcript.toLowerCase();
+            guide.innerHTML = `Heard: "${text}"`;
+            
+            // Basic extraction
+            const ageMatch = text.match(/age\s*(\d+)/);
+            const incomeMatch = text.match(/income\s*(\d+)/);
+            const stateMatch = text.match(/state\s*([a-z\s]+)/);
+
+            if(ageMatch) document.getElementById('age').value = ageMatch[1];
+            if(incomeMatch) document.getElementById('income').value = incomeMatch[1];
+            if(stateMatch) document.getElementById('state').value = stateMatch[1].trim();
+            
+            guide.innerHTML += '<br>✅ Form auto-filled based on speech!';
+        };
+
+        recognition.onerror = function() {
+            guide.innerHTML = 'Error listening. Please try again.';
+        };
+    }
+</script>
+{% endblock %}

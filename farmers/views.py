@@ -737,9 +737,15 @@ def update_application_status(request, app_id):
         application.applied_by = request.user
         application.save()
 
-        notify_application_status(application, new_status, notes)
+        notification = notify_application_status(application, new_status, notes)
 
         messages.success(request, 'Application status updated!')
+        if not getattr(notification, 'email_sent', False):
+            messages.warning(
+                request,
+                _('The status was saved, but the email could not be sent: %(error)s')
+                % {'error': getattr(notification, 'email_error', '') or 'unknown error'},
+            )
         return redirect('admin_dashboard')
 
     return render(request, 'update_status.html', {'application': application})

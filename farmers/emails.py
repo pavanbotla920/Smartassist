@@ -34,8 +34,13 @@ def notify(user, subject, message, email_to=None):
         message=message,
     )
 
+    # Transient result flags so callers can report the outcome to the user.
+    notification.email_sent = False
+    notification.email_error = None
+
     recipient = (email_to or user.email or '').strip()
     if not recipient:
+        notification.email_error = 'No email address on file.'
         logger.info(
             'Notification %s stored in-app only: no email address on file.',
             notification.pk,
@@ -50,11 +55,13 @@ def notify(user, subject, message, email_to=None):
             recipient_list=[recipient],
             fail_silently=False,
         )
-    except Exception:
+    except Exception as exc:
+        notification.email_error = str(exc) or type(exc).__name__
         logger.exception(
             'Failed to email notification %s to %s', notification.pk, recipient,
         )
     else:
+        notification.email_sent = True
         logger.info('Emailed notification %s to %s', notification.pk, recipient)
 
     return notification

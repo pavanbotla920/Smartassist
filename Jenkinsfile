@@ -1,4 +1,3 @@
-
 pipeline {
     agent any
 
@@ -52,7 +51,37 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                sh 'docker build -t smartassist-kisan:jenkins-test .'
+                sh '''
+                    docker build \
+                        -t pavanbotla/smartassist-kisan:latest \
+                        -t pavanbotla/smartassist-kisan:1.0.1 \
+                        .
+                '''
+            }
+        }
+
+        stage('Docker Hub Push') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-credentials',
+                        usernameVariable: 'DOCKERHUB_USERNAME',
+                        passwordVariable: 'DOCKERHUB_TOKEN'
+                    )
+                ]) {
+                    sh '''
+                        set +x
+
+                        echo "$DOCKERHUB_TOKEN" | docker login \
+                            --username "$DOCKERHUB_USERNAME" \
+                            --password-stdin
+
+                        docker push pavanbotla/smartassist-kisan:1.0.1
+                        docker push pavanbotla/smartassist-kisan:latest
+
+                        docker logout
+                    '''
+                }
             }
         }
     }

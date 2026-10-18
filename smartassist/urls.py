@@ -15,8 +15,6 @@ from farmers.views import (
     state_schemes_public_api,
     india_map_overview_api,
     india_map_state_analytics_api,
-    india_map_schemes,
-    state_dashboard,
     scheme_voice_audio,
     scheme_translation_api,
     register,
@@ -29,9 +27,11 @@ from farmers.views import (
     application_status,
     admin_dashboard,
     manage_schemes,
+    add_scheme,
+    edit_scheme,  
+    delete_scheme,
     update_application_status,
     apply_scheme_admin,
-    reports,
     set_language,
     logout_user
 )
@@ -44,6 +44,10 @@ urlpatterns = [
 urlpatterns += i18n_patterns(
     # Home
     path('', home, name='home'),
+    path('manage-schemes/', manage_schemes, name='manage_schemes'),
+    path('manage-schemes/add/', add_scheme, name='add_scheme'), # Uses same view as edit but without ID
+    path('manage-schemes/edit/<int:scheme_id>/', edit_scheme, name='edit_scheme'),
+    path('manage-schemes/delete/<int:scheme_id>/', delete_scheme, name='delete_scheme'),
 
     # Dashboard
     path('dashboard/', dashboard, name='dashboard'),
@@ -81,7 +85,6 @@ urlpatterns += i18n_patterns(
     path('manage-schemes/', manage_schemes, name='manage_schemes'),
     path('update-status/<int:app_id>/', update_application_status, name='update_status'),
     path('apply-scheme/<int:app_id>/<int:scheme_id>/', apply_scheme_admin, name='apply_scheme_admin'),
-    path('reports/', reports, name='reports'),
 
     # ✅ CHATBOT (IMPORTANT)
     path('chatbot/', chatbot, name='chatbot'),
@@ -95,8 +98,6 @@ urlpatterns += i18n_patterns(
     path('api/scheme-translation/', scheme_translation_api, name='scheme_translation_api'),
     path('api/india-map/overview/', india_map_overview_api, name='india_map_overview_api'),
     path('api/india-map/state/<str:state_name>/', india_map_state_analytics_api, name='india_map_state_analytics_api'),
-    path('india-map/', india_map_schemes, name='india_map_schemes'),
-    path('state-dashboard/<str:state_name>/', state_dashboard, name='state_dashboard'),
 
     prefix_default_language=False
 )

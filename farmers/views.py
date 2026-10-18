@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Count, Q
+from django.db.models.functions import TruncMonth
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout as auth_logout
 from django.core.cache import cache
@@ -7,15 +8,20 @@ from django.http import HttpResponse, JsonResponse, Http404, StreamingHttpRespon
 from django.views.decorators.http import require_GET, require_POST
 from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
 from django.utils.translation import gettext as _, check_for_language
 from django.urls import reverse, translate_url
 from django.conf import settings as conf_settings
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils import timezone
+from datetime import timedelta
+from dateutil.relativedelta import relativedelta
 from urllib.parse import urlencode, urlparse
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 from .models import ApplicationRequest, Scheme, Notification, UserProfile
 from .forms import UserRegisterForm, UserUpdateForm, UserProfileForm, CitizenApplicationForm, SchemeForm
+from .emails import notify, notify_application_status
 import csv
 import asyncio
 import json
@@ -159,16 +165,6 @@ def scheme_awareness(request):
         'type_filter': type_filter,
     }
     return render(request, 'scheme_awareness.html', context)
-
-
-def india_map_schemes(request):
-    """Render the interactive India scheme map dashboard."""
-    return render(request, 'india_map_schemes.html')
-
-
-def state_dashboard(request, state_name):
-    """Render the state-specific analytics dashboard."""
-    return render(request, 'state_dashboard.html', {'state_name': state_name})
 
 
 def scheme_detail(request, scheme_id):
@@ -484,17 +480,17 @@ def apply_for_assistance(request):
             application = form.save(commit=False)
             application.user = request.user
             application.scheme = scheme
-            application.status = 'Submitted'
+            application.status = 'Pending'
             application.save()
 
             scheme_name = scheme.scheme_name if scheme else _('government scheme assistance')
-            Notification.objects.create(
-                user=request.user,
-                notification_type='email',
-                subject=_('Application Submitted'),
-                message=_('Your application for %(scheme)s has been submitted successfully.') % {
+            notify(
+                request.user,
+                _('Application Submitted'),
+                _('Your application for %(scheme)s has been submitted successfully.') % {
                     'scheme': scheme_name,
                 },
+                email_to=application.email,
             )
 
             if scheme:
@@ -549,15 +545,12 @@ def application_status(request):
 # -----------------------------
 @login_required
 def admin_dashboard(request):
-    """Admin/Volunteer dashboard"""
-    user_profile = UserProfile.objects.get(user=request.user)
+    user_profile = get_object_or_404(UserProfile, user=request.user)
     if user_profile.role not in ['volunteer', 'admin']:
         return redirect('dashboard')
 
-    # Get all applications
+    # --- Application Stats (Keep Existing) ---
     applications = ApplicationRequest.objects.all().order_by('-created_at')
-
-    # Statistics
     total_applications = applications.count()
     pending = applications.filter(status='Submitted').count()
     under_review = applications.filter(status='Under Review').count()
@@ -565,21 +558,104 @@ def admin_dashboard(request):
     approved = applications.filter(status='Approved').count()
     rejected = applications.filter(status='Rejected').count()
 
+    # ==========================================
+    # NEW ANALYTICS LOGIC
+    # ==========================================
+    now = timezone.now()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    # 1. Farmer Registration Trends
+    total_farmers = UserProfile.objects.filter(role='citizen').count()
+    
+    # Calculate for the dynamic tags (default to month)
+    week_start = today_start - timedelta(days=today_start.weekday())
+    month_start = today_start.replace(day=1)
+    six_months_ago = month_start - relativedelta(months=6)
+    year_start = month_start - relativedelta(years=1)
+
+    farmers_week = UserProfile.objects.filter(role='citizen', user__date_joined__gte=week_start).count()
+    farmers_month = UserProfile.objects.filter(role='citizen', user__date_joined__gte=month_start).count()
+    farmers_six_months = UserProfile.objects.filter(role='citizen', user__date_joined__gte=six_months_ago).count()
+    farmers_year = UserProfile.objects.filter(role='citizen', user__date_joined__gte=year_start).count()
+
+    # Chart Data (Last 6 months for a neat graph)
+    trend_months = []
+    trend_counts = []
+    for i in range(5, -1, -1): # 5 months ago to current month
+        start_date = (month_start - relativedelta(months=i))
+        end_date = start_date + relativedelta(months=1)
+        count = UserProfile.objects.filter(role='citizen', user__date_joined__gte=start_date, user__date_joined__lt=end_date).count()
+        trend_months.append(start_date.strftime('%b'))
+        trend_counts.append(count)
+
+    # 2. Scheme Trends
+    active_schemes = Scheme.objects.all().count()
+    central_schemes = Scheme.objects.filter(scheme_type='Central').count()
+    state_schemes = Scheme.objects.filter(scheme_type='State').count()
+    new_schemes_month = Scheme.objects.filter(created_at__gte=month_start).count() if hasattr(Scheme, 'created_at') else 0
+    
+    # Get some schemes to display in the Engagement/Expiring boxes
+    # (Since we don't have real engagement tracking yet, we just grab the first few)
+    recent_schemes = Scheme.objects.all().order_by('-id')[:3]
+    expiring_schemes = Scheme.objects.all().order_by('id')[:3] # Placeholder if no closing_date
+
+    # 3. Geographic Distribution
+    # Top 5 Districts
+    district_data = (
+        UserProfile.objects.filter(role='citizen')
+        .exclude(district__isnull=True).exclude(district='')
+        .values('district', 'state')
+        .annotate(count=Count('id'))
+        .order_by('-count')[:5]
+    )
+
+    # State Bar Chart Data
+    state_distribution = (
+        UserProfile.objects.filter(role='citizen')
+        .exclude(state__isnull=True).exclude(state='')
+        .values('state')
+        .annotate(count=Count('id'))
+        .order_by('-count')[:8] # Top 8 states
+    )
+    state_labels = [item['state'] for item in state_distribution]
+    state_data = [item['count'] for item in state_distribution]
+
     context = {
-        'applications': applications[:10],  # Recent 10
+        'applications': applications[:10],
         'total_applications': total_applications,
         'pending': pending,
         'under_review': under_review,
         'applied': applied,
         'approved': approved,
         'rejected': rejected,
+        
+        # Farmer Trends
+        'total_farmers': total_farmers,
+        'farmers_week': farmers_week,
+        'farmers_month': farmers_month,
+        'farmers_six_months': farmers_six_months,
+        'farmers_year': farmers_year,
+        'trend_months': trend_months,
+        'trend_counts': trend_counts,
+        
+        # Scheme Trends
+        'active_schemes': active_schemes,
+        'central_schemes': central_schemes,
+        'state_schemes': state_schemes,
+        'new_schemes_month': new_schemes_month,
+        'recent_schemes': recent_schemes,
+        'expiring_schemes': expiring_schemes,
+        
+        # Geo Distribution
+        'district_data': district_data,
+        'state_labels': state_labels,
+        'state_data': state_data,
     }
     return render(request, 'admin_dashboard.html', context)
 
-
-@login_required
+@login_required 
 def manage_schemes(request):
-    """Manage government schemes"""
+    """Manage government schemes (List, Create, Delete)"""
     user_profile = UserProfile.objects.get(user=request.user)
     if user_profile.role not in ['volunteer', 'admin']:
         return redirect('dashboard')
@@ -593,19 +669,66 @@ def manage_schemes(request):
     else:
         form = SchemeForm()
 
-    schemes = Scheme.objects.all()
+    # Fetch all schemes, newest first
+    schemes = Scheme.objects.all().order_by('-id') 
+    
     return render(request, 'manage_schemes.html', {'form': form, 'schemes': schemes})
+@login_required
+def add_scheme(request):
+    """Create a new scheme"""
+    user_profile = UserProfile.objects.get(user=request.user)
+    if user_profile.role not in ['volunteer', 'admin']:
+        return redirect('dashboard')
 
+    if request.method == 'POST':
+        form = SchemeForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _('Scheme added successfully!'))
+            return redirect('manage_schemes')
+    else:
+        form = SchemeForm()
+
+    return render(request, 'scheme_form.html', {'form': form})
+
+@login_required
+def edit_scheme(request, scheme_id):
+    """Edit an existing scheme"""
+    scheme = get_object_or_404(Scheme, id=scheme_id)
+    user_profile = UserProfile.objects.get(user=request.user)
+    
+    if user_profile.role not in ['volunteer', 'admin']:
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        form = SchemeForm(request.POST, instance=scheme)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _('Scheme updated successfully!'))
+            return redirect('manage_schemes')
+    else:
+        form = SchemeForm(instance=scheme)
+
+    return render(request, 'scheme_form.html', {'form': form, 'scheme': scheme})
+@login_required
+def delete_scheme(request, scheme_id):
+    """Delete a scheme"""
+    scheme = get_object_or_404(Scheme, id=scheme_id)
+    user_profile = UserProfile.objects.get(user=request.user)
+    
+    if user_profile.role in ['volunteer', 'admin']:
+        scheme.delete()
+        messages.success(request, _('Scheme deleted successfully!'))
+    return redirect('manage_schemes')
 
 @login_required
 def update_application_status(request, app_id):
-    """Update application status"""
     user_profile = get_object_or_404(UserProfile, user=request.user)
     if user_profile.role not in ['volunteer', 'admin']:
         return redirect('dashboard')
 
     application = get_object_or_404(ApplicationRequest, id=app_id)
-
+    
     if request.method == 'POST':
         new_status = request.POST.get('status')
         notes = request.POST.get('notes')
@@ -614,19 +737,12 @@ def update_application_status(request, app_id):
         application.applied_by = request.user
         application.save()
 
-        # Send notification
-        Notification.objects.create(
-            user=application.user,
-            notification_type='email',
-            subject=_('Application Status Updated'),
-            message=_(f'Your application status has been updated to: {new_status}')
-        )
+        notify_application_status(application, new_status, notes)
 
-        messages.success(request, _('Application status updated!'))
+        messages.success(request, 'Application status updated!')
         return redirect('admin_dashboard')
 
     return render(request, 'update_status.html', {'application': application})
-
 
 @login_required
 def apply_scheme_admin(request, app_id, scheme_id):
@@ -646,54 +762,17 @@ def apply_scheme_admin(request, app_id, scheme_id):
     application.save()
 
     # Send notification
-    Notification.objects.create(
-        user=application.user,
-        notification_type='email',
-        subject=_('Scheme Applied'),
-        message=_(f'We have applied for {scheme.scheme_name} on your behalf.')
+    notify(
+        application.user,
+        _('Scheme Applied'),
+        _('We have applied for %(scheme)s on your behalf.') % {'scheme': scheme.scheme_name},
+        email_to=application.email,
     )
 
     messages.success(request, _('Scheme applied successfully!'))
     return redirect('admin_dashboard')
 
 
-# -----------------------------
-# REPORTS & ANALYTICS
-# -----------------------------
-@login_required
-def reports(request):
-    """Reports and analytics"""
-    user_profile = get_object_or_404(UserProfile, user=request.user)
-    if user_profile.role not in ['volunteer', 'admin']:
-        return redirect('dashboard')
-
-    # Application status data
-    status_data = list(
-        ApplicationRequest.objects.values('status')
-        .annotate(count=Count('status'))
-    )
-
-    # Scheme-wise applications
-    scheme_data = list(
-        ApplicationRequest.objects.filter(scheme__isnull=False)
-        .values('scheme__scheme_name')
-        .annotate(count=Count('scheme'))
-        .order_by('-count')
-    )
-
-    # State-wise applications
-    state_data = list(
-        ApplicationRequest.objects.values('state')
-        .annotate(count=Count('state'))
-        .order_by('-count')
-    )
-
-    context = {
-        'status_data': json.dumps(status_data),
-        'scheme_data': json.dumps(scheme_data),
-        'state_data': json.dumps(state_data),
-    }
-    return render(request, 'reports.html', context)
 
 
 # -----------------------------
@@ -764,6 +843,10 @@ def set_language(request):
 # -----------------------------
 @login_required
 def dashboard(request):
+    # ✅ Automatically redirect Admins/Volunteers to their proper dashboard
+    if hasattr(request.user, 'userprofile') and request.user.userprofile.role in ['admin', 'volunteer']:
+        return redirect('admin_dashboard')
+
     # Fetch the user's profile safely, just in case it doesn't exist yet
     user_profile, created = UserProfile.objects.get_or_create(user=request.user)
 
@@ -1004,11 +1087,12 @@ def recommend_schemes(request):
     form_data = {}
 
     if request.method == 'POST':
-        age = int(request.POST.get('age'))
-        income = int(request.POST.get('income'))
-        category = request.POST.get('category')
-        state = request.POST.get('state')
-
+        # Use .get() with defaults so it doesn't crash if a user skips steps
+        age = int(request.POST.get('age') or 0)
+        income = int(request.POST.get('income') or 0) # 0 means no income limit enforced if skipped
+        category = request.POST.get('category') or 'General'
+        state = request.POST.get('state') or ''
+        
         form_data = {
             'age': age,
             'income': income,
@@ -1023,25 +1107,31 @@ def recommend_schemes(request):
             score = 0
             reasons = []
 
-            # AGE CHECK
+            # AGE CHECK (Always required, so we always check)
             if scheme.min_age <= age <= scheme.max_age:
-                score += 40
-                reasons.append("Age eligible")
-
-            # INCOME CHECK
-            if income <= scheme.income_limit:
                 score += 30
-                reasons.append("Income eligible")
+                reasons.append("Age eligible")
+            else:
+                # If they fail the age check, it's a bad match. 
+                # We don't add points, but we still keep it in the list to sort later.
+                pass 
 
-            # CATEGORY CHECK
-            if scheme.category == "All" or scheme.category == category:
+            # INCOME CHECK (If income is 0, it means they skipped it, so we give them the points)
+            if income == 0 or income <= scheme.income_limit:
+                score += 30
+                if income > 0:
+                    reasons.append("Income eligible")
+
+            # CATEGORY CHECK (If they skip, it defaults to General)
+            if scheme.category == "All" or scheme.category.lower() == category.lower():
                 score += 20
                 reasons.append("Category match")
 
-            # STATE CHECK
-            if state.lower() in scheme.state.lower():
-                score += 10
-                reasons.append("State match")
+            # STATE CHECK (If they skip, state is empty, so we give them the points)
+            if not state or not scheme.state or state.lower() in scheme.state.lower():
+                score += 20
+                if state:
+                    reasons.append("Location match")
 
             scheme_official = _format_link(scheme.official_website)
             scheme_apply = _format_link(scheme.apply_link) or scheme_official
@@ -1057,7 +1147,8 @@ def recommend_schemes(request):
         # SORT BY SCORE
         results = sorted(results, key=lambda x: x['score'], reverse=True)
 
-        schemes = results[:5]   # TOP 5
+        # FILTER: Only keep schemes with a score of 40 or higher
+        schemes = [r for r in results if r['score'] >= 40][:5]
 
     return render(request, 'recommend.html', {
         'schemes': schemes,

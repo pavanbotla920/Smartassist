@@ -1,233 +1,462 @@
 {% extends 'base.html' %}
 {% load i18n %}
+{% load static %}
 
-{% block title %}{% trans "Admin Dashboard - SmartAssist" %}{% endblock %}
+{% block title %}Admin Dashboard - SmartAssist{% endblock %}
+
+{% block extra_head %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .sa-admin-bg { background: var(--sa-paper); min-height: calc(100vh - 72px); padding: 2.5rem 1rem 4rem; }
+    
+    /* Header Row */
+    .sa-admin-header-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+    .sa-admin-header h1 { font-family: var(--sa-font-display); font-size: 2.2rem; font-weight: 700; color: var(--sa-ink); margin-bottom: 0.3rem; }
+    .sa-admin-header p { color: var(--sa-muted); font-size: 1rem; margin: 0; }
+    
+    /* Cute Top Buttons */
+    .sa-top-actions { display: flex; gap: 0.8rem; flex-wrap: wrap; }
+    .sa-btn-export-top { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 30px; font-size: 0.85rem; font-weight: 700; cursor: pointer; border: 1px solid var(--sa-line); background: #fff; color: var(--sa-ink); transition: var(--sa-ease); box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+    .sa-btn-export-top:hover { border-color: var(--sa-gold); background: var(--sa-paper); transform: translateY(-2px); }
+    .sa-btn-generate { background: var(--sa-emerald); color: #fff; border: none; box-shadow: 0 4px 15px rgba(31,169,113,0.3); }
+    .sa-btn-generate:hover { background: var(--sa-ink); color: #fff; }
+
+    /* Stat Cards */
+    .sa-stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2.5rem; }
+    .sa-stat-card { background: var(--sa-card); border: 1px solid var(--sa-line); border-radius: 20px; padding: 1.2rem; text-align: center; box-shadow: 0 8px 24px rgba(11,46,36,0.04); transition: var(--sa-ease); }
+    .sa-stat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(11,46,36,0.08); }
+    .sa-stat-card h3 { font-size: 2rem; font-weight: 800; margin: 0 0 0.2rem; }
+    .sa-stat-card p { font-size: 0.8rem; font-weight: 700; color: var(--sa-muted); text-transform: uppercase; margin: 0; letter-spacing: 0.5px; }
+    .sa-stat-card.total h3 { color: var(--sa-ink); }
+    .sa-stat-card.pending h3 { color: var(--sa-gold-deep); }
+    .sa-stat-card.review h3 { color: #d97706; }
+    .sa-stat-card.applied h3 { color: #2563eb; }
+    .sa-stat-card.approved h3 { color: var(--sa-emerald); }
+    .sa-stat-card.rejected h3 { color: #dc3545; }
+
+    /* Main Grid */
+    .sa-admin-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; align-items: stretch; margin-bottom: 2.5rem; }
+    @media (max-width: 992px) { .sa-admin-grid { grid-template-columns: 1fr; } }
+
+    /* Panels */
+    .sa-panel { background: var(--sa-card); border: 1px solid var(--sa-line); border-radius: 24px; box-shadow: 0 10px 30px rgba(11,46,36,0.05); display: flex; flex-direction: column; overflow: hidden; }
+    .sa-panel-header { padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--sa-line); background: var(--sa-paper); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    .sa-panel-header h5 { margin: 0; font-size: 1.1rem; font-weight: 800; color: var(--sa-ink); }
+    
+    /* Application List */
+    .sa-app-list { display: flex; flex-direction: column; max-height: 400px; overflow-y: auto; }
+    .sa-app-list::-webkit-scrollbar { width: 8px; }
+    .sa-app-list::-webkit-scrollbar-track { background: var(--sa-paper); }
+    .sa-app-list::-webkit-scrollbar-thumb { background: var(--sa-gold); border-radius: 4px; }
+    .sa-app-item { display: flex; justify-content: space-between; align-items: center; padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--sa-line); transition: var(--sa-ease); flex-shrink: 0; }
+    .sa-app-item:hover { background: var(--sa-paper); }
+    .sa-app-name { font-weight: 800; color: var(--sa-ink); font-size: 1rem; margin: 0 0 0.2rem; }
+    .sa-app-detail { font-size: 0.85rem; color: var(--sa-muted); margin: 0; }
+    .sa-status-badge { padding: 0.4rem 0.8rem; border-radius: 30px; font-size: 0.75rem; font-weight: 800; }
+    .bg-pending { background: rgba(217,168,78,0.15); color: var(--sa-gold-deep); }
+    .bg-underreview { background: rgba(217,168,78,0.15); color: var(--sa-gold-deep); }
+    .bg-applied { background: rgba(59,130,246,0.15); color: #2563eb; }
+    .bg-approved { background: rgba(31,169,113,0.15); color: var(--sa-emerald); }
+    .bg-rejected { background: rgba(220,53,69,0.1); color: #dc3545; }
+    .sa-btn-update { background: var(--sa-ink); color: #fff; padding: 0.4rem 1rem; border-radius: 30px; font-size: 0.8rem; font-weight: 700; text-decoration: none; transition: var(--sa-ease); border: none; cursor: pointer;}
+    .sa-btn-update:hover { background: var(--sa-emerald); color: #fff; }
+
+    /* Quick Actions */
+    .sa-quick-actions-body { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; flex-grow: 1; }
+    .sa-quick-action { display: flex; align-items: center; gap: 1rem; padding: 1rem; border-radius: 16px; background: var(--sa-paper); border: 1px solid var(--sa-line); text-decoration: none; color: var(--sa-text); font-weight: 700; transition: var(--sa-ease); }
+    .sa-quick-action:hover { border-color: var(--sa-gold); background: #fff; color: var(--sa-ink); transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.05); }
+    .sa-quick-action i { width: 36px; height: 36px; border-radius: 50%; background: var(--sa-gold-soft); color: var(--sa-gold-deep); display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+
+    /* ==========================================
+       NEW ANALYTICS SECTION CSS
+       ========================================== */
+    .sa-analytics-panel { background: var(--sa-card); border: 1px solid var(--sa-line); border-radius: 24px; box-shadow: 0 10px 30px rgba(11,46,36,0.05); padding: 2.5rem; margin-bottom: 2rem; }
+    .sa-section-title { font-family: var(--sa-font-display); font-size: 1.4rem; font-weight: 800; color: var(--sa-ink); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.6rem; }
+    
+    /* Cute Cards */
+    .sa-cute-card { background: #fff; border: 1px solid var(--sa-line); border-radius: 20px; padding: 1.5rem; box-shadow: 0 6px 18px rgba(0,0,0,0.03); height: 100%; display: flex; flex-direction: column; justify-content: center; }
+    .sa-cute-card h4 { font-size: 2.2rem; font-weight: 800; color: var(--sa-ink); margin: 0 0 0.2rem; }
+    .sa-cute-card span { font-size: 0.85rem; font-weight: 700; color: var(--sa-muted); text-transform: uppercase; }
+    
+    /* Pills for Time Filters */
+    .sa-filter-pills { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .sa-pill { padding: 0.4rem 1rem; border-radius: 30px; font-size: 0.8rem; font-weight: 700; border: 1px solid var(--sa-line); background: #fff; color: var(--sa-muted); cursor: pointer; transition: var(--sa-ease); }
+    .sa-pill:hover, .sa-pill.active { background: var(--sa-ink); color: #fff; border-color: var(--sa-ink); }
+
+    /* Scheme Boxes (Like Home Page) */
+    .sa-scheme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem; }
+    .sa-scheme-card { background: #fff; border: 1px solid var(--sa-line); border-top: 4px solid var(--sa-gold); border-radius: 16px; padding: 1.2rem; transition: var(--sa-ease); box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+    .sa-scheme-card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0,0,0,0.08); }
+    .sa-scheme-card h6 { font-weight: 800; color: var(--sa-ink); margin-bottom: 0.3rem; font-size: 1rem; }
+    .sa-scheme-card p { font-size: 0.8rem; color: var(--sa-muted); margin-bottom: 0.8rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .sa-scheme-card .sa-mini-badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.7rem; font-weight: 700; background: var(--sa-paper); border: 1px solid var(--sa-line); }
+
+    /* District List */
+    .sa-district-box { background: #fff; border: 1px solid var(--sa-line); border-radius: 20px; padding: 1.5rem; box-shadow: 0 6px 18px rgba(0,0,0,0.03); }
+    .sa-district-item { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 0; border-bottom: 1px dashed rgba(11,46,36,0.1); }
+    .sa-district-item:last-child { border-bottom: none; }
+    .sa-district-name { font-weight: 800; color: var(--sa-ink); font-size: 0.95rem; margin: 0; }
+    .sa-district-state { font-size: 0.75rem; color: var(--sa-muted); margin: 0; }
+    .sa-progress-track { height: 6px; background: rgba(11,46,36,0.08); border-radius: 99px; width: 100px; overflow: hidden; }
+    .sa-progress-fill { height: 100%; background: var(--sa-emerald); border-radius: 99px; }
+
+    /* Chart Container */
+    .sa-chart-box { background: #fff; border: 1px solid var(--sa-line); border-radius: 20px; padding: 1.5rem; box-shadow: 0 6px 18px rgba(0,0,0,0.03); height: 100%; }
+    .sa-chart-wrap { position: relative; height: 250px; width: 100%; margin-top: 1rem; }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="row mb-4">
-        <div class="col">
-            <h1 class="display-5 fw-bold">
-                <i class="fas fa-tachometer-alt text-primary"></i>
-                {% trans "Admin Dashboard" %}
-            </h1>
-            <p class="text-muted">{% trans "Manage citizen applications and government schemes" %}</p>
+<div class="sa-admin-bg">
+    <div class="container" style="max-width: 1240px; margin: 0 auto;">
+        
+        <!-- Header with Export/Generate Buttons -->
+        <div class="sa-admin-header-row">
+            <div class="sa-admin-header">
+                <h1><i class="fas fa-shield-alt" style="color: var(--sa-gold);"></i> Admin Dashboard</h1>
+                <p>Manage applications, schemes, and platform analytics.</p>
+            </div>
+            <div class="sa-top-actions">
+                <button class="sa-btn-export-top" onclick="alert('PDF export functionality coming soon!')">
+                    <i class="fas fa-file-pdf text-danger"></i> Export PDF
+                </button>
+                <button class="sa-btn-export-top" onclick="alert('Excel export functionality coming soon!')">
+                    <i class="fas fa-file-excel text-success"></i> Export Excel
+                </button>
+                <button class="sa-btn-export-top" onclick="alert('CSV export functionality coming soon!')">
+                    <i class="fas fa-file-csv text-primary"></i> Export CSV
+                </button>
+                <button class="sa-btn-export-top sa-btn-generate" onclick="window.print()">
+                    <i class="fas fa-magic"></i> Generate Report
+                </button>
+            </div>
         </div>
-    </div>
 
-    <!-- Statistics Cards -->
-    <div class="row mb-4">
-        <div class="col-md-2">
-            <div class="card bg-primary text-white">
-                <div class="card-body text-center">
-                    <i class="fas fa-clipboard-list fa-2x mb-2"></i>
-                    <h4>{{ total_applications }}</h4>
-                    <small>{% trans "Total Applications" %}</small>
-                </div>
-            </div>
+        <!-- Existing Application Stats -->
+        <div class="sa-stat-grid">
+            <div class="sa-stat-card total"><h3>{{ total_applications }}</h3><p>Total Applications</p></div>
+            <div class="sa-stat-card pending"><h3>{{ pending }}</h3><p>Submitted</p></div>
+            <div class="sa-stat-card review"><h3>{{ under_review }}</h3><p>Under Review</p></div>
+            <div class="sa-stat-card approved"><h3>{{ approved }}</h3><p>Approved</p></div>
+            <div class="sa-stat-card rejected"><h3>{{ rejected }}</h3><p>Rejected</p></div>
         </div>
-        <div class="col-md-2">
-            <div class="card bg-info text-white">
-                <div class="card-body text-center">
-                    <i class="fas fa-clock fa-2x mb-2"></i>
-                    <h4>{{ pending }}</h4>
-                    <small>{% trans "Pending" %}</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card bg-warning text-white">
-                <div class="card-body text-center">
-                    <i class="fas fa-search fa-2x mb-2"></i>
-                    <h4>{{ under_review }}</h4>
-                    <small>{% trans "Under Review" %}</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card bg-success text-white">
-                <div class="card-body text-center">
-                    <i class="fas fa-check-circle fa-2x mb-2"></i>
-                    <h4>{{ applied }}</h4>
-                    <small>{% trans "Applied" %}</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card bg-success text-white">
-                <div class="card-body text-center">
-                    <i class="fas fa-thumbs-up fa-2x mb-2"></i>
-                    <h4>{{ approved }}</h4>
-                    <small>{% trans "Approved" %}</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card bg-danger text-white">
-                <div class="card-body text-center">
-                    <i class="fas fa-times-circle fa-2x mb-2"></i>
-                    <h4>{{ rejected }}</h4>
-                    <small>{% trans "Rejected" %}</small>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Recent Applications -->
-    <div class="row">
-        <div class="col-lg-8">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="fas fa-list"></i>
-                        {% trans "Recent Applications" %}
-                    </h5>
-                    <a href="#all-applications" class="btn btn-sm btn-outline-primary">{% trans "View All" %}</a>
+        <!-- Existing Main Grid (Apps & Actions) -->
+        <div class="sa-admin-grid">
+            <div class="sa-panel">
+                <div class="sa-panel-header">
+                    <h5><i class="fas fa-list" style="color: var(--sa-gold);"></i> Recent Applications</h5>
                 </div>
-                <div class="card-body">
-                    {% if applications %}
-                        <div class="list-group list-group-flush">
-                            {% for app in applications %}
-                            <div class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="mb-1">{{ app.name }}</h6>
-                                    <p class="mb-1 text-muted small">
-                                        {{ app.state }}, {{ app.district }} • {{ app.mobile }}
-                                    </p>
-                                    <small class="text-muted">{{ app.created_at|date:"M d, Y" }}</small>
-                                </div>
-                                <div class="text-end">
-                                    <span class="badge status-badge status-{{ app.status|lower|cut:' ' }} mb-2">
-                                        {{ app.get_status_display }}
-                                    </span>
-                                    <br>
-                                    <a href="{% url 'update_status' app.id %}" class="btn btn-sm btn-primary">
-                                        <i class="fas fa-edit"></i> {% trans "Update" %}
-                                    </a>
-                                </div>
-                            </div>
-                            {% endfor %}
+                <div class="sa-app-list">
+                    {% for app in applications %}
+                    <div class="sa-app-item">
+                        <div>
+                            <p class="sa-app-name">{{ app.name }}</p>
+                            <p class="sa-app-detail"><i class="fas fa-map-marker-alt"></i> {{ app.district }}, {{ app.state }} &nbsp;•&nbsp; <i class="fas fa-calendar"></i> {{ app.created_at|date:"M d" }}</p>
                         </div>
-                    {% else %}
-                        <p class="text-center text-muted py-4">{% trans "No applications yet" %}</p>
-                    {% endif %}
+                        <div style="text-align: right;">
+                            <span class="sa-status-badge bg-{{ app.status|lower|cut:' ' }}">{{ app.status }}</span>
+                            <div style="margin-top: 0.5rem;"><a href="{% url 'update_status' app.id %}" class="sa-btn-update">Update</a></div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div style="padding: 3rem; text-align: center; color: var(--sa-muted);">No applications yet.</div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="sa-panel">
+                <div class="sa-panel-header"><h5><i class="fas fa-bolt" style="color: var(--sa-gold);"></i> Quick Actions</h5></div>
+                <div class="sa-quick-actions-body">
+                    <a href="{% url 'manage_schemes' %}" class="sa-quick-action"><i class="fas fa-plus"></i> Add / Manage Schemes</a>
+                                        <a href="{% url 'admin:index' %}" class="sa-quick-action"><i class="fas fa-cog"></i> Django Admin Panel</a>
                 </div>
             </div>
         </div>
 
-        <!-- Quick Actions -->
-        <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-bolt"></i>
-                        {% trans "Quick Actions" %}
-                    </h5>
+        <!-- ========================================== -->
+        <!-- NEW CUSTOM ANALYTICS SECTION               -->
+        <!-- ========================================== -->
+        <div class="sa-analytics-panel">
+            <h3 class="sa-section-title"><i class="fas fa-chart-pie text-success"></i> Admin Analytics</h3>
+
+            <!-- 1. FARMER REGISTRATION TRENDS -->
+            <h5 class="sa-analytics-subhead" style="font-weight: 800; color: var(--sa-gold-deep); margin-bottom: 1.5rem;">Farmer Registration Trends</h5>
+            
+            <div class="row g-4 mb-4">
+                <!-- Total Registered -->
+                <div class="col-md-4">
+                    <div class="sa-cute-card">
+                        <span>Total Registered Farmers</span>
+                        <h4>{{ total_farmers }}</h4>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="d-grid gap-2">
-                        <a href="{% url 'manage_schemes' %}" class="btn btn-primary">
-                            <i class="fas fa-plus"></i>
-                            {% trans "Add New Scheme" %}
-                        </a>
-                        <a href="{% url 'reports' %}" class="btn btn-success">
-                            <i class="fas fa-chart-bar"></i>
-                            {% trans "View Reports" %}
-                        </a>
-                        <button class="btn btn-info" onclick="exportData()">
-                            <i class="fas fa-download"></i>
-                            {% trans "Export Data" %}
-                        </button>
+                <!-- New Registrations (Dynamic Tag) -->
+                <div class="col-md-4">
+                    <div class="sa-cute-card" style="background: var(--sa-paper);">
+                        <span>New Registrations</span>
+                        <div class="d-flex align-items-baseline gap-2">
+                            <h4 id="dynamic-new-farmers">{{ farmers_month }}</h4>
+                            <span id="dynamic-tag" class="badge bg-success rounded-pill" style="font-size: 0.7rem;">This Month</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Filter Pills -->
+                <div class="col-md-4 d-flex align-items-center">
+                    <div class="sa-filter-pills mb-0">
+                        <button class="sa-pill" onclick="updateFarmers('week', {{ farmers_week }}, this)">Week</button>
+                        <button class="sa-pill active" onclick="updateFarmers('month', {{ farmers_month }}, this)">Month</button>
+                        <button class="sa-pill" onclick="updateFarmers('six_months', {{ farmers_six_months }}, this)">6 Months</button>
+                        <button class="sa-pill" onclick="updateFarmers('year', {{ farmers_year }}, this)">Year</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Recent Activity -->
-            <div class="card mt-3">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-history"></i>
-                        {% trans "Recent Activity" %}
-                    </h5>
+            <!-- Line Graph -->
+            <div class="sa-chart-box mb-5">
+                <h6 class="fw-bold mb-0 text-muted">Registration Growth (Last 6 Months)</h6>
+                <div class="sa-chart-wrap">
+                    <canvas id="farmerTrendChart"></canvas>
                 </div>
-                <div class="card-body">
-                    <div class="timeline">
-                        <div class="timeline-item">
-                            <div class="timeline-marker bg-success"></div>
-                            <div class="timeline-content">
-                                <small>{% trans "Application #123 approved" %}</small>
-                                <br><small class="text-muted">2 hours ago</small>
+            </div>
+
+            <!-- 2. SCHEME TRENDS -->
+            <h5 class="sa-analytics-subhead" style="font-weight: 800; color: var(--sa-gold-deep); margin-bottom: 1.5rem;">Scheme Trends</h5>
+            
+            <div class="row g-4 mb-4">
+                <div class="col-md-4">
+                    <div class="sa-cute-card">
+                        <span>Active Schemes</span>
+                        <h4>{{ active_schemes }}</h4>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="sa-cute-card">
+                        <span>State Schemes</span>
+                        <h4>{{ state_schemes }}</h4>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="sa-cute-card">
+                        <span>Central Schemes</span>
+                        <h4>{{ central_schemes }}</h4>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scheme Filter Box -->
+            <div class="sa-chart-box mb-5">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                    <h6 class="fw-bold mb-0 text-muted">Scheme Overview</h6>
+                    <div class="sa-filter-pills mb-0">
+                        <button class="sa-pill active" onclick="switchSchemeTab('high', this)">High Engagement</button>
+                        <button class="sa-pill" onclick="switchSchemeTab('low', this)">Low Engagement</button>
+                        <button class="sa-pill" onclick="switchSchemeTab('expiring', this)">Expiring Soon</button>
+                        <button class="sa-pill" onclick="switchSchemeTab('new', this)">New This Month</button>
+                    </div>
+                </div>
+                
+                <!-- Tab Content: High Engagement (Default) -->
+                <div id="tab-high" class="sa-scheme-grid">
+                    {% for scheme in recent_schemes %}
+                    <div class="sa-scheme-card">
+                        <span class="sa-mini-badge mb-2" style="color: var(--sa-emerald);">{{ scheme.scheme_type }}</span>
+                        <h6>{{ scheme.scheme_name }}</h6>
+                        <p>{{ scheme.description|default:"No description available."|truncatechars:60 }}</p>
+                        <div class="d-flex justify-content-between align-items-center mt-auto">
+                            <small class="text-muted"><i class="fas fa-eye"></i> 120 views</small>
+                            <a href="#" class="text-success fw-bold text-decoration-none" style="font-size: 0.8rem;">View &rarr;</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Tab Content: Low Engagement -->
+                <div id="tab-low" class="sa-scheme-grid" style="display: none;">
+                    {% for scheme in recent_schemes|slice:"1:4" %}
+                    <div class="sa-scheme-card" style="border-top-color: #dc3545;">
+                        <span class="sa-mini-badge mb-2" style="color: #dc3545;">Low Traffic</span>
+                        <h6>{{ scheme.scheme_name }}</h6>
+                        <p>{{ scheme.description|default:"No description available."|truncatechars:60 }}</p>
+                        <div class="d-flex justify-content-between align-items-center mt-auto">
+                            <small class="text-muted"><i class="fas fa-eye"></i> 4 views</small>
+                            <a href="#" class="text-danger fw-bold text-decoration-none" style="font-size: 0.8rem;">Boost &rarr;</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Tab Content: Expiring -->
+                <div id="tab-expiring" class="sa-scheme-grid" style="display: none;">
+                    {% for scheme in expiring_schemes %}
+                    <div class="sa-scheme-card" style="border-top-color: var(--sa-gold);">
+                        <span class="sa-mini-badge mb-2" style="color: var(--sa-gold-deep);">Ends in 12 Days</span>
+                        <h6>{{ scheme.scheme_name }}</h6>
+                        <p>{{ scheme.description|default:"No description available."|truncatechars:60 }}</p>
+                        <div class="d-flex justify-content-between align-items-center mt-auto">
+                            <small class="text-danger fw-bold"><i class="fas fa-clock"></i> Deadline</small>
+                            <a href="#" class="text-dark fw-bold text-decoration-none" style="font-size: 0.8rem;">Edit &rarr;</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Tab Content: New -->
+                <div id="tab-new" class="sa-scheme-grid" style="display: none;">
+                    {% for scheme in recent_schemes %}
+                    <div class="sa-scheme-card" style="border-top-color: #3b82f6;">
+                        <span class="sa-mini-badge mb-2" style="color: #3b82f6;">Newly Added</span>
+                        <h6>{{ scheme.scheme_name }}</h6>
+                        <p>{{ scheme.description|default:"No description available."|truncatechars:60 }}</p>
+                        <div class="d-flex justify-content-between align-items-center mt-auto">
+                            <small class="text-muted">Added this month</small>
+                            <a href="#" class="text-primary fw-bold text-decoration-none" style="font-size: 0.8rem;">Share &rarr;</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- 3. GEOGRAPHIC DISTRIBUTION -->
+            <h5 class="sa-analytics-subhead" style="font-weight: 800; color: var(--sa-gold-deep); margin-bottom: 1.5rem;">Geographic Distribution</h5>
+            
+            <div class="row g-4">
+                <!-- Districts Panel -->
+                <div class="col-md-5">
+                    <div class="sa-district-box">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold mb-0 text-muted">Farmer Distribution</h6>
+                            <select class="form-select form-select-sm" style="width: auto; border-radius: 20px;">
+                                <option>Highest Adoption</option>
+                                <option>Lowest Adoption</option>
+                            </select>
+                        </div>
+                        {% for item in district_data %}
+                        <div class="sa-district-item">
+                            <div>
+                                <p class="sa-district-name">{{ item.district }}</p>
+                                <p class="sa-district-state">{{ item.state }}</p>
+                            </div>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="sa-progress-track">
+                                    <div class="sa-progress-fill" style="width: {{ item.count }}0%;"></div>
+                                </div>
+                                <span class="fw-bold" style="font-size: 0.9rem; color: var(--sa-ink);">{{ item.count }}</span>
                             </div>
                         </div>
-                        <div class="timeline-item">
-                            <div class="timeline-marker bg-primary"></div>
-                            <div class="timeline-content">
-                                <small>{% trans "New scheme added: PM Kisan" %}</small>
-                                <br><small class="text-muted">1 day ago</small>
-                            </div>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-marker bg-warning"></div>
-                            <div class="timeline-content">
-                                <small>{% trans "5 applications under review" %}</small>
-                                <br><small class="text-muted">2 days ago</small>
-                            </div>
+                        {% empty %}
+                        <p class="text-muted small">No district data available.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- State Chart -->
+                <div class="col-md-7">
+                    <div class="sa-chart-box">
+                        <h6 class="fw-bold mb-0 text-muted">Farmer Distribution By State</h6>
+                        <div class="sa-chart-wrap">
+                            <canvas id="stateDistributionChart"></canvas>
                         </div>
                     </div>
                 </div>
             </div>
+
         </div>
+
     </div>
 </div>
-
-<style>
-.status-submitted { background-color: #17a2b8; }
-.status-underreview { background-color: #ffc107; color: #000; }
-.status-applied { background-color: #007bff; }
-.status-approved { background-color: #28a745; }
-.status-rejected { background-color: #dc3545; }
-
-.timeline {
-    position: relative;
-    padding-left: 20px;
-}
-
-.timeline::before {
-    content: '';
-    position: absolute;
-    left: 10px;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: #e9ecef;
-}
-
-.timeline-item {
-    position: relative;
-    margin-bottom: 15px;
-}
-
-.timeline-marker {
-    position: absolute;
-    left: -17px;
-    top: 5px;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-}
-
-.timeline-content small {
-    font-size: 0.75rem;
-}
-</style>
-
 {% endblock %}
 
 {% block extra_js %}
 <script>
-function exportData() {
-    // This would typically trigger a download
-    alert('{% trans "Data export functionality would be implemented here" %}');
-}
+    // 1. Dynamic Time Filter for Registrations
+    function updateFarmers(range, count, btn) {
+        // Update active pill
+        document.querySelectorAll('.sa-filter-pills button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Update Number
+        const numEl = document.getElementById('dynamic-new-farmers');
+        numEl.textContent = count;
+        
+        // Update Tag text
+        const tagEl = document.getElementById('dynamic-tag');
+        const labels = { 'week': 'This Week', 'month': 'This Month', 'six_months': '6 Months', 'year': 'This Year' };
+        tagEl.textContent = labels[range];
+    }
+
+    // 2. Tab Switching for Scheme Boxes
+    function switchSchemeTab(tab, btn) {
+        document.querySelectorAll('.sa-filter-pills button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Hide all tabs
+        ['high', 'low', 'expiring', 'new'].forEach(t => {
+            document.getElementById('tab-' + t).style.display = 'none';
+        });
+        
+        // Show selected tab
+        document.getElementById('tab-' + tab).style.display = 'grid';
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        
+        // --- 1. Line Chart (Farmer Trends) ---
+        const trendCtx = document.getElementById('farmerTrendChart').getContext('2d');
+        new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: {{ trend_months|safe }},
+                datasets: [{
+                    label: 'New Registrations',
+                    data: {{ trend_counts|safe }},
+                    borderColor: '#10553E',
+                    backgroundColor: 'rgba(31, 169, 113, 0.15)',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#D9A84E',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(11,46,36,0.06)' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // --- 2. Bar Chart (Geographic Distribution) ---
+        const stateCtx = document.getElementById('stateDistributionChart').getContext('2d');
+        new Chart(stateCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ state_labels|safe }},
+                datasets: [{
+                    label: 'Registered Farmers',
+                    data: {{ state_data|safe }},
+                    backgroundColor: '#1FA971',
+                    borderRadius: 8,
+                    barPercentage: 0.5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: 'rgba(11,46,36,0.06)' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+    });
 </script>
 {% endblock %}

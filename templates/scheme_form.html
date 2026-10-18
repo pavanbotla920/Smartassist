@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% if scheme %}Edit Scheme{% else %}Add New Scheme{% endif %} | SmartAssist{% endblock %}
+
+{% block extra_head %}
+<style>
+    .sa-form-bg { background: var(--sa-paper); min-height: calc(100vh - 72px); padding: 3rem 1rem 5rem; }
+    .sa-form-card { max-width: 900px; margin: 0 auto; background: var(--sa-card); border: 1px solid var(--sa-line); border-radius: var(--sa-radius-lg); box-shadow: var(--sa-shadow); overflow: hidden; }
+    .sa-form-header { background: linear-gradient(115deg, var(--sa-ink) 0%, var(--sa-emerald) 100%); padding: 2.5rem; color: #fff; border-bottom: 4px solid var(--sa-gold); }
+    .sa-form-header h2 { margin: 0; font-family: var(--sa-font-display); font-weight: 700; font-size: 2rem; color: #fff; }
+    
+    .sa-form-body { padding: 2.5rem; }
+    .sa-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+    @media (max-width: 768px) { .sa-form-grid { grid-template-columns: 1fr; } }
+    
+    .sa-input-group label { font-size: 0.8rem; font-weight: 800; color: var(--sa-muted); text-transform: uppercase; margin-bottom: 0.5rem; display: block; }
+    .sa-input-group input, .sa-input-group select, .sa-input-group textarea { width: 100%; padding: 0.8rem; border: 1.5px solid var(--sa-line); border-radius: var(--sa-radius-sm); background: var(--sa-paper); font-family: var(--sa-font-body); color: var(--sa-text); }
+    .sa-input-group textarea { min-height: 100px; resize: vertical; }
+    .sa-input-group input:focus, .sa-input-group select:focus, .sa-input-group textarea:focus { outline: none; border-color: var(--sa-emerald); background: #fff; box-shadow: 0 0 0 3px rgba(31,169,113,0.15); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sa-form-bg">
+    <div class="sa-form-card">
+        <div class="sa-form-header">
+            <h2>
+                {% if scheme %}
+                    <i class="fas fa-edit" style="color: var(--sa-gold);"></i> Edit Scheme
+                {% else %}
+                    <i class="fas fa-plus-circle" style="color: var(--sa-gold);"></i> Add New Scheme
+                {% endif %}
+            </h2>
+        </div>
+        
+        <div class="sa-form-body">
+            <form method="POST">
+                {% csrf_token %}
+                <div class="sa-form-grid">
+                    <div class="sa-input-group">
+                        <label>Scheme Name *</label>
+                        {{ form.scheme_name }}
+                    </div>
+                    <div class="sa-input-group">
+                        <label>Scheme Type *</label>
+                        {{ form.scheme_type }}
+                    </div>
+                    <div class="sa-input-group">
+                        <label>Department</label>
+                        {{ form.department }}
+                    </div>
+                    <div class="sa-input-group">
+                        <label>State (Leave blank for All India)</label>
+                        {{ form.state }}
+                    </div>
+                    <div class="sa-input-group">
+                        <label>Category</label>
+                        {{ form.category }}
+                    </div>
+                    <div class="sa-input-group">
+                        <label>Income Limit (₹)</label>
+                        {{ form.income_limit }}
+                    </div>
+                    <div class="sa-input-group">
+                        <label>Min Age</label>
+                        {{ form.min_age }}
+                    </div>
+                    <div class="sa-input-group">
+                        <label>Max Age</label>
+                        {{ form.max_age }}
+                    </div>
+                </div>
+
+                <div class="sa-input-group" style="margin-bottom: 1.5rem;">
+                    <label>Description</label>
+                    {{ form.description }}
+                </div>
+                <div class="sa-input-group" style="margin-bottom: 1.5rem;">
+                    <label>Eligibility Details</label>
+                    {{ form.eligibility }}
+                </div>
+                <div class="sa-input-group" style="margin-bottom: 1.5rem;">
+                    <label>Required Documents</label>
+                    {{ form.documents_required }}
+                </div>
+                
+                <div class="sa-form-grid">
+                    <div class="sa-input-group">
+                        <label>Official Website URL</label>
+                        {{ form.official_website }}
+                    </div>
+                    <div class="sa-input-group">
+                        <label>Apply Link URL</label>
+                        {{ form.apply_link }}
+                    </div>
+                </div>
+
+                <div style="text-align: right; margin-top: 2rem;">
+                    <a href="{% url 'manage_schemes' %}" class="sa-btn sa-btn-ghost-light" style="color: var(--sa-ink); border-color: var(--sa-line);">Cancel</a>
+                    <button type="submit" class="sa-btn sa-btn-primary"><i class="fas fa-save"></i> Save Scheme</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

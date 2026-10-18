@@ -210,7 +210,7 @@
 
 {% block content %}
 <div class="sa-detail-bg">
-    <div class="sa-detail-card">
+    <div class="sa-detail-card" data-scheme-translation-card data-scheme-id="{{ scheme.id }}">
         
         <!-- The Green Header Box -->
         <header class="sa-detail-header">
@@ -236,7 +236,7 @@
                 {% endif %}
             </div>
 
-            <h1 class="sa-detail-title">{{ scheme.scheme_name }}</h1>
+            <h1 class="sa-detail-title" data-scheme-field="scheme_name">{{ scheme.scheme_name }}</h1>
             <div class="sa-detail-dept">
                 <i class="fas fa-building" style="color: var(--sa-gold);"></i> 
                 {{ scheme.department|default:_("Department Not Available") }}
@@ -291,7 +291,7 @@
                 <h2 class="sa-section-title">
                     <i class="fas fa-file-alt"></i> {% trans "About this Scheme" %}
                 </h2>
-                <div class="sa-text-content">
+                <div class="sa-text-content" data-scheme-field="description">
                     {{ scheme.description|default:"No detailed description available for this scheme." }}
                 </div>
             </section>
@@ -332,7 +332,7 @@
                     </div>
                 </div>
 
-                <div class="sa-text-content" style="background: var(--sa-paper); padding: 1.5rem; border-radius: var(--sa-radius-sm); border: 1px solid var(--sa-line);">
+                <div class="sa-text-content" style="background: var(--sa-paper); padding: 1.5rem; border-radius: var(--sa-radius-sm); border: 1px solid var(--sa-line);" data-scheme-field="eligibility">
                     {{ scheme.eligibility|default:"Please check official guidelines for complete eligibility details." }}
                 </div>
             </section>
@@ -342,7 +342,7 @@
                 <h2 class="sa-section-title">
                     <i class="fas fa-folder-open"></i> {% trans "Required Documents" %}
                 </h2>
-                <div class="sa-text-content" style="background: var(--sa-paper); padding: 1.5rem; border-radius: var(--sa-radius-sm); border: 1px solid var(--sa-line);">
+                <div class="sa-text-content" style="background: var(--sa-paper); padding: 1.5rem; border-radius: var(--sa-radius-sm); border: 1px solid var(--sa-line);" data-scheme-field="documents_required">
                     {{ scheme.documents_required|default:"Required documents vary by applicant profile. Please verify on the official website before applying." }}
                 </div>
             </section>
@@ -354,6 +354,7 @@
 
 {% block extra_js %}
 <script src="{% static 'js/scheme-voice.js' %}"></script>
+<script src="{% static 'js/scheme-localization.js' %}"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const listenButton = document.getElementById('scheme-listen-button');

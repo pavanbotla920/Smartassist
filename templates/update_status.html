@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}Update Application Status | SmartAssist{% endblock %}
+
+{% block extra_head %}
+<style>
+    .sa-update-bg { background: var(--sa-paper); min-height: calc(100vh - 72px); padding: 3rem 1rem; }
+    .sa-update-card { max-width: 700px; margin: 0 auto; background: var(--sa-card); border: 1px solid var(--sa-line); border-radius: var(--sa-radius-lg); box-shadow: var(--sa-shadow); overflow: hidden; }
+    .sa-update-header { background: linear-gradient(115deg, var(--sa-ink) 0%, var(--sa-emerald) 100%); padding: 2rem; color: #fff; border-bottom: 4px solid var(--sa-gold); }
+    .sa-update-header h2 { margin: 0; font-family: var(--sa-font-display); font-weight: 700; font-size: 1.8rem; }
+    .sa-update-body { padding: 2.5rem; }
+    
+    .sa-app-details { background: var(--sa-paper); border: 1px dashed var(--sa-line); border-radius: var(--sa-radius-sm); padding: 1.5rem; margin-bottom: 2rem; }
+    .sa-app-details p { margin-bottom: 0.5rem; font-size: 0.95rem; color: var(--sa-text); }
+    .sa-app-details strong { color: var(--sa-ink); }
+
+    .sa-input-group label { font-size: 0.85rem; font-weight: 800; color: var(--sa-muted); text-transform: uppercase; margin-bottom: 0.5rem; display: block; }
+    .sa-input-group select, .sa-input-group textarea { width: 100%; padding: 0.8rem; border: 1.5px solid var(--sa-line); border-radius: var(--sa-radius-sm); background: var(--sa-paper); font-family: var(--sa-font-body); color: var(--sa-text); margin-bottom: 1.5rem; }
+    .sa-input-group select:focus, .sa-input-group textarea:focus { outline: none; border-color: var(--sa-emerald); box-shadow: 0 0 0 3px rgba(31,169,113,0.15); }
+    
+    .sa-btn-row { display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sa-update-bg">
+    <div class="sa-update-card">
+                <div class="sa-update-header" style="color: #ffffff !important;">
+            <h2 style="color: #ffffff !important;"><i class="fas fa-edit" style="color: var(--sa-gold) !important;"></i> Update Application Status</h2>
+            <p style="margin: 0.5rem 0 0; color: rgba(255,255,255,0.8);">Review the details and update the status for the citizen.</p>
+        </div>
+        
+        <div class="sa-update-body">
+            <div class="sa-app-details">
+                <p><strong>Applicant Name:</strong> {{ application.name }}</p>
+                <p><strong>Applied For:</strong> {{ application.scheme.scheme_name|default:"General Assistance" }}</p>
+                <p><strong>Location:</strong> {{ application.district }}, {{ application.state }}</p>
+                <p><strong>Contact:</strong> {{ application.mobile }} | {{ application.email|default:"No email" }}</p>
+                <p><strong>Current Status:</strong> <span class="badge bg-secondary">{{ application.status }}</span></p>
+            </div>
+
+            <form method="POST">
+                {% csrf_token %}
+                <div class="sa-input-group">
+                    <label for="status">New Status *</label>
+                    <select name="status" id="status" required>
+                        <option value="Pending" {% if application.status == 'Pending' %}selected{% endif %}>Pending</option>
+                        <option value="Under Review" {% if application.status == 'Under Review' %}selected{% endif %}>Under Review</option>
+                        <option value="Approved" {% if application.status == 'Approved' %}selected{% endif %}>Approved (Triggers Email)</option>
+                        <option value="Rejected" {% if application.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                    </select>
+                </div>
+
+                <div class="sa-input-group">
+                    <label for="notes">Internal Notes (Optional)</label>
+                    <textarea name="notes" id="notes" rows="3" placeholder="Add any notes about this update...">{{ application.notes|default:'' }}</textarea>
+                </div>
+
+                <div class="sa-btn-row">
+                    <a href="{% url 'admin_dashboard' %}" class="sa-btn sa-btn-ghost-light" style="color: var(--sa-ink); border-color: var(--sa-line);">Cancel</a>
+                    <button type="submit" class="sa-btn sa-btn-primary"><i class="fas fa-save"></i> Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

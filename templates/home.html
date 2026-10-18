@@ -715,7 +715,9 @@
                     {% if not user.is_authenticated %}
                     <a href="{% url 'register' %}" class="sa-btn sa-btn-ghost-light"><i class="fas fa-user-plus"></i> {% trans "Get Started" %}</a>
                     {% else %}
-                    <a href="{% url 'dashboard' %}" class="sa-btn sa-btn-ghost-light"><i class="fas fa-gauge"></i> {% trans "Dashboard" %}</a>
+                    <a href="{% if user.userprofile.role == 'admin' or user.userprofile.role == 'volunteer' %}{% url 'admin_dashboard' %}{% else %}{% url 'dashboard' %}{% endif %}" class="sa-btn sa-btn-ghost-light">
+                        <i class="fas fa-gauge"></i> {% trans "Dashboard" %}
+                    </a>
                     {% endif %}
                 </div>
                 <div class="sa-hero-note">
@@ -1004,7 +1006,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="schemeModalTitle">Scheme</h5>
-                <a href="{% if user.is_authenticated %}{% url 'apply_assistance' %}{% else %}{% url 'register' %}{% endif %}" class="sa-btn sa-btn-gold">
+                <a href="{% url 'recommend' %}" class="sa-btn sa-btn-gold">
                     <i class="fas fa-clipboard-check"></i> {% trans "Check Eligibility" %}
                 </a>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
@@ -1157,8 +1159,11 @@
                 <a href="{% url 'register' %}" class="sa-btn sa-btn-gold"><i class="fas fa-user-plus"></i> {% trans "Create Free Account" %}</a>
                 <a href="{% url 'scheme_awareness' %}" class="sa-btn sa-btn-ghost-light"><i class="fas fa-search"></i> {% trans "Browse Schemes" %}</a>
                 {% else %}
-                <a href="{% url 'apply_assistance' %}" class="sa-btn sa-btn-gold"><i class="fas fa-paper-plane"></i> {% trans "Apply for Assistance" %}</a>
-                <a href="{% url 'dashboard' %}" class="sa-btn sa-btn-ghost-light"><i class="fas fa-gauge"></i> {% trans "Go to Dashboard" %}</a>
+                <!-- Changed Apply to Check Eligibility -->
+                <a href="{% url 'recommend' %}" class="sa-btn sa-btn-gold"><i class="fas fa-clipboard-check"></i> {% trans "Check Eligibility" %}</a>
+                <a href="{% if user.userprofile.role == 'admin' or user.userprofile.role == 'volunteer' %}{% url 'admin_dashboard' %}{% else %}{% url 'dashboard' %}{% endif %}" class="sa-btn sa-btn-ghost-light">
+                    <i class="fas fa-gauge"></i> {% trans "Go to Dashboard" %}
+                </a>
                 {% endif %}
             </div>
         </div>

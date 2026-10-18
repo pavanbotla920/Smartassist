@@ -35,11 +35,11 @@ msgstr "ప్రభుత్వ పథకం సహాయం కోసం మ�
 
 #: farmers/views.py:211
 msgid ""
-"Application submitted for assistance. Our volunteers will help you apply for "
-"suitable schemes."
+"Application submitted for assistance. Our volunteers will help you apply for"
+" suitable schemes."
 msgstr ""
-"సహాయం కోసం దరఖాస్తు సమర్పించబడింది. మా వాలంటీర్లు మీకు తగిన పథకాల కోసం దరఖాస్తు చేసుకోవడానికి సహాయం "
-"చేస్తారు."
+"సహాయం కోసం దరఖాస్తు సమర్పించబడింది. మా వాలంటీర్లు మీకు తగిన పథకాల కోసం "
+"దరఖాస్తు చేసుకోవడానికి సహాయం చేస్తారు."
 
 #: farmers/views.py:282
 msgid "Scheme added successfully!"
@@ -262,13 +262,13 @@ msgstr "కమ్యూనిటీ ప్రభావం"
 
 #: templates/application_status.html:112
 msgid ""
-"Congratulations on taking the first step! Once you receive benefits from any "
-"scheme, please help spread awareness by informing your family, friends, and "
-"community members about these government initiatives."
+"Congratulations on taking the first step! Once you receive benefits from any"
+" scheme, please help spread awareness by informing your family, friends, and"
+" community members about these government initiatives."
 msgstr ""
-"మొదటి అడుగు వేసినందుకు అభినందనలు! మీరు ఏదైనా పథకం నుండి ప్రయోజనాలను పొందిన తర్వాత, ఈ ప్రభుత్వ "
-"కార్యక్రమాల గురించి మీ కుటుంబం, స్నేహితులు మరియు సంఘం సభ్యులకు తెలియజేయడం ద్వారా అవగాహన "
-"కల్పించడంలో దయచేసి సహాయం చేయండి."
+"మొదటి అడుగు వేసినందుకు అభినందనలు! మీరు ఏదైనా పథకం నుండి ప్రయోజనాలను పొందిన "
+"తర్వాత, ఈ ప్రభుత్వ కార్యక్రమాల గురించి మీ కుటుంబం, స్నేహితులు మరియు సంఘం "
+"సభ్యులకు తెలియజేయడం ద్వారా అవగాహన కల్పించడంలో దయచేసి సహాయం చేయండి."
 
 #: templates/application_status.html:122
 msgid "No Applications Yet"
@@ -318,8 +318,9 @@ msgid ""
 "information and apply for suitable government schemes on your behalf. You "
 "will be notified of the progress."
 msgstr ""
-"మీ ప్రాథమిక వివరాలను క్రింద పూరించండి. మా వాలంటీర్లు మీ సమాచారాన్ని సమీక్షిస్తారు మరియు మీ తరపున తగిన "
-"ప్రభుత్వ పథకాలకు దరఖాస్తు చేస్తారు. పురోగతి గురించి మీకు తెలియజేయబడుతుంది."
+"మీ ప్రాథమిక వివరాలను క్రింద పూరించండి. మా వాలంటీర్లు మీ సమాచారాన్ని "
+"సమీక్షిస్తారు మరియు మీ తరపున తగిన ప్రభుత్వ పథకాలకు దరఖాస్తు చేస్తారు. "
+"పురోగతి గురించి మీకు తెలియజేయబడుతుంది."
 
 #: templates/apply.html:29
 msgid "Full Name"
@@ -412,8 +413,9 @@ msgid ""
 "schemes with your family, friends, and community members to help others "
 "benefit as well."
 msgstr ""
-"పథకం ప్రయోజనాలను పొందిన తర్వాత, దయచేసి ఇతరులకు కూడా ప్రయోజనం చేకూర్చేలా మీ కుటుంబం, స్నేహితులు "
-"మరియు కమ్యూనిటీ సభ్యులతో ఈ పథకాల గురించిన సమాచారాన్ని భాగస్వామ్యం చేయండి."
+"పథకం ప్రయోజనాలను పొందిన తర్వాత, దయచేసి ఇతరులకు కూడా ప్రయోజనం చేకూర్చేలా మీ "
+"కుటుంబం, స్నేహితులు మరియు కమ్యూనిటీ సభ్యులతో ఈ పథకాల గురించిన సమాచారాన్ని "
+"భాగస్వామ్యం చేయండి."
 
 #: templates/apply.html:142
 msgid "Submit Application for Assistance"
@@ -568,8 +570,8 @@ msgid ""
 "Direct income support of ₹6,000 per year to all eligible farmer families in "
 "three equal instalments directly into their bank accounts."
 msgstr ""
-"అర్హులైన రైతుల కుటుంబాలందరికీ సంవత్సరానికి ₹6,000 ప్రత్యక్ష ఆదాయ మద్దతు మూడు సమాన వాయిదాలలో నేరుగా "
-"వారి బ్యాంకు ఖాతాల్లోకి వస్తుంది."
+"అర్హులైన రైతుల కుటుంబాలందరికీ సంవత్సరానికి ₹6,000 ప్రత్యక్ష ఆదాయ మద్దతు మూడు"
+" సమాన వాయిదాలలో నేరుగా వారి బ్యాంకు ఖాతాల్లోకి వస్తుంది."
 
 #: templates/dashboard.html:1424
 msgid "Education"
@@ -580,8 +582,8 @@ msgid ""
 "Merit-based scholarship for OBC, EBC and DNT students in Classes 9–11. "
 "Empowering the future through quality education support."
 msgstr ""
-"9-11 తరగతులలో చదువుతున్న OBC, EBC మరియు DNT విద్యార్థుల కోసం ప్రతిభ ఆధారిత స్కాలర్‌షిప్. నాణ్యమైన "
-"విద్యా మద్దతు ద్వారా భవిష్యత్తును సాధికారపరచడం."
+"9-11 తరగతులలో చదువుతున్న OBC, EBC మరియు DNT విద్యార్థుల కోసం ప్రతిభ ఆధారిత "
+"స్కాలర్‌షిప్. నాణ్యమైన విద్యా మద్దతు ద్వారా భవిష్యత్తును సాధికారపరచడం."
 
 #: templates/dashboard.html:1433 templates/dashboard.html:1456
 #: templates/dashboard.html:1479
@@ -597,8 +599,8 @@ msgid ""
 "Accidental insurance cover of ₹2 lakh at just ₹20 per year. Financial "
 "protection for families against accidents and permanent disability."
 msgstr ""
-"సంవత్సరానికి కేవలం ₹20 వద్ద ₹2 లక్షల ప్రమాద బీమా కవర్. ప్రమాదాలు మరియు శాశ్వత వైకల్యానికి వ్యతిరేకంగా "
-"కుటుంబాలకు ఆర్థిక రక్షణ."
+"సంవత్సరానికి కేవలం ₹20 వద్ద ₹2 లక్షల ప్రమాద బీమా కవర్. ప్రమాదాలు మరియు "
+"శాశ్వత వైకల్యానికి వ్యతిరేకంగా కుటుంబాలకు ఆర్థిక రక్షణ."
 
 #: templates/dashboard.html:1457 templates/dashboard.html:1480
 msgid "Check Eligibility"
@@ -613,8 +615,8 @@ msgid ""
 "Affordable crop insurance to protect farmers against yield losses due to "
 "natural calamities, pests, and diseases."
 msgstr ""
-"ప్రకృతి వైపరీత్యాలు, తెగుళ్లు మరియు వ్యాధుల వల్ల దిగుబడి నష్టాల నుండి రైతులను రక్షించడానికి సరసమైన "
-"పంట బీమా."
+"ప్రకృతి వైపరీత్యాలు, తెగుళ్లు మరియు వ్యాధుల వల్ల దిగుబడి నష్టాల నుండి "
+"రైతులను రక్షించడానికి సరసమైన పంట బీమా."
 
 #: templates/dashboard.html:1493
 msgid "Inclusion"
@@ -633,8 +635,8 @@ msgid ""
 "Access targeted support schemes for women in agriculture including credit, "
 "training, and market linkage assistance."
 msgstr ""
-"వ్యవసాయంలో మహిళల కోసం రుణాలు, శిక్షణ మరియు మార్కెట్ అనుసంధాన సహాయంతో సహా లక్షిత మద్దతు పథకాలను "
-"పొందండి."
+"వ్యవసాయంలో మహిళల కోసం రుణాలు, శిక్షణ మరియు మార్కెట్ అనుసంధాన సహాయంతో సహా "
+"లక్షిత మద్దతు పథకాలను పొందండి."
 
 #: templates/dashboard.html:1502 templates/home.html:470
 msgid "Explore Schemes"
@@ -653,8 +655,8 @@ msgid ""
 "Use AI-powered recommendations to identify best-fit schemes and get step-by-"
 "step guidance for application and eligibility checks."
 msgstr ""
-"అత్యంత అనుకూలమైన పథకాలను గుర్తించడానికి AI ఆధారిత సిఫార్సులను ఉపయోగించండి మరియు అప్లికేషన్ మరియు "
-"అర్హత తనిఖీల కోసం దశల వారీ మార్గదర్శకత్వం పొందండి."
+"అత్యంత అనుకూలమైన పథకాలను గుర్తించడానికి AI ఆధారిత సిఫార్సులను ఉపయోగించండి "
+"మరియు అప్లికేషన్ మరియు అర్హత తనిఖీల కోసం దశల వారీ మార్గదర్శకత్వం పొందండి."
 
 #: templates/dashboard.html:1525
 msgid "Try AI Recommendations"
@@ -673,8 +675,8 @@ msgid ""
 "Health assurance scheme providing annual coverage up to ₹5 lakh per family "
 "for secondary and tertiary hospitalization."
 msgstr ""
-"సెకండరీ మరియు టెర్షియరీ ఆసుపత్రిలో చేరడానికి ప్రతి కుటుంబానికి ₹5 లక్షల వరకు వార్షిక కవరేజీని అందించే "
-"ఆరోగ్య హామీ పథకం."
+"సెకండరీ మరియు టెర్షియరీ ఆసుపత్రిలో చేరడానికి ప్రతి కుటుంబానికి ₹5 లక్షల వరకు"
+" వార్షిక కవరేజీని అందించే ఆరోగ్య హామీ పథకం."
 
 #: templates/dashboard.html:1548
 msgid "Explore Central Scheme"
@@ -686,11 +688,11 @@ msgstr "సహాయం దరఖాస్తు చేసుకోండి"
 
 #: templates/dashboard.html:1564
 msgid ""
-"Housing support for eligible rural families to build pucca houses with basic "
-"facilities under the flagship central scheme."
+"Housing support for eligible rural families to build pucca houses with basic"
+" facilities under the flagship central scheme."
 msgstr ""
-"ఫ్లాగ్‌షిప్ సెంట్రల్ స్కీమ్ కింద కనీస సౌకర్యాలతో కూడిన పక్కా ఇళ్లను నిర్మించుకోవడానికి అర్హులైన గ్రామీణ "
-"కుటుంబాలకు గృహనిర్మాణ మద్దతు."
+"ఫ్లాగ్‌షిప్ సెంట్రల్ స్కీమ్ కింద కనీస సౌకర్యాలతో కూడిన పక్కా ఇళ్లను "
+"నిర్మించుకోవడానికి అర్హులైన గ్రామీణ కుటుంబాలకు గృహనిర్మాణ మద్దతు."
 
 #: templates/dashboard.html:1571
 msgid "View Central Schemes"
@@ -832,9 +834,11 @@ msgstr "దరఖాస్తు తేదీ"
 
 #: templates/dashboard.html:1880
 msgid ""
-"SmartAssist - Agricultural Schemes Portal | Government of India | All Rights "
-"Reserved"
-msgstr "స్మార్ట్అసిస్ట్ - వ్యవసాయ పథకాల పోర్టల్ | భారత ప్రభుత్వం | అన్ని హక్కులూ ప్రత్యేకించబడినవి"
+"SmartAssist - Agricultural Schemes Portal | Government of India | All Rights"
+" Reserved"
+msgstr ""
+"స్మార్ట్అసిస్ట్ - వ్యవసాయ పథకాల పోర్టల్ | భారత ప్రభుత్వం | అన్ని హక్కులూ "
+"ప్రత్యేకించబడినవి"
 
 #: templates/dashboard.html:1887
 msgid "State Details"
@@ -865,8 +869,8 @@ msgid ""
 "SmartAssist bridges the digital divide by connecting citizens with "
 "government welfare schemes through dedicated volunteers and administrators."
 msgstr ""
-"స్మార్ట్అసిస్ట్ అంకితమైన వాలంటీర్లు మరియు నిర్వాహకుల ద్వారా పౌరులను ప్రభుత్వ సంక్షేమ పథకాలతో "
-"అనుసంధానించడం ద్వారా డిజిటల్ అంతరాన్ని తగ్గిస్తుంది."
+"స్మార్ట్అసిస్ట్ అంకితమైన వాలంటీర్లు మరియు నిర్వాహకుల ద్వారా పౌరులను ప్రభుత్వ"
+" సంక్షేమ పథకాలతో అనుసంధానించడం ద్వారా డిజిటల్ అంతరాన్ని తగ్గిస్తుంది."
 
 #: templates/home.html:480
 msgid "Live Platform Highlights"
@@ -924,7 +928,9 @@ msgstr "2. సహాయం పొందండి"
 msgid ""
 "Our volunteers review your details and apply for suitable schemes on your "
 "behalf."
-msgstr "మా వాలంటీర్లు మీ వివరాలను సమీక్షిస్తారు మరియు మీ తరపున తగిన పథకాలకు దరఖాస్తు చేస్తారు."
+msgstr ""
+"మా వాలంటీర్లు మీ వివరాలను సమీక్షిస్తారు మరియు మీ తరపున తగిన పథకాలకు దరఖాస్తు"
+" చేస్తారు."
 
 #: templates/home.html:524
 msgid "3. Track & Receive"
@@ -932,7 +938,9 @@ msgstr "3. ట్రాక్ చేయండి & స్వీకరించ�
 
 #: templates/home.html:525
 msgid "Track your application status and receive benefits when approved."
-msgstr "మీ అప్లికేషన్ స్థితిని ట్రాక్ చేయండి మరియు ఆమోదించబడినప్పుడు ప్రయోజనాలను పొందండి."
+msgstr ""
+"మీ అప్లికేషన్ స్థితిని ట్రాక్ చేయండి మరియు ఆమోదించబడినప్పుడు ప్రయోజనాలను "
+"పొందండి."
 
 #: templates/home.html:531
 msgid "SDG Impact"
@@ -964,8 +972,9 @@ msgid ""
 "literacy level or digital skills, can access government welfare schemes and "
 "contribute to community development."
 msgstr ""
-"అక్షరాస్యత స్థాయి లేదా డిజిటల్ నైపుణ్యాలతో సంబంధం లేకుండా ప్రతి పౌరుడు ప్రభుత్వ సంక్షేమ పథకాలను యాక్సెస్ "
-"చేయగల మరియు కమ్యూనిటీ అభివృద్ధికి దోహదపడే సమ్మిళిత డిజిటల్ పర్యావరణ వ్యవస్థను సృష్టించడం."
+"అక్షరాస్యత స్థాయి లేదా డిజిటల్ నైపుణ్యాలతో సంబంధం లేకుండా ప్రతి పౌరుడు "
+"ప్రభుత్వ సంక్షేమ పథకాలను యాక్సెస్ చేయగల మరియు కమ్యూనిటీ అభివృద్ధికి దోహదపడే "
+"సమ్మిళిత డిజిటల్ పర్యావరణ వ్యవస్థను సృష్టించడం."
 
 #: templates/home.html:570
 msgid "Citizens Helped"
@@ -985,8 +994,9 @@ msgid ""
 "neighbors about government schemes. Together, we can build an aware and "
 "empowered community!"
 msgstr ""
-"ప్రయోజనాలను పొందిన తర్వాత, దయచేసి మీ కుటుంబ సభ్యులు, స్నేహితులు మరియు ఇరుగుపొరుగు వారికి ప్రభుత్వ "
-"పథకాల గురించి తెలియజేయండి. కలిసి, మేము అవగాహన మరియు సాధికారత కలిగిన సంఘాన్ని నిర్మించగలము!"
+"ప్రయోజనాలను పొందిన తర్వాత, దయచేసి మీ కుటుంబ సభ్యులు, స్నేహితులు మరియు "
+"ఇరుగుపొరుగు వారికి ప్రభుత్వ పథకాల గురించి తెలియజేయండి. కలిసి, మేము అవగాహన "
+"మరియు సాధికారత కలిగిన సంఘాన్ని నిర్మించగలము!"
 
 # ============================================================
 # LOGIN.HTML
@@ -997,7 +1007,8 @@ msgstr "లాగిన్ - స్మార్ట్అసిస్ట్"
 
 #: templates/login.html:21
 msgid "Invalid username or password. Please check your credentials."
-msgstr "చెల్లని వినియోగదారు పేరు లేదా పాస్‌వర్డ్. దయచేసి మీ ఆధారాలను తనిఖీ చేయండి."
+msgstr ""
+"చెల్లని వినియోగదారు పేరు లేదా పాస్‌వర్డ్. దయచేసి మీ ఆధారాలను తనిఖీ చేయండి."
 
 #: templates/login.html:31
 msgid "Forgot password?"
@@ -1020,7 +1031,8 @@ msgstr "నా అప్లికేషన్లు - స్మార్ట్�
 
 #: templates/my_applications.html:15
 msgid "Track every scheme request you submitted through SmartAssist."
-msgstr "స్మార్ట్అసిస్ట్ ద్వారా మీరు సమర్పించిన ప్రతి పథకం అభ్యర్థనను ట్రాక్ చేయండి."
+msgstr ""
+"స్మార్ట్అసిస్ట్ ద్వారా మీరు సమర్పించిన ప్రతి పథకం అభ్యర్థనను ట్రాక్ చేయండి."
 
 #: templates/my_applications.html:58
 msgid "Submitted On"
@@ -1033,7 +1045,9 @@ msgstr "అప్లికేషన్ నంబర్"
 #: templates/my_applications.html:77
 msgid ""
 "Start by browsing schemes and applying to one that matches your profile."
-msgstr "పథకాలను బ్రౌజ్ చేయడం ద్వారా ప్రారంభించండి మరియు మీ ప్రొఫైల్‌కు సరిపోలే వాటికి దరఖాస్తు చేసుకోండి."
+msgstr ""
+"పథకాలను బ్రౌజ్ చేయడం ద్వారా ప్రారంభించండి మరియు మీ ప్రొఫైల్‌కు సరిపోలే "
+"వాటికి దరఖాస్తు చేసుకోండి."
 
 #: templates/my_applications.html:79 templates/scheme_awareness.html:469
 #: templates/scheme_detail.html:239
@@ -1054,7 +1068,9 @@ msgstr "మీ పాస్‌వర్డ్ మర్చిపోయారా?
 #: templates/password_reset.html:19
 msgid ""
 "Enter your registered email ID and we will send you a password reset link."
-msgstr "మీ నమోదిత ఇమెయిల్ ID ని నమోదు చేయండి మరియు మేము మీకు పాస్‌వర్డ్ రీసెట్ లింక్‌ను పంపుతాము."
+msgstr ""
+"మీ నమోదిత ఇమెయిల్ ID ని నమోదు చేయండి మరియు మేము మీకు పాస్‌వర్డ్ రీసెట్ "
+"లింక్‌ను పంపుతాము."
 
 #: templates/password_reset.html:28
 msgid "Send Reset Link"
@@ -1077,7 +1093,9 @@ msgstr "పాస్‌వర్డ్ రీసెట్ పూర్తయి�
 msgid ""
 "Your password has been updated successfully. You can now log in with your "
 "new password."
-msgstr "మీ పాస్‌వర్డ్ విజయవంతంగా నవీకరించబడింది. మీరు ఇప్పుడు మీ కొత్త పాస్‌వర్డ్‌తో లాగిన్ అవ్వవచ్చు."
+msgstr ""
+"మీ పాస్‌వర్డ్ విజయవంతంగా నవీకరించబడింది. మీరు ఇప్పుడు మీ కొత్త పాస్‌వర్డ్‌తో"
+" లాగిన్ అవ్వవచ్చు."
 
 #: templates/password_reset_confirm.html:4
 msgid "Set New Password - SmartAssist"
@@ -1099,7 +1117,9 @@ msgstr "పాస్‌వర్డ్ మార్చండి"
 msgid ""
 "The password reset link is invalid or has already been used. Please request "
 "a new reset link."
-msgstr "పాస్‌వర్డ్ రీసెట్ లింక్ చెల్లదు లేదా ఇప్పటికే ఉపయోగించబడింది. దయచేసి కొత్త రీసెట్ లింక్‌ను అభ్యర్థించండి."
+msgstr ""
+"పాస్‌వర్డ్ రీసెట్ లింక్ చెల్లదు లేదా ఇప్పటికే ఉపయోగించబడింది. దయచేసి కొత్త "
+"రీసెట్ లింక్‌ను అభ్యర్థించండి."
 
 #: templates/password_reset_done.html:4
 msgid "Reset Link Sent - SmartAssist"
@@ -1248,8 +1268,9 @@ msgid ""
 "Explore %(total)s welfare schemes — browse freely, filter by state or "
 "category, and apply for the ones you qualify for."
 msgstr ""
-"%(total)s సంక్షేమ పథకాలను అన్వేషించండి — స్వేచ్ఛగా బ్రౌజ్ చేయండి, రాష్ట్రం లేదా వర్గం ఆధారంగా ఫిల్టర్ "
-"చేయండి మరియు మీరు అర్హత సాధించిన వాటి కోసం దరఖాస్తు చేయండి."
+"%(total)s సంక్షేమ పథకాలను అన్వేషించండి — స్వేచ్ఛగా బ్రౌజ్ చేయండి, రాష్ట్రం "
+"లేదా వర్గం ఆధారంగా ఫిల్టర్ చేయండి మరియు మీరు అర్హత సాధించిన వాటి కోసం "
+"దరఖాస్తు చేయండి."
 
 #: templates/scheme_awareness.html:154
 msgid "Search schemes by name, category, keyword…"
@@ -1348,8 +1369,8 @@ msgstr ""
 
 #: templates/scheme_awareness.html:460
 msgid ""
-"Login is only needed to <strong style=\"color:var(--text-light)\">apply</"
-"strong>."
+"Login is only needed to <strong style=\"color:var(--text-"
+"light)\">apply</strong>."
 msgstr ""
 
 # ============================================================
@@ -1437,8 +1458,8 @@ msgstr ""
 
 #: venv/lib/python3.12/site-packages/django/core/validators.py:297
 msgid ""
-"Enter a valid “slug” consisting of Unicode letters, numbers, underscores, or "
-"hyphens."
+"Enter a valid “slug” consisting of Unicode letters, numbers, underscores, or"
+" hyphens."
 msgstr ""
 
 #: venv/lib/python3.12/site-packages/django/core/validators.py:309
@@ -1650,15 +1671,15 @@ msgstr ""
 #: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1561
 #, python-format
 msgid ""
-"“%(value)s” value has an invalid format. It must be in YYYY-MM-DD HH:MM[:ss[."
-"uuuuuu]][TZ] format."
+"“%(value)s” value has an invalid format. It must be in YYYY-MM-DD "
+"HH:MM[:ss[.uuuuuu]][TZ] format."
 msgstr ""
 
 #: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1569
 #, python-format
 msgid ""
-"“%(value)s” value has the correct format (YYYY-MM-DD HH:MM[:ss[.uuuuuu]]"
-"[TZ]) but it is an invalid date/time."
+"“%(value)s” value has the correct format (YYYY-MM-DD "
+"HH:MM[:ss[.uuuuuu]][TZ]) but it is an invalid date/time."
 msgstr ""
 
 #: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1574
@@ -1677,8 +1698,8 @@ msgstr ""
 #: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1864
 #, python-format
 msgid ""
-"“%(value)s” value has an invalid format. It must be in [DD] [[HH:]MM:]ss[."
-"uuuuuu] format."
+"“%(value)s” value has an invalid format. It must be in [DD] "
+"[[HH:]MM:]ss[.uuuuuu] format."
 msgstr ""
 
 #: venv/lib/python3.12/site-packages/django/db/models/fields/__init__.py:1868
@@ -1896,7 +1917,8 @@ msgstr ""
 
 #: venv/lib/python3.12/site-packages/django/forms/fields.py:642
 #, python-format
-msgid "Ensure this filename has at most %(max)d character (it has %(length)d)."
+msgid ""
+"Ensure this filename has at most %(max)d character (it has %(length)d)."
 msgid_plural ""
 "Ensure this filename has at most %(max)d characters (it has %(length)d)."
 msgstr[0] ""
@@ -2003,7 +2025,8 @@ msgid "The inline value did not match the parent instance."
 msgstr ""
 
 #: venv/lib/python3.12/site-packages/django/forms/models.py:1474
-msgid "Select a valid choice. That choice is not one of the available choices."
+msgid ""
+"Select a valid choice. That choice is not one of the available choices."
 msgstr ""
 
 #: venv/lib/python3.12/site-packages/django/forms/models.py:1623
@@ -2495,10 +2518,10 @@ msgstr ""
 
 #: venv/lib/python3.12/site-packages/django/views/csrf.py:45
 msgid ""
-"If you are using the <meta name=\"referrer\" content=\"no-referrer\"> tag or "
-"including the “Referrer-Policy: no-referrer” header, please remove them. The "
-"CSRF protection requires the “Referer” header to do strict referer checking. "
-"If you’re concerned about privacy, use alternatives like <a "
+"If you are using the <meta name=\"referrer\" content=\"no-referrer\"> tag or"
+" including the “Referrer-Policy: no-referrer” header, please remove them. "
+"The CSRF protection requires the “Referer” header to do strict referer "
+"checking. If you’re concerned about privacy, use alternatives like <a "
 "rel=\"noreferrer\" …> for links to third-party sites."
 msgstr ""
 
@@ -2550,8 +2573,8 @@ msgstr ""
 #: venv/lib/python3.12/site-packages/django/views/generic/dates.py:680
 #, python-format
 msgid ""
-"Future %(verbose_name_plural)s not available because %(class_name)s."
-"allow_future is False."
+"Future %(verbose_name_plural)s not available because "
+"%(class_name)s.allow_future is False."
 msgstr ""
 
 #: venv/lib/python3.12/site-packages/django/views/generic/dates.py:720
@@ -2609,10 +2632,10 @@ msgstr ""
 #: venv/lib/python3.12/site-packages/django/views/templates/default_urlconf.html:208
 #, python-format
 msgid ""
-"You are seeing this page because <a href=\"https://docs.djangoproject.com/en/"
-"%(version)s/ref/settings/#debug\" target=\"_blank\" "
-"rel=\"noopener\">DEBUG=True</a> is in your settings file and you have not "
-"configured any URLs."
+"You are seeing this page because <a "
+"href=\"https://docs.djangoproject.com/en/%(version)s/ref/settings/#debug\" "
+"target=\"_blank\" rel=\"noopener\">DEBUG=True</a> is in your settings file "
+"and you have not configured any URLs."
 msgstr ""
 
 #: venv/lib/python3.12/site-packages/django/views/templates/default_urlconf.html:217
@@ -2638,6 +2661,18 @@ msgstr ""
 #: venv/lib/python3.12/site-packages/django/views/templates/default_urlconf.html:236
 msgid "Connect, get help, or contribute"
 msgstr ""
+
+msgid "Selected Scheme Details"
+msgstr "ఎంచుకున్న పథకం వివరాలు"
+
+msgid "Description"
+msgstr "వివరణ"
+
+msgid "Required Documents"
+msgstr "అవసరమైన పత్రాలు"
+
+msgid "About this Scheme"
+msgstr "ఈ పథకం గురించి"
 
 # ============================================================
 # BASE.HTML — FOOTER

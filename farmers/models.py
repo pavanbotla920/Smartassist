@@ -1,7 +1,5 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.core.mail import send_mail
-from django.conf import settings
 
 class UserProfile(models.Model):
     ROLE_CHOICES = [
@@ -119,9 +117,8 @@ class Scheme(models.Model):
 
 class ApplicationRequest(models.Model):
     STATUS_CHOICES = [
-        ('Submitted', 'Submitted'),
+        ('Pending', 'Pending'),
         ('Under Review', 'Under Review'),
-        ('Applied', 'Applied'),
         ('Approved', 'Approved'),
         ('Rejected', 'Rejected'),
     ]
@@ -142,7 +139,7 @@ class ApplicationRequest(models.Model):
     district = models.CharField(max_length=100, blank=True, null=True)
     
     # Admin/Volunteer management
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Submitted')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
     notes = models.TextField(blank=True, null=True)
     applied_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='handled_applications')
     application_number = models.CharField(max_length=50, blank=True, null=True)
@@ -168,23 +165,6 @@ class Notification(models.Model):
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def save(self, *args, **kwargs):
-        is_new = self.pk is None
-        super().save(*args, **kwargs) # Save to database first
-
-        # If this is a new email notification, send it
-        if is_new and self.notification_type == 'email' and self.user.email:
-            try:
-                send_mail(
-                    subject=self.subject,
-                    message=self.message,
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[self.user.email],
-                    fail_silently=False, # Set to False so we see errors in terminal
-                )
-                print(f"✅ Email sent to {self.user.email}")
-            except Exception as e:
-                print(f"❌ Email failed: {e}")
 
     def __str__(self):
         return f"{self.subject} - {self.user.username}"

@@ -258,8 +258,8 @@
                                 <span class="sa-status-badge rejected"><i class="fas fa-times-circle"></i> {% trans "Rejected" %}</span>
                             {% elif application.status == 'Applied' %}
                                 <span class="sa-status-badge applied"><i class="fas fa-check-double"></i> {% trans "Applied" %}</span>
-                            {% elif application.status == 'Submitted' %}
-                                <span class="sa-status-badge submitted"><i class="fas fa-paper-plane"></i> {% trans "Submitted" %}</span>
+                            {% elif application.status == 'Pending' %}
+                                <span class="sa-status-badge pending"><i class="fas fa-hourglass-half"></i> {% trans "Pending" %}</span>
                             {% else %}
                                 <span class="sa-status-badge pending"><i class="fas fa-clock"></i> {{ application.status }}</span>
                             {% endif %}
@@ -424,7 +424,7 @@
             html += buildStep("Application Submitted", `Your application was received on ${dateSubmitted}.`, false, true);
 
             // Step 2, 3, 4 based on status
-            if (actualStatus === 'Submitted') {
+            if (actualStatus === 'Pending') {
                 html += buildStep("Under Review", "A volunteer is currently reviewing your documents and verifying eligibility.", true, false);
                 html += buildStep("Submitted to Department", "Awaiting final review from the government department.", false, false);
             } 

@@ -212,8 +212,12 @@
 
     {% block extra_head %}{% endblock %}
 </head>
-<body>
-        <!-- Navigation -->
+<body
+  data-speech-base-url="{% url 'scheme_voice_audio' 0 %}"
+  data-scheme-translation-url="{% url 'scheme_translation_api' %}"
+  data-translation-failure-message="{% trans 'Scheme details remain in English because translation is unavailable.' %}"
+>
+    <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
         <div class="container">
             <!-- White SmartAssist Brand -->
@@ -234,9 +238,14 @@
                         <a class="nav-link {% if request.path == '/' or request.path == '/en/' %}active-tab{% endif %}" href="{% url 'home' %}">{% trans "Home" %}</a>
                     </li>
                     
-                    <!-- 2. Schemes (Always Visible) -->
+                    <!-- 2. Eligibility (The new AI Wizard) -->
                     <li class="nav-item">
-                        <a class="nav-link {% if 'schemes' in request.path %}active-tab{% endif %}" href="{% url 'scheme_awareness' %}">{% trans "Schemes" %}</a>
+                        <a class="nav-link {% if 'recommend' in request.path %}active-tab{% endif %}" href="{% url 'recommend' %}">{% trans "Eligibility" %}</a>
+                    </li>
+
+                    <!-- 3. Schemes (Always Visible) -->
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'schemes' in request.path and 'manage-schemes' not in request.path %}active-tab{% endif %}" href="{% url 'scheme_awareness' %}">{% trans "Schemes" %}</a>
                     </li>
 
                     <!-- LOGGED IN TABS ONLY -->
@@ -255,19 +264,14 @@
 
                         {% elif user.userprofile.role == 'volunteer' or user.userprofile.role == 'admin' %}
                             
-                            <!-- Admin Dashboard -->
-                            <li class="nav-item">
-                                <a class="nav-link {% if 'admin-dashboard' in request.path %}active-tab{% endif %}" href="{% url 'admin_dashboard' %}">{% trans "Admin Dashboard" %}</a>
-                            </li>
-                            
                             <!-- Manage Schemes -->
                             <li class="nav-item">
                                 <a class="nav-link {% if 'manage-schemes' in request.path %}active-tab{% endif %}" href="{% url 'manage_schemes' %}">{% trans "Manage Schemes" %}</a>
                             </li>
-                            
-                            <!-- Reports -->
+
+                            <!-- Admin Dashboard -->
                             <li class="nav-item">
-                                <a class="nav-link {% if 'reports' in request.path %}active-tab{% endif %}" href="{% url 'reports' %}">{% trans "Reports" %}</a>
+                                <a class="nav-link {% if 'admin-dashboard' in request.path %}active-tab{% endif %}" href="{% url 'admin_dashboard' %}">{% trans "Admin Dashboard" %}</a>
                             </li>
                         {% endif %}
                     {% endif %}
@@ -301,8 +305,6 @@
         {% block content %}{% endblock %}
     </main>
 
-    
-
     <!-- Footer -->
     <footer class="gov-footer" id="govFooter">
         <div class="footer-grid">
@@ -325,7 +327,11 @@
                     <li><a href="#">{% trans "FAQ" %}</a></li>
                     <li><a href="#">{% trans "Terms & Conditions" %}</a></li>
                     <li><a href="#">{% trans "Disclaimer" %}</a></li>
-                    <li><a href="{% url 'dashboard' %}">{% trans "Dashboard" %}</a></li>
+                    <li>
+                        <a href="{% if user.is_authenticated and user.userprofile.role == 'admin' %}{% url 'admin_dashboard' %}{% elif user.is_authenticated and user.userprofile.role == 'volunteer' %}{% url 'admin_dashboard' %}{% else %}{% url 'dashboard' %}{% endif %}">
+                            {% trans "Dashboard" %}
+                        </a>
+                    </li>
                 </ul>
             </div>
 

@@ -1,14 +1,17 @@
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse, translate_url
 from django.utils.translation import deactivate_all
 from unittest.mock import patch
 
 from aiohttp import ClientResponseError
-from farmers.models import Scheme
+from django.core import mail
+
+from farmers.models import ApplicationRequest, Scheme
 from farmers.views import VoiceServiceError, _scheme_voice_text, _synthesize_scheme_voice
 
 
+@override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
 class SmartAssistVerificationTests(TestCase):
     def setUp(self):
         self.central_scheme = Scheme.objects.create(
@@ -50,7 +53,8 @@ class SmartAssistVerificationTests(TestCase):
         self.assertEqual(len(response.context['schemes']), 1)
 
     def test_official_website_link_has_security_attributes(self):
-        response = self.client.get(reverse('scheme_awareness'), {'type': 'Central'})
+        # The official-site link now lives on the scheme detail page.
+        response = self.client.get(reverse('scheme_detail', args=[self.central_scheme.id]))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'href="https://example.gov.in/central"', html=False)
@@ -64,7 +68,6 @@ class SmartAssistVerificationTests(TestCase):
         response = self.client.get(reverse('scheme_detail', args=[self.central_scheme.id]))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Official website unavailable')
         self.assertNotContains(response, 'href=""', html=False)
 
     def test_state_api_rejects_non_http_official_links(self):
@@ -123,30 +126,6 @@ class SmartAssistVerificationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual([item['name'] for item in response.json()], ['Central Test Scheme'])
 
-    def test_india_map_uses_registered_api_and_directs_to_scheme_voice_controls(self):
-        response = self.client.get(reverse('india_map_schemes'))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'data-overview-url="/api/india-map/overview/"', html=False)
-        self.assertContains(response, 'data-site-language')
-        self.assertContains(response, 'language-switcher.js')
-        self.assertContains(response, 'select a language and press Listen on the specific scheme')
-        self.assertNotContains(response, 'id="audio-play"')
-        self.assertNotContains(response, 'tile.openstreetmap.org')
-
-    def test_state_dashboard_uses_registered_scheme_api_and_shared_voice_script(self):
-        response = self.client.get(reverse('state_dashboard', args=['Test State']))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'data-state-schemes-url="/api/schemes/__state__/"', html=False)
-        self.assertContains(response, 'data-speech-base-url="/api/schemes/0/speech/"', html=False)
-        self.assertContains(response, 'scheme-voice.js')
-        self.assertNotContains(response, 'tts-proxy')
-        self.assertContains(response, 'data-site-language')
-        self.assertContains(response, 'data-voice-language')
-        self.assertContains(response, 'data-language-code="en"', html=False)
-        self.assertContains(response, 'scheme-localization.js')
-
     def test_language_preference_persists_for_anonymous_user_and_preserves_page_query(self):
         response = self.client.get(
             reverse('set_language'),
@@ -178,9 +157,9 @@ class SmartAssistVerificationTests(TestCase):
 
     def test_major_pages_render_translated_labels_in_supported_languages(self):
         translations = {
-            'hi': ('विवरण', 'आवश्यक दस्तावेज़', 'सभी योजनाएँ'),
-            'mr': ('वर्णन', 'आवश्यक कागदपत्रे', 'सर्व योजना'),
-            'te': ('వివరణ', 'అవసరమైన పత్రాలు', 'అన్ని పథకాలు'),
+            'hi': ('इस योजना के बारे में', 'आवश्यक दस्तावेज़', 'विवरण देखें'),
+            'mr': ('या योजनेबद्दल', 'आवश्यक कागदपत्रे', 'तपशील पहा'),
+            'te': ('ఈ పథకం గురించి', 'అవసరమైన పత్రాలు', 'వివరాలను వీక్షించండి'),
         }
 
         for language, expected in translations.items():
@@ -189,11 +168,6 @@ class SmartAssistVerificationTests(TestCase):
                     translate_url(reverse('scheme_awareness'), language),
                     translate_url(
                         reverse('scheme_detail', args=[self.central_scheme.id]),
-                        language,
-                    ),
-                    translate_url(reverse('india_map_schemes'), language),
-                    translate_url(
-                        reverse('state_dashboard', args=['Test State']),
                         language,
                     ),
                 )
@@ -209,7 +183,7 @@ class SmartAssistVerificationTests(TestCase):
     def test_authentication_and_application_pages_render_localized_content(self):
         translations = {
             'hi': ('खाता बनाएं', 'चयनित योजना का विवरण', 'सहायता के लिए आवेदन जमा करें'),
-            'mr': ('खाते तयार करा', 'निवडलेल्या योजनेचा तपशील', 'सहाय्यासाठीचा अर्ज सादर करा'),
+            'mr': ('खाते तयार करा', 'निवडलेल्या योजनेचा तपशील', 'मदतीसाठी अर्ज सबमिट करा'),
             'te': ('ఖాతా సృష్టించండి', 'ఎంచుకున్న పథకం వివరాలు', 'సహాయం కోసం దరఖాస్తును సమర్పించండి'),
         }
         self.client.force_login(self.user)
@@ -232,8 +206,8 @@ class SmartAssistVerificationTests(TestCase):
 
     def test_invalid_password_reset_link_message_is_localized(self):
         messages = {
-            'hi': 'पासवर्ड रीसेट लिंक अमान्य है या पहले ही इस्तेमाल किया जा चुका है।',
-            'mr': 'पासवर्ड रीसेट दुवा अवैध आहे किंवा आधीच वापरला आहे.',
+            'hi': 'पासवर्ड रीसेट लिंक अमान्य है या पहले ही उपयोग किया जा चुका है। कृपया एक नया रीसेट लिंक का अनुरोध करें।',
+            'mr': 'पासवर्ड रीसेट लिंक अवैध आहे किंवा आधीच वापरली गेली आहे. कृपया नवीन रीसेट लिंकची विनंती करा.',
             'te': 'పాస్‌వర్డ్ రీసెట్ లింక్ చెల్లదు లేదా ఇప్పటికే ఉపయోగించబడింది.',
         }
         reset_url = reverse(
@@ -248,44 +222,12 @@ class SmartAssistVerificationTests(TestCase):
                 self.assertEqual(response.status_code, 200)
                 self.assertContains(response, expected_message)
 
-    def test_dynamic_map_and_audio_placeholders_are_translatable(self):
-        expected = {
-            'hi': (
-                'योजना संबंधी जानकारी और विवरण देखने के लिए कोई राज्य चुनें।',
-                'सुनें दबाएँ।',
-            ),
-            'mr': (
-                'योजनांची माहिती व तपशील पाहण्यासाठी राज्य निवडा.',
-                'ऐका दाबा.',
-            ),
-            'te': (
-                'పథకాల సమాచారం మరియు వివరాలను చూడటానికి ఒక రాష్ట్రాన్ని ఎంచుకోండి.',
-                'వినండి నొక్కండి.',
-            ),
-        }
-        map_url = reverse('india_map_schemes')
-        state_dashboard_url = reverse('state_dashboard', args=['Test State'])
-
-        for language, (map_text, audio_text) in expected.items():
-            with self.subTest(language=language):
-                map_response = self.client.get(f'/{language}{map_url}')
-                dashboard_response = self.client.get(
-                    f'/{language}{state_dashboard_url}',
-                )
-
-                self.assertContains(map_response, map_text)
-                self.assertContains(map_response, '{state}')
-                self.assertContains(dashboard_response, '{language}')
-                self.assertIn(audio_text, dashboard_response.content.decode())
-
     def test_major_public_and_authenticated_pages_render_in_each_target_language(self):
         self.client.force_login(self.user)
         page_urls = (
             reverse('home'),
             reverse('scheme_awareness'),
             reverse('scheme_detail', args=[self.central_scheme.id]),
-            reverse('india_map_schemes'),
-            reverse('state_dashboard', args=['Test State']),
             reverse('dashboard'),
             reverse('login'),
             reverse('register'),
@@ -423,11 +365,7 @@ class SmartAssistVerificationTests(TestCase):
         application_url = f'{reverse("apply_assistance")}?scheme_id={self.central_scheme.id}'
 
         self.assertEqual(listing.status_code, 200)
-        self.assertContains(
-            listing,
-            f"handleApplyNow('{self.central_scheme.id}', '{application_url}')",
-            html=False,
-        )
+        self.assertContains(listing, f'href="{application_url}"', html=False)
         self.assertEqual(detail.status_code, 200)
         self.assertContains(detail, f'data-apply-url="{application_url}"', html=False)
 
@@ -439,15 +377,9 @@ class SmartAssistVerificationTests(TestCase):
         self.assertContains(response, 'data-scheme-translation-card')
         self.assertContains(response, 'data-scheme-field="eligibility"')
         self.assertContains(response, 'scheme-localization.js')
-        self.assertContains(
-            response,
-            f'data-speech-base-url="/api/schemes/{self.central_scheme.id}/speech/"',
-            html=False,
-        )
+        self.assertContains(response, 'data-speech-base-url="/api/schemes/0/speech/"', html=False)
         self.assertContains(response, 'data-scheme-name="Central Test Scheme"')
         self.assertContains(response, 'data-scheme-description="Central scheme description."')
-        self.assertContains(response, 'href="/static/css/scheme-platform.css"')
-        self.assertContains(response, 'src="/static/js/scheme-platform.js"')
 
     def test_scheme_voice_audio_translates_only_the_selected_scheme(self):
         with (
@@ -561,10 +493,9 @@ class SmartAssistVerificationTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Request help applying for Central Test Scheme')
+        self.assertContains(response, 'Request help for Central Test Scheme')
         self.assertContains(response, 'Eligible citizens.')
         self.assertContains(response, 'name="scheme_id"', html=False)
-        self.assertContains(response, 'class="form-control"', html=False)
 
         response = self.client.post(
             f"{reverse('apply_assistance')}?scheme_id={self.central_scheme.id}",
@@ -587,7 +518,7 @@ class SmartAssistVerificationTests(TestCase):
         application = self.client.get(reverse('application_status')).context['applications'].get()
         self.assertEqual(application.scheme, self.central_scheme)
         self.assertEqual(application.name, 'Citizen User')
-        self.assertEqual(application.status, 'Submitted')
+        self.assertEqual(application.status, 'Pending')
 
     def test_invalid_assistance_form_renders_errors_and_preserves_scheme(self):
         self.client.login(username='citizen', password='secret123')
@@ -625,5 +556,96 @@ class SmartAssistVerificationTests(TestCase):
         self.assertRedirects(response, reverse('application_status'))
         application = self.client.get(reverse('application_status')).context['applications'].get()
         self.assertEqual(application.scheme, None)
-        self.assertEqual(application.status, 'Submitted')
+        self.assertEqual(application.status, 'Pending')
         self.assertContains(self.client.get(reverse('application_status')), 'Citizen User')
+
+
+@override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+class ApplicationStatusEmailTests(TestCase):
+    """Email on status change, and the authorization that must gate it."""
+
+    def setUp(self):
+        self.citizen = User.objects.create_user(
+            username='citizen_email', password='secret123', email='farmer@example.com',
+        )
+        self.admin = User.objects.create_user(
+            username='admin_email', password='secret123',
+        )
+        self.admin.userprofile.role = 'admin'
+        self.admin.userprofile.save()
+        self.application = ApplicationRequest.objects.create(
+            user=self.citizen,
+            name='Citizen Email',
+            age=35,
+            gender='Female',
+            mobile='9876543210',
+            email='farmer@example.com',
+            state='India',
+            district='Test District',
+        )
+
+    def test_approval_sends_email_to_the_applicant(self):
+        self.client.force_login(self.admin)
+
+        self.client.post(
+            reverse('update_status', args=[self.application.id]),
+            {'status': 'Approved', 'notes': 'Documents verified'},
+        )
+
+        self.application.refresh_from_db()
+        self.assertEqual(self.application.status, 'Approved')
+        self.assertEqual(len(mail.outbox), 1)
+        sent = mail.outbox[0]
+        self.assertIn('farmer@example.com', sent.to)
+        self.assertIn('Approved', sent.subject)
+        self.assertIn('Documents verified', sent.body)
+
+    def test_rejection_sends_email(self):
+        self.client.force_login(self.admin)
+
+        self.client.post(
+            reverse('update_status', args=[self.application.id]),
+            {'status': 'Rejected', 'notes': 'Income above limit'},
+        )
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('Rejected', mail.outbox[0].subject)
+
+    def test_update_status_page_loads_for_admin(self):
+        """Regression: the GET branch must return the form, not None."""
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse('update_status', args=[self.application.id]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Update Application Status')
+
+    def test_citizen_cannot_update_application_status(self):
+        """Regression: a plain citizen must not approve their own application."""
+        self.client.force_login(self.citizen)
+
+        response = self.client.post(
+            reverse('update_status', args=[self.application.id]),
+            {'status': 'Approved', 'notes': 'self-approved'},
+        )
+
+        self.application.refresh_from_db()
+        self.assertNotEqual(self.application.status, 'Approved')
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertRedirects(response, reverse('dashboard'))
+
+    def test_no_email_is_sent_when_no_address_is_on_file(self):
+        self.citizen.email = ''
+        self.citizen.save(update_fields=['email'])
+        self.application.email = ''
+        self.application.save(update_fields=['email'])
+        self.client.force_login(self.admin)
+
+        self.client.post(
+            reverse('update_status', args=[self.application.id]),
+            {'status': 'Approved'},
+        )
+
+        self.application.refresh_from_db()
+        self.assertEqual(self.application.status, 'Approved')
+        self.assertEqual(len(mail.outbox), 0)

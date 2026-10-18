@@ -1,3 +1,4 @@
+
 pipeline {
     agent any
 
@@ -28,6 +29,24 @@ pipeline {
         stage('Django Tests') {
             steps {
                 sh '.venv-ci/bin/python manage.py test'
+            }
+        }
+
+        stage('Selenium UI Testing') {
+            steps {
+                sh '''
+                    echo "Checking SmartAssist-Kisan application..."
+                    curl --fail --silent --show-error http://localhost:8003/ -o /dev/null
+
+                    echo "Checking Firefox..."
+                    /snap/firefox/current/usr/lib/firefox/firefox --version
+
+                    echo "Checking GeckoDriver..."
+                    /snap/firefox/current/usr/lib/firefox/geckodriver --version
+
+                    echo "Running Selenium homepage test..."
+                    .venv-ci/bin/python -m unittest selenium_tests.test_homepage -v
+                '''
             }
         }
 

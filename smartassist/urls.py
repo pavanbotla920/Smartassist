@@ -32,7 +32,10 @@ from farmers.views import (
     apply_scheme_admin,
     reports,
     set_language,
-    logout_user
+    logout_user,
+    add_scheme,
+    edit_scheme,
+    delete_scheme,
 )
 
 urlpatterns = [
@@ -77,6 +80,10 @@ urlpatterns += i18n_patterns(
     # Admin/Volunteer
     path('admin-dashboard/', admin_dashboard, name='admin_dashboard'),
     path('manage-schemes/', manage_schemes, name='manage_schemes'),
+    path('manage-schemes/add/', add_scheme, name='add_scheme'),
+path('manage-schemes/edit/<int:scheme_id>/', edit_scheme, name='edit_scheme'),
+path('manage-schemes/delete/<int:scheme_id>/', delete_scheme, name='delete_scheme'),
+
     path('update-status/<int:app_id>/', update_application_status, name='update_status'),
     path('apply-scheme/<int:app_id>/<int:scheme_id>/', apply_scheme_admin, name='apply_scheme_admin'),
     path('reports/', reports, name='reports'),

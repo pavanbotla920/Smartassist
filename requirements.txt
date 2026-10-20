@@ -5,3 +5,4 @@ edge-tts==7.2.3
 Pillow==12.1.1
 sqlparse==0.5.5
 tzdata==2025.3
+selenium==4.51.0

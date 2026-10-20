@@ -1,0 +1,333 @@
+/* =====================================================
+   SMARTASSIST GLOBAL THEME (GREEN / CREAM / GOLD)
+   ===================================================== */
+
+:root {
+    /* Core Palette */
+    --sa-ink: #0B2E24;
+    --sa-ink-2: #0E3A2C;
+    --sa-emerald: #10553E;
+    --sa-leaf: #1FA971;
+    --sa-gold: #D9A84E;
+    --sa-gold-deep: #B8862F;
+    --sa-gold-soft: #F4E8CE;
+    --sa-ivory: #F7F1E3;
+    --sa-paper: #FAF7EF;
+    --sa-card: #FFFFFF;
+    --sa-text: #1F2A26;
+    --sa-muted: #5D6B64;
+    --sa-line: rgba(11,46,36,0.12);
+
+    /* System */
+    --sa-radius: 16px;
+    --sa-radius-sm: 12px;
+    --sa-shadow: 0 14px 30px rgba(11,46,36,.10);
+    --sa-shadow-lg: 0 24px 48px rgba(11,46,36,.16);
+    --sa-ease: cubic-bezier(.22,.61,.36,1);
+
+    /* Fonts */
+    --sa-font-display: Georgia, 'Times New Roman', serif;
+    --sa-font-body: 'Segoe UI', system-ui, sans-serif;
+}
+
+body {
+    background: var(--sa-paper);
+    font-family: var(--sa-font-body);
+    color: var(--sa-text);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--sa-font-display);
+    color: var(--sa-ink);
+}
+
+/* =====================================================
+   BUTTONS
+   ===================================================== */
+.sa-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    border: none;
+    border-radius: 999px;
+    padding: .72rem 1.35rem;
+    font-size: .95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform .22s var(--sa-ease), box-shadow .22s var(--sa-ease);
+    text-decoration: none;
+}
+.sa-btn:hover {
+    transform: translateY(-2px);
+    color: inherit;
+}
+.sa-btn-gold {
+    color: var(--sa-ink);
+    background: var(--sa-gold);
+    box-shadow: 0 10px 24px rgba(217,168,78,.35);
+}
+.sa-btn-gold:hover {
+    color: var(--sa-ink);
+    background: #e5b863;
+}
+.sa-btn-primary {
+    color: #fff;
+    background: var(--sa-ink);
+    box-shadow: 0 10px 24px rgba(11,46,36,.28);
+}
+.sa-btn-primary:hover {
+    color: #fff;
+    background: var(--sa-emerald);
+}
+.sa-btn-ghost-light {
+    color: #fff;
+    background: rgba(255,255,255,.08);
+    border: 1.5px solid rgba(255,255,255,.45);
+}
+.sa-btn-ghost-light:hover {
+    color: #fff;
+    background: rgba(255,255,255,.15);
+}
+
+/* =====================================================
+   SECTIONS & TYPOGRAPHY
+   ===================================================== */
+.sa-section {
+    padding: 4.5rem 0;
+    background: var(--sa-paper);
+}
+.sa-section--alt {
+    background: var(--sa-ivory);
+}
+.sa-section-head {
+    max-width: 640px;
+    margin: 0 auto 2.4rem;
+    text-align: center;
+}
+.sa-section-head h2 {
+    font-size: clamp(1.75rem, 3.4vw, 2.6rem);
+    font-weight: 600;
+    margin: .5rem 0 .6rem;
+}
+.sa-section-head p {
+    color: var(--sa-muted);
+    margin: 0;
+    font-size: 1.02rem;
+}
+
+/* =====================================================
+   KICKERS & CARDS
+   ===================================================== */
+.sa-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: .75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    color: var(--sa-leaf);
+}
+.sa-kicker::before {
+    content: '';
+    width: 26px;
+    height: 2px;
+    background: var(--sa-gold);
+    border-radius: 2px;
+}
+
+.sa-card {
+    position: relative;
+    background: var(--sa-card);
+    border: 1px solid var(--sa-line);
+    border-radius: var(--sa-radius);
+    padding: 1.35rem;
+    box-shadow: var(--sa-shadow);
+    transition: transform .24s var(--sa-ease), box-shadow .24s var(--sa-ease);
+}
+.sa-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--sa-shadow-lg);
+}
+.sa-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    color: var(--sa-ink);
+    background: var(--sa-gold-soft);
+    border: 1px solid rgba(217,168,78,.35);
+    margin-bottom: .9rem;
+}
+
+/* =====================================================
+   CHIPS & BADGES
+   ===================================================== */
+.sa-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    border-radius: 999px;
+    padding: .35rem .85rem;
+    font-size: .78rem;
+    font-weight: 700;
+    background: var(--sa-gold-soft);
+    color: var(--sa-ink);
+}
+
+/* =====================================================
+   BOOTSTRAP OVERRIDES (for Navbar)
+   ===================================================== */
+.navbar {
+    background-color: var(--sa-ink) !important;
+    padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid rgba(217,168,78,.35);
+}
+.navbar-brand, .navbar-brand i {
+    color: #fff !important;
+    font-family: var(--sa-font-display);
+    font-size: 1.4rem;
+}
+.navbar-brand i {
+    color: var(--sa-gold) !important;
+}
+.navbar-light .navbar-nav .nav-link {
+    color: rgba(255,255,255,.82) !important;
+    font-weight: 600;
+}
+.navbar-light .navbar-nav .nav-link:hover,
+.navbar-light .navbar-nav .nav-link.active {
+    color: #fff !important;
+}
+.navbar-toggler {
+    border-color: rgba(255,255,255,.2);
+}
+.navbar-toggler-icon {
+    filter: invert(1);
+}
+
+/* =====================================================
+   NAVBAR & FORMS OVERRIDE
+   ===================================================== */
+
+/* Fix "SmartAssist" text brightness */
+.navbar-brand {
+    color: #ffffff !important;
+    font-weight: 800;
+    font-size: 1.35rem;
+}
+.navbar-brand i {
+    color: var(--sa-gold) !important;
+}
+
+/* Force nav links to be white, not blue */
+.navbar-nav .nav-link {
+    color: rgba(255, 255, 255, 0.85) !important;
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link:focus {
+    color: #ffffff !important;
+}
+
+/* Fix Login/Register/Profile buttons */
+.navbar .btn-primary {
+    background-color: var(--sa-gold) !important;
+    border-color: var(--sa-gold) !important;
+    color: var(--sa-ink) !important;
+    font-weight: 700;
+    border-radius: 999px !important; /* Rounded pill shape */
+    padding: 0.4rem 1.2rem;
+}
+.navbar .btn-primary:hover {
+    background-color: #e5b863 !important;
+}
+
+.navbar .btn-outline-primary {
+    border-color: rgba(255, 255, 255, 0.4) !important;
+    color: #ffffff !important;
+    border-radius: 999px !important; /* Rounded pill shape */
+    padding: 0.4rem 1.2rem;
+    font-weight: 600;
+}
+.navbar .btn-outline-primary:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border-color: #ffffff !important;
+    color: #ffffff !important;
+}
+
+/* Make the Language selector look like a rounded rectangle */
+.site-language-select {
+    border-radius: 8px !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    padding: 0.4rem 2rem 0.4rem 0.8rem !important;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    /* Custom dropdown arrow to look good on dark green */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23ffffff' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 10px center !important;
+    appearance: none;
+    -webkit-appearance: none;
+}
+.site-language-select option {
+    background-color: var(--sa-ink);
+    color: #ffffff;
+}
+
+/* =====================================================
+   NAVBAR ACTIVE TAB INDICATOR (FORCE OVERRIDE)
+   ===================================================== */
+.navbar-nav .nav-link.active-tab {
+    background-color: var(--sa-gold) !important;
+    color: var(--sa-ink) !important;
+    font-weight: 800 !important;
+    border-radius: 999px !important;
+    padding: 0.4rem 1.2rem !important;
+    margin: 0 0.2rem !important;
+    box-shadow: 0 4px 12px rgba(217, 168, 78, 0.4);
+}
+
+.navbar-nav .nav-link.active-tab:hover {
+    background-color: #e5b863 !important;
+    color: var(--sa-ink) !important;
+}
+
+/* =====================================================
+   NAVBAR FIXES (Sticky, Brand Visibility, Active Tab)
+   ===================================================== */
+.navbar {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1030 !important;
+    background-color: var(--sa-ink) !important;
+}
+
+.navbar-brand {
+    color: #ffffff !important; /* Forces white */
+    font-weight: 800 !important;
+    font-size: 1.4rem !important;
+    letter-spacing: -0.5px;
+}
+.navbar-brand i {
+    color: var(--sa-gold) !important; /* Forces gold icon */
+    margin-right: 5px;
+}
+
+.navbar-nav .nav-link.active-tab {
+    background-color: var(--sa-gold) !important;
+    color: var(--sa-ink) !important;
+    font-weight: 800 !important;
+    border-radius: 999px !important;
+    padding: 0.4rem 1.2rem !important;
+    margin: 0 0.2rem !important;
+    box-shadow: 0 4px 12px rgba(217, 168, 78, 0.4);
+}

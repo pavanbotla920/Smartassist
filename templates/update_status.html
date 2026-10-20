@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Update Application Status" %} | SmartAssist{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h1 class="h4 mb-0">{% trans "Update application status" %}</h1>
+                </div>
+                <div class="card-body">
+                    <p><strong>{% trans "Applicant" %}:</strong> {{ application.name }}</p>
+                    <p><strong>{% trans "Scheme" %}:</strong> {{ application.scheme|default:_("Not assigned") }}</p>
+                    <p><strong>{% trans "Current status" %}:</strong> {{ application.get_status_display }}</p>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label" for="status">{% trans "New status" %}</label>
+                            <select class="form-select" id="status" name="status" required>
+                                {% for value, label in status_choices %}
+                                    <option value="{{ value }}" {% if application.status == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="notes">{% trans "Notes" %}</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="4">{{ application.notes|default:'' }}</textarea>
+                        </div>
+                        <button class="btn btn-primary" type="submit">{% trans "Save status" %}</button>
+                        <a class="btn btn-outline-secondary" href="{% url 'admin_dashboard' %}">{% trans "Cancel" %}</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

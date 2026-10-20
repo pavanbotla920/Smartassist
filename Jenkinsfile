@@ -31,9 +31,57 @@ pipeline {
             }
         }
 
+        stage('Selenium UI Testing') {
+            steps {
+                sh '''
+                    echo "Checking SmartAssist-Kisan application..."
+                    curl --fail --silent --show-error http://localhost:8003/ -o /dev/null
+
+                    echo "Checking Firefox..."
+                    /snap/firefox/current/usr/lib/firefox/firefox --version
+
+                    echo "Checking GeckoDriver..."
+                    /snap/firefox/current/usr/lib/firefox/geckodriver --version
+
+                    echo "Running Selenium homepage test..."
+                    .venv-ci/bin/python -m unittest selenium_tests.test_homepage -v
+                '''
+            }
+        }
+
         stage('Docker Build') {
             steps {
-                sh 'docker build -t smartassist-kisan:jenkins-test .'
+                sh '''
+                    docker build \
+                        -t pavanbotla/smartassist-kisan:latest \
+                        -t pavanbotla/smartassist-kisan:1.0.1 \
+                        .
+                '''
+            }
+        }
+
+        stage('Docker Hub Push') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-credentials',
+                        usernameVariable: 'DOCKERHUB_USERNAME',
+                        passwordVariable: 'DOCKERHUB_TOKEN'
+                    )
+                ]) {
+                    sh '''
+                        set +x
+
+                        echo "$DOCKERHUB_TOKEN" | docker login \
+                            --username "$DOCKERHUB_USERNAME" \
+                            --password-stdin
+
+                        docker push pavanbotla/smartassist-kisan:1.0.1
+                        docker push pavanbotla/smartassist-kisan:latest
+
+                        docker logout
+                    '''
+                }
             }
         }
     }

@@ -15,6 +15,8 @@ from urllib.parse import urlencode, urlparse
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 from .models import ApplicationRequest, Scheme, Notification, UserProfile
+from .emails import notify_application_status
+from .location_data import get_location_json, get_state_choices
 from .forms import UserRegisterForm, UserUpdateForm, UserProfileForm, CitizenApplicationForm, SchemeForm
 import csv
 import asyncio
@@ -80,7 +82,10 @@ def profile(request):
 
     context = {
         'user_form': user_form,
-        'profile_form': profile_form
+        'profile_form': profile_form,
+        'location_json': get_location_json(),
+        'state_choices': get_state_choices(),
+        'state_values': [value for value, _ in get_state_choices()],
     }
     return render(request, 'profile.html', context)
 
@@ -592,18 +597,20 @@ def update_application_status(request, app_id):
         application.applied_by = request.user
         application.save()
 
-        # Send notification
-        Notification.objects.create(
-            user=application.user,
-            notification_type='email',
-            subject=_('Application Status Updated'),
-            message=_(f'Your application status has been updated to: {new_status}')
-        )
+        # Create an in-app notification and attempt to send an email
+        notify_application_status(application, new_status, notes or '')
 
         messages.success(request, _('Application status updated!'))
         return redirect('admin_dashboard')
 
-    return render(request, 'update_status.html', {'application': application})
+    return render(
+        request,
+        'update_status.html',
+        {
+            'application': application,
+            'status_choices': ApplicationRequest.STATUS_CHOICES,
+        },
+    )
 
 
 @login_required
@@ -1020,15 +1027,20 @@ def state_schemes_public_api(request, state_name):
 # -----------------------------
 @login_required
 def recommend_schemes(request):
-
     schemes = []
     form_data = {}
 
     if request.method == 'POST':
-        age = int(request.POST.get('age'))
-        income = int(request.POST.get('income'))
-        category = request.POST.get('category')
-        state = request.POST.get('state')
+        try:
+            age = max(int(request.POST.get('age') or 0), 0)
+        except (TypeError, ValueError):
+            age = 0
+        try:
+            income = max(int(request.POST.get('income') or 0), 0)
+        except (TypeError, ValueError):
+            income = 0
+        category = (request.POST.get('category') or '').strip()
+        state = (request.POST.get('state') or '').strip()
 
         form_data = {
             'age': age,
@@ -1044,25 +1056,24 @@ def recommend_schemes(request):
             score = 0
             reasons = []
 
-            # AGE CHECK
-            if scheme.min_age <= age <= scheme.max_age:
+            if age and scheme.min_age <= age <= scheme.max_age:
                 score += 40
                 reasons.append("Age eligible")
 
-            # INCOME CHECK
-            if income <= scheme.income_limit:
+            if not income or income <= scheme.income_limit:
                 score += 30
-                reasons.append("Income eligible")
+                if income:
+                    reasons.append("Income eligible")
 
-            # CATEGORY CHECK
-            if scheme.category == "All" or scheme.category == category:
+            if not category or scheme.category == "All" or scheme.category.lower() == category.lower():
                 score += 20
-                reasons.append("Category match")
+                if category:
+                    reasons.append("Category match")
 
-            # STATE CHECK
-            if state.lower() in scheme.state.lower():
+            if not state or state.lower() in (scheme.state or '').lower():
                 score += 10
-                reasons.append("State match")
+                if state:
+                    reasons.append("State match")
 
             scheme_official = _format_link(scheme.official_website)
             scheme_apply = _format_link(scheme.apply_link) or scheme_official
@@ -1580,3 +1591,78 @@ def chatbot_stream(request):
     response['Cache-Control'] = 'no-cache'
     response['X-Accel-Buffering'] = 'no'
     return response
+
+
+
+
+
+
+# ==========================================
+# SCHEME MANAGEMENT: ADD, EDIT AND DELETE
+# ==========================================
+
+@login_required
+def add_scheme(request):
+    """Allow admins and volunteers to add a government scheme."""
+    user_profile = get_object_or_404(UserProfile, user=request.user)
+
+    if user_profile.role not in ['admin', 'volunteer']:
+        messages.error(request, _('You do not have permission to add schemes.'))
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        form = SchemeForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, _('Scheme added successfully!'))
+            return redirect('manage_schemes')
+    else:
+        form = SchemeForm()
+
+    return render(request, 'scheme_form.html', {'form': form})
+
+
+@login_required
+def edit_scheme(request, scheme_id):
+    """Allow admins and volunteers to edit an existing scheme."""
+    user_profile = get_object_or_404(UserProfile, user=request.user)
+
+    if user_profile.role not in ['admin', 'volunteer']:
+        messages.error(request, _('You do not have permission to edit schemes.'))
+        return redirect('dashboard')
+
+    scheme = get_object_or_404(Scheme, id=scheme_id)
+
+    if request.method == 'POST':
+        form = SchemeForm(request.POST, instance=scheme)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, _('Scheme updated successfully!'))
+            return redirect('manage_schemes')
+    else:
+        form = SchemeForm(instance=scheme)
+
+    return render(
+        request,
+        'scheme_form.html',
+        {'form': form, 'scheme': scheme}
+    )
+
+
+@login_required
+@require_POST
+def delete_scheme(request, scheme_id):
+    """Delete a scheme securely using POST."""
+    user_profile = get_object_or_404(UserProfile, user=request.user)
+
+    if user_profile.role not in ['admin', 'volunteer']:
+        messages.error(request, _('You do not have permission to delete schemes.'))
+        return redirect('dashboard')
+
+    scheme = get_object_or_404(Scheme, id=scheme_id)
+    scheme.delete()
+
+    messages.success(request, _('Scheme deleted successfully!'))
+    return redirect('manage_schemes')

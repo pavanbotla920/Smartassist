@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from django.utils.translation import gettext_lazy as _
 from .models import UserProfile, Scheme, ApplicationRequest
+from .password_validator import validate as validate_password
 
 
 class UserRegisterForm(UserCreationForm):
@@ -12,6 +13,18 @@ class UserRegisterForm(UserCreationForm):
         self.fields['email'].label = _('Email address')
         self.fields['password1'].label = _('Password')
         self.fields['password2'].label = _('Confirm password')
+
+    def clean_password1(self):
+        password = self.cleaned_data.get('password1') or ''
+        result = validate_password(
+            password,
+            username=self.cleaned_data.get('username', ''),
+            email=self.cleaned_data.get('email', ''),
+        )
+        if not result['accepted']:
+            for reason in result['reasons']:
+                self.add_error('password1', _(reason))
+        return password
 
     class Meta:
         model = User
@@ -39,6 +52,24 @@ class UserProfileForm(forms.ModelForm):
             'income_range': _('Income range'),
             'category': _('Category'),
         }
+
+    def clean_phone(self):
+        phone = (self.cleaned_data.get('phone') or '').strip()
+        if phone and not phone.isdigit():
+            raise forms.ValidationError(_('Phone number must contain digits only.'))
+        if phone and len(phone) != 10:
+            raise forms.ValidationError(_('Phone number must be exactly 10 digits.'))
+        return phone
+
+    def clean_age(self):
+        age = self.cleaned_data.get('age')
+        if age is not None and not 18 <= age <= 120:
+            raise forms.ValidationError(_('Please enter an age between 18 and 120.'))
+        return age
+
+    def clean(self):
+        cleaned_data = super().clean()
+        return cleaned_data
 
 
 class CitizenApplicationForm(forms.ModelForm):

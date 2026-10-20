@@ -1,298 +1,523 @@
 {% extends 'base.html' %}
-{% load i18n %}
+{% load i18n static %}
 
 {% block title %}{% trans "SmartAssist - AI-Powered Agriculture Scheme Platform" %}{% endblock %}
 
 {% block extra_head %}
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
+
     :root {
-        --ink: #0f1e3a;
-        --green: #1f9d62;
-        --green-2: #14c983;
-        --blue: #2a6ef2;
-        --muted: #60708e;
-        --glass-bg: rgba(255, 255, 255, 0.13);
-        --glass-border: rgba(255, 255, 255, 0.3);
+        --sa-paper: #f7f9f7;
+        --sa-card: #ffffff;
+        --sa-ink: #0b2e24;
+        --sa-text: #24352d;
+        --sa-muted: #66756c;
+        --sa-emerald: #10553e;
+        --sa-gold: #d9a84e;
+        --sa-gold-soft: #f4e8ce;
+        --sa-gold-deep: #77551a;
+        --sa-line: #dce5de;
+        --sa-radius-sm: 10px;
+        --sa-radius-lg: 18px;
+        --sa-font-display: Arial, Helvetica, sans-serif;
+        --sa-font-body: Arial, Helvetica, sans-serif;
     }
 
-    html { scroll-behavior: smooth; }
-
+    /* =====================================================
+       PAGE STYLES — SMARTASSIST-KISAN HERO & HOMEPAGE
+       ===================================================== */
     .sa-home {
-        font-family: 'Poppins', 'Segoe UI', sans-serif;
-        color: var(--ink);
+        background: var(--sa-paper);
     }
 
-    .sa-hero {
+    /* Editorial type and a quiet field-line texture keep the page warm,
+       distinctive, and grounded in the agricultural mission. */
+    .sa-home {
         position: relative;
-        min-height: calc(100vh - 72px);
+        isolation: isolate;
         overflow: hidden;
-        background: #071125;
+    }
+    .sa-home::before {
+        content: "";
+        position: absolute;
+        inset: 0 0 auto;
+        height: 32rem;
+        z-index: -1;
+        pointer-events: none;
+        opacity: .48;
+        background:
+            linear-gradient(105deg, transparent 0 55%, rgba(217, 168, 78, .07) 55.1% 55.35%, transparent 55.45%),
+            repeating-linear-gradient(165deg, transparent 0 39px, rgba(16, 85, 62, .045) 40px 41px);
+        mask-image: linear-gradient(to bottom, #000 0%, transparent 88%);
     }
 
-    .sa-slide-wrap {
+    /* ---------- Community Awareness Top Announcement ---------- */
+    .sa-top-announcement {
+        max-width: 1240px;
+        margin: 1.25rem auto 0;
+        padding: 0 1rem;
+    }
+    .sa-announcement-card {
+        background: #ffffff;
+        border: 1px solid rgba(11, 46, 36, 0.12);
+        border-left: 5px solid var(--sa-gold);
+        border-radius: var(--sa-radius-sm);
+        padding: 1.1rem 1.4rem;
+        display: flex;
+        align-items: center;
+        gap: 1.1rem;
+        box-shadow: 0 4px 16px rgba(11, 46, 36, 0.05);
+        position: relative;
+        overflow: hidden;
+    }
+    .sa-announcement-card::after {
+        content: "01";
         position: absolute;
-        inset: 0;
+        right: 1.2rem;
+        top: .65rem;
+        color: rgba(11, 46, 36, .08);
+        font: 700 3.2rem/1 var(--sa-font-display);
+    }
+    .sa-announcement-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: var(--sa-gold-soft);
+        color: var(--sa-gold-deep);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+        border: 1px solid rgba(217, 168, 78, 0.4);
+    }
+    .sa-announcement-content h6 {
+        font-family: var(--sa-font-display);
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--sa-ink);
+        margin: 0 0 0.2rem;
+    }
+    .sa-announcement-content p {
+        margin: 0;
+        color: var(--sa-text);
+        font-size: 0.92rem;
+        line-height: 1.55;
+    }
+
+    /* ---------- Premium Hero Section (Balanced Two-Column Layout) ---------- */
+    .sa-hero-wrap {
+        max-width: 1240px;
+        margin: 1.25rem auto 2.5rem;
+        padding: 0 1rem;
+    }
+    .sa-hero-grid {
+        display: grid;
+        grid-template-columns: 1.08fr 0.92fr;
+        gap: 1.5rem;
+        align-items: stretch;
+    }
+
+    /* Left Column: Solid Opaque Dark Green Content Panel */
+    .sa-hero-panel {
+        background: linear-gradient(135deg, #0B2E24, #10553E); /* Dark green gradient with gold accents */
+        border: 1px solid rgba(217, 168, 78, 0.35);
+        border-radius: 6px 26px 26px 26px;
+        padding: 2.8rem 2.4rem;
+        box-shadow: 0 16px 40px rgba(11, 46, 36, 0.15);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+    .sa-hero-panel::after {
+        content: "";
+        position: absolute;
+        width: 19rem;
+        height: 19rem;
+        right: -8rem;
+        bottom: -10rem;
+        border: 1px solid rgba(244, 232, 206, .18);
+        border-radius: 50%;
+        box-shadow: 0 0 0 2.2rem rgba(244, 232, 206, .035), 0 0 0 4.4rem rgba(244, 232, 206, .025);
+        pointer-events: none;
+    }
+
+    .sa-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        border-radius: 999px;
+        border: 1px solid rgba(217, 168, 78, 0.55);
+        background: rgba(217, 168, 78, 0.16);
+        color: var(--sa-gold-soft);
+        padding: 0.4rem 0.95rem;
+        font-size: 0.76rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 1.2rem;
+        width: fit-content;
+    }
+
+    .sa-title {
+        font-family: var(--sa-font-display);
+        font-size: clamp(2.1rem, 3.8vw, 3.2rem);
+        line-height: 1.12;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 1.1rem;
+        letter-spacing: -0.035em;
+        max-width: 11ch;
+    }
+    .sa-title span {
+        color: var(--sa-gold);
+    }
+
+    .sa-sub {
+        color: rgba(255, 255, 255, 0.92);
+        font-size: 1.04rem;
+        line-height: 1.7;
+        margin-bottom: 0.85rem;
+    }
+    .sa-highlight {
+        color: var(--sa-gold-soft);
+        font-weight: 600;
+        font-size: 0.98rem;
+        line-height: 1.6;
+        margin-bottom: 1.8rem;
+    }
+
+    .sa-btn-row {
+        display: flex;
+        gap: 0.85rem;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    /* Right Column: Visual Stage (Clean Farmer Photo Showcase + Highlights Panel) */
+    .sa-hero-visual {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+        justify-content: space-between;
+    }
+
+    /* 1. Animated Farmer Photograph Showcase (100% natural, ZERO dark overlay) */
+    .sa-showcase-card {
+        background: #ffffff;
+        border: 1px solid rgba(11, 46, 36, 0.14);
+        border-radius: 26px 6px 26px 26px;
+        overflow: hidden;
+        box-shadow: 0 16px 36px rgba(11, 46, 36, 0.12);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .sa-photo-frame {
+        position: relative;
+        height: 330px;
+        width: 100%;
+        overflow: hidden;
+        background: #0B2E24;
     }
 
     .sa-slide {
         position: absolute;
         inset: 0;
         opacity: 0;
-        transition: opacity 1s ease;
+        visibility: hidden;
+        transition: opacity 0.75s ease-in-out;
     }
-
-    .sa-slide.active { opacity: 1; }
-
+    .sa-slide.active {
+        opacity: 1;
+        visibility: visible;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .sa-slide,
+        .sa-dot,
+        .sa-dot::before,
+        .sa-highlights-list li {
+            transition: none;
+        }
+        .sa-marquee-track {
+            animation: none;
+        }
+    }
     .sa-slide img {
         width: 100%;
         height: 100%;
         object-fit: cover;
-        transform: scale(1.08);
-        transition: transform 7s ease;
-        filter: saturate(1.03) contrast(1.02);
+        display: block;
+        /* ZERO dark tint filter or blur */
     }
 
-    .sa-slide.active img { transform: scale(1); }
-
-    .sa-overlay {
-        position: absolute;
-        inset: 0;
-        background:
-            radial-gradient(circle at 12% 20%, rgba(20, 201, 131, 0.18), transparent 40%),
-            radial-gradient(circle at 85% 70%, rgba(42, 110, 242, 0.25), transparent 42%),
-            linear-gradient(120deg, rgba(5, 16, 35, 0.85) 0%, rgba(5, 34, 25, 0.7) 45%, rgba(4, 20, 48, 0.78) 100%);
-    }
-
-    .sa-hero-content {
-        position: relative;
-        z-index: 2;
-        min-height: calc(100vh - 72px);
-        display: grid;
-        align-items: center;
-        padding: 2rem 0;
-    }
-
-    .sa-hero-grid {
-        max-width: 1240px;
-        margin: 0 auto;
-        width: 100%;
-        padding: 0 1rem;
-        display: grid;
-        grid-template-columns: 1.2fr 0.8fr;
-        gap: 1.4rem;
-    }
-
-    .sa-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        border-radius: 999px;
-        border: 1px solid rgba(255, 255, 255, 0.4);
-        background: rgba(255, 255, 255, 0.11);
-        color: #def6ff;
-        padding: 0.4rem 0.9rem;
-        font-size: 0.78rem;
-        font-weight: 600;
-        margin-bottom: 1rem;
-        letter-spacing: 0.02em;
-    }
-
-    .sa-title {
-        font-size: clamp(2rem, 5vw, 3.7rem);
-        line-height: 1.08;
-        font-weight: 800;
-        color: #fff;
-        margin-bottom: 1rem;
-        text-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
-        animation: saFadeUp 0.7s ease both;
-    }
-
-    .sa-title span {
-        background: linear-gradient(90deg, #47e8a4, #66b9ff);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    .sa-sub {
-        max-width: 680px;
-        color: rgba(255, 255, 255, 0.9);
-        font-size: 1.03rem;
-        line-height: 1.7;
-        margin-bottom: 1.35rem;
-        animation: saFadeUp 0.7s 0.1s ease both;
-    }
-
-    .sa-btn-row {
+    /* Showcase Controls Bar */
+    .sa-photo-controls {
+        background: #ffffff;
+        padding: 0.7rem 1.1rem;
         display: flex;
-        gap: 0.75rem;
-        flex-wrap: wrap;
-        animation: saFadeUp 0.7s 0.18s ease both;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.8rem;
+        border-top: 1px solid rgba(11, 46, 36, 0.08);
+    }
+    .sa-photo-badge {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: var(--sa-ink);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .sa-photo-badge i {
+        color: var(--sa-gold-deep);
     }
 
-    .sa-btn {
-        border: none;
-        border-radius: 999px;
-        padding: 0.8rem 1.3rem;
-        font-weight: 600;
-        text-decoration: none;
-        display: inline-flex;
+    .sa-dot-nav {
+        display: flex;
         align-items: center;
         gap: 0.45rem;
-        transition: transform 0.22s ease, box-shadow 0.22s ease;
+    }
+    .sa-dot {
+        width: 44px;
+        height: 44px;
+        position: relative;
+        border-radius: 50%;
+        border: none;
+        background: transparent;
+        transition: background-color 0.24s ease;
+        cursor: pointer;
+        padding: 0;
+    }
+    .sa-dot::before {
+        content: "";
+        position: absolute;
+        width: 9px;
+        height: 9px;
+        border-radius: 99px;
+        inset: 0;
+        margin: auto;
+        background: rgba(11, 46, 36, 0.25);
+        transition: width 0.24s ease, background-color 0.24s ease;
+    }
+    .sa-dot:hover {
+        background: var(--sa-gold-deep);
+    }
+    .sa-dot:hover::before {
+        background: var(--sa-gold-deep);
+    }
+    .sa-dot.active {
+        background: rgba(217, 168, 78, 0.14);
+    }
+    .sa-dot.active::before {
+        width: 24px;
+        background: var(--sa-gold);
+    }
+    .sa-dot:focus-visible,
+    .sa-slide-toggle:focus-visible {
+        outline: 3px solid var(--sa-gold);
+        outline-offset: 2px;
+    }
+    .sa-slide-toggle {
+        min-width: 44px;
+        min-height: 44px;
+        border: 1px solid rgba(11, 46, 36, 0.18);
+        border-radius: 999px;
+        background: #ffffff;
+        color: var(--sa-ink);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 0.7rem;
+    }
+    .sa-slide-toggle:hover {
+        border-color: var(--sa-gold-deep);
+        color: var(--sa-gold-deep);
+    }
+    @media (max-width: 600px) {
+        .sa-photo-controls {
+            flex-wrap: wrap;
+        }
+        .sa-photo-badge {
+            flex: 1 1 100%;
+        }
+        .sa-dot-nav {
+            margin-left: auto;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
     }
 
-    .sa-btn:hover { transform: translateY(-3px) scale(1.03); }
-
-    .sa-btn-primary {
-        color: #fff;
-        background: linear-gradient(110deg, var(--green), var(--blue));
-        box-shadow: 0 10px 26px rgba(31, 157, 98, 0.36);
+    /* 2. Refined Live Platform Highlights Panel (Solid Opaque Dark Green) */
+    .sa-highlights-panel {
+        background: #0B2E24; /* Solid, opaque deep green — no glassmorphism */
+        border: 1px solid rgba(217, 168, 78, 0.35);
+        border-radius: 6px 20px 20px 20px;
+        padding: 1.3rem 1.4rem;
+        box-shadow: 0 16px 36px rgba(11, 46, 36, 0.12);
+        color: #ffffff;
     }
-
-    .sa-btn-primary:hover {
-        box-shadow: 0 14px 36px rgba(31, 157, 98, 0.48), 0 0 0 4px rgba(20, 201, 131, 0.18);
+    .sa-highlights-head {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        margin-bottom: 0.9rem;
     }
-
-    .sa-btn-ghost {
-        color: #fff;
-        border: 1.5px solid rgba(255, 255, 255, 0.5);
-        background: rgba(255, 255, 255, 0.09);
+    .sa-highlights-head i {
+        color: var(--sa-gold);
+        font-size: 1.1rem;
     }
-
-    .sa-hero-card {
-        background: var(--glass-bg);
-        border: 1px solid var(--glass-border);
-        border-radius: 22px;
-        padding: 1.1rem;
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        box-shadow: 0 22px 40px rgba(7, 12, 30, 0.35);
-        color: #fff;
-        animation: saFadeUp 0.75s 0.28s ease both;
+    .sa-highlights-head h5 {
+        font-family: var(--sa-font-body);
+        font-weight: 800;
+        font-size: 0.98rem;
+        color: var(--sa-gold);
+        letter-spacing: 0.02em;
+        margin: 0;
     }
-
-    .sa-hero-card h5 {
-        font-weight: 700;
-        margin-bottom: 0.8rem;
-        font-size: 1rem;
-    }
-
-    .sa-mini-list {
+    .sa-highlights-list {
         list-style: none;
         margin: 0;
         padding: 0;
         display: grid;
-        gap: 0.52rem;
+        gap: 0.55rem;
     }
-
-    .sa-mini-list li {
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.22);
-        border-radius: 12px;
-        padding: 0.62rem 0.72rem;
-        font-size: 0.84rem;
-    }
-
-    .sa-dot-nav {
-        position: absolute;
-        left: 50%;
-        bottom: 1rem;
-        transform: translateX(-50%);
+    .sa-highlights-list li {
         display: flex;
-        gap: 0.42rem;
-        z-index: 3;
+        align-items: center;
+        gap: 0.65rem;
+        background: #10553E; /* Solid forest green item pill */
+        border: 1px solid rgba(217, 168, 78, 0.22);
+        border-radius: 12px;
+        padding: 0.62rem 0.85rem;
+        font-size: 0.86rem;
+        line-height: 1.45;
+        color: rgba(255, 255, 255, 0.96);
+        transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .sa-highlights-list li:hover {
+        transform: translateX(4px);
+        border-color: var(--sa-gold);
+    }
+    .sa-highlights-list li i {
+        color: var(--sa-gold);
+        font-size: 0.92rem;
+        flex-shrink: 0;
     }
 
-    .sa-dot {
-        width: 9px;
-        height: 9px;
-        border-radius: 99px;
-        border: none;
-        background: rgba(255, 255, 255, 0.5);
-        transition: width 0.24s ease, background 0.24s ease;
+    /* ---------- Trust Band ---------- */
+    .sa-trust {
+        background: var(--sa-ivory);
+        border-bottom: 1px solid var(--sa-line);
     }
-
-    .sa-dot.active {
-        width: 24px;
-        background: #fff;
-    }
-
-    .sa-band {
-        background: linear-gradient(90deg, #092346, #0b5837, #092346);
-        color: #fff;
-    }
-
-    .sa-band-grid {
+    .sa-trust-inner {
         max-width: 1240px;
         margin: 0 auto;
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 0.6rem;
-        padding: 0.75rem 1rem;
+        padding: 1.1rem 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1.2rem;
+        flex-wrap: wrap;
     }
-
-    .sa-band-item { text-align: center; }
-    .sa-band-item strong {
-        display: block;
-        font-size: 1.25rem;
-        font-weight: 800;
-        color: #7af3be;
-        line-height: 1;
-    }
-    .sa-band-item span {
+    .sa-trust-label {
         font-size: 0.72rem;
-        color: rgba(255, 255, 255, 0.74);
-    }
-
-    .sa-section {
-        padding: 4rem 0;
-        background:
-            radial-gradient(circle at 5% 10%, rgba(42, 110, 242, 0.08), transparent 30%),
-            radial-gradient(circle at 90% 20%, rgba(31, 157, 98, 0.1), transparent 30%),
-            #f7faff;
-    }
-
-    .sa-section-head {
-        text-align: center;
-        margin-bottom: 2rem;
-    }
-
-    .sa-section-head h2 {
-        font-size: clamp(1.7rem, 3.2vw, 2.5rem);
         font-weight: 800;
-        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--sa-gold-deep);
+    }
+    .sa-trust-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: var(--sa-ink);
+        padding: 0.4rem 0.85rem;
+        border-radius: 999px;
+        border: 1px solid var(--sa-line);
+        background: #ffffff;
+        text-decoration: none;
+        transition: transform 0.2s var(--sa-ease), box-shadow 0.2s var(--sa-ease);
+    }
+    .sa-trust-item:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--sa-shadow);
+        color: var(--sa-ink);
+        border-color: var(--sa-gold);
+    }
+    .sa-trust-item i { color: var(--sa-leaf); }
+
+    /* ---------- Popular Schemes Marquee ---------- */
+    .sa-marquee {
+        background: linear-gradient(115deg, #0B2E24, #10553E);
+        border-top: 1px solid rgba(217, 168, 78, 0.35);
+        border-bottom: 1px solid rgba(217, 168, 78, 0.35);
+        color: #ffffff;
+        overflow: hidden;
+        position: relative;
+        padding: 0.95rem 0;
+    }
+    .sa-marquee-track {
+        display: flex;
+        align-items: center;
+        gap: 2.4rem;
+        width: max-content;
+        animation: saMarqueeScroll 32s linear infinite;
+        will-change: transform;
+    }
+    .sa-marquee:hover .sa-marquee-track {
+        animation-play-state: paused;
+    }
+    .sa-marquee-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-size: 0.9rem;
+        font-weight: 700;
+        white-space: nowrap;
+        color: rgba(255, 255, 255, 0.95);
+    }
+    .sa-marquee-item i {
+        color: var(--sa-gold);
+        font-size: 0.85rem;
+    }
+    .sa-marquee-sep {
+        color: rgba(217, 168, 78, 0.55);
+        font-size: 0.5rem;
+    }
+    @keyframes saMarqueeScroll {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
     }
 
-    .sa-section-head p { color: var(--muted); margin: 0; }
-
+    /* ---------- 3-Step Process Cards ---------- */
     .sa-cards {
         max-width: 1240px;
         margin: 0 auto;
         padding: 0 1rem;
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 1rem;
+        gap: 1.25rem;
     }
-
-    .sa-card {
+    .sa-card--step {
         position: relative;
-        background: #fff;
-        border: 1px solid rgba(15, 30, 58, 0.1);
-        border-radius: 18px;
-        padding: 1.2rem;
-        box-shadow: 0 14px 28px rgba(15, 30, 58, 0.08);
-        transition: transform 0.24s ease, box-shadow 0.24s ease;
-        animation: saFadeUp 0.65s ease both;
     }
-
-    .sa-card:hover {
-        transform: translateY(-6px);
-        box-shadow: 0 22px 35px rgba(15, 30, 58, 0.14);
+    .sa-step-num {
+        position: absolute;
+        top: 1.1rem;
+        right: 1.2rem;
+        font-family: var(--sa-font-display);
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: rgba(11, 46, 36, 0.12);
+        line-height: 1;
     }
-
-    .sa-card i {
+    .sa-card-icon {
         width: 48px;
         height: 48px;
         border-radius: 14px;
@@ -300,352 +525,1126 @@
         align-items: center;
         justify-content: center;
         font-size: 1.15rem;
-        margin-bottom: 0.8rem;
-        color: #fff;
-        background: linear-gradient(120deg, #2a6ef2, #1f9d62);
-        box-shadow: 0 8px 18px rgba(42, 110, 242, 0.28);
+        color: var(--sa-ink);
+        background: var(--sa-gold-soft);
+        border: 1px solid rgba(217, 168, 78, 0.35);
+        margin-bottom: 0.9rem;
     }
-
     .sa-card h4 {
-        font-size: 1.05rem;
+        font-family: var(--sa-font-display);
+        font-size: 1.15rem;
         font-weight: 700;
         margin-bottom: 0.45rem;
+        color: var(--sa-ink);
     }
-
     .sa-card p {
-        color: #596b8a;
+        color: var(--sa-muted);
+        font-size: 0.9rem;
+        line-height: 1.6;
         margin: 0;
-        font-size: 0.92rem;
     }
 
-    .sa-awareness {
+    /* ---------- Feature Grid ---------- */
+    .sa-features {
         max-width: 1240px;
-        margin: 2.2rem auto 0;
+        margin: 0 auto;
         padding: 0 1rem;
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 1.1rem;
+    }
+    .sa-feature {
+        grid-column: span 2;
+        background: var(--sa-card);
+        border: 1px solid var(--sa-line);
+        border-radius: var(--sa-radius);
+        padding: 1.4rem;
+        box-shadow: var(--sa-shadow);
+        transition: transform 0.24s var(--sa-ease), box-shadow 0.24s var(--sa-ease);
+        display: flex;
+        flex-direction: column;
+    }
+    .sa-feature:nth-child(4), .sa-feature:nth-child(5) {
+        grid-column: span 3;
+    }
+    .sa-feature:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--sa-shadow-lg);
+    }
+    .sa-feature h4 {
+        font-family: var(--sa-font-display);
+        font-size: 1.08rem;
+        font-weight: 700;
+        margin-bottom: 0.4rem;
+        color: var(--sa-ink);
+    }
+    .sa-feature p {
+        color: var(--sa-muted);
+        margin: 0 0 0.85rem;
+        font-size: 0.88rem;
+        line-height: 1.6;
+        flex-grow: 1;
+    }
+    .sa-solves {
+        border-top: 1px dashed var(--sa-line);
+        padding-top: 0.7rem;
+        font-size: 0.8rem;
+        line-height: 1.5;
+        color: var(--sa-text);
+    }
+    .sa-solves strong {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        color: var(--sa-gold-deep);
+        font-size: 0.72rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 0.25rem;
     }
 
+    /* ---------- Featured Scheme Preview Cards ---------- */
+    .sa-scheme-card {
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        background: var(--sa-card);
+        border: 1px solid var(--sa-line);
+        border-top: 4px solid var(--sa-gold);
+        border-radius: var(--sa-radius);
+        padding: 1.4rem;
+        box-shadow: var(--sa-shadow);
+        transition: transform 0.24s var(--sa-ease), box-shadow 0.24s var(--sa-ease);
+    }
+    .sa-scheme-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--sa-shadow-lg);
+    }
+    .sa-scheme-cat {
+        font-size: 0.72rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--sa-gold-deep);
+        margin-bottom: 0.5rem;
+    }
+    .sa-scheme-card h4 {
+        font-family: var(--sa-font-display);
+        font-size: 1.15rem;
+        font-weight: 700;
+        margin: 0 0 0.4rem;
+        color: var(--sa-ink);
+    }
+    .sa-scheme-card p {
+        color: var(--sa-muted);
+        font-size: 0.9rem;
+        line-height: 1.6;
+        margin: 0 0 0.9rem;
+        flex-grow: 1;
+    }
+    .sa-scheme-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin-bottom: 0.9rem;
+    }
+    .sa-scheme-meta {
+        margin-top: auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.6rem;
+        border-top: 1px dashed var(--sa-line);
+        padding-top: 0.75rem;
+    }
+    .sa-scheme-type {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.76rem;
+        font-weight: 800;
+        padding: 0.28rem 0.7rem;
+        border-radius: 999px;
+    }
+    .sa-scheme-type--central {
+        background: rgba(31, 169, 113, 0.12);
+        color: #0E6B48;
+    }
+    .sa-scheme-type--state {
+        background: rgba(217, 168, 78, 0.16);
+        color: var(--sa-gold-deep);
+    }
+    .sa-scheme-state {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--sa-muted);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+    .sa-scheme-more {
+        text-align: center;
+        margin-top: 2rem;
+    }
+
+    /* ---------- Scheme Detail Modal ---------- */
+    .sa-modal .modal-content {
+        border: none;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: var(--sa-shadow-lg);
+    }
+    .sa-modal .modal-header {
+        background: linear-gradient(115deg, #0B2E24, #10553E);
+        border: none;
+        padding: 1.25rem 1.5rem;
+        color: #ffffff;
+    }
+    .sa-modal .modal-header h5 {
+        font-family: var(--sa-font-display);
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 1.35rem;
+        margin: 0;
+    }
+    .sa-modal .btn-close { filter: invert(1); }
+    .sa-modal .modal-body {
+        padding: 1.4rem 1.6rem;
+        background: var(--sa-paper);
+    }
+    .sa-modal-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        margin-bottom: 1rem;
+    }
+    .sa-modal-label {
+        font-size: 0.74rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--sa-gold-deep);
+        margin-bottom: 0.35rem;
+    }
+    .sa-modal-text {
+        color: var(--sa-text);
+        font-size: 0.94rem;
+        line-height: 1.65;
+        margin-bottom: 1.1rem;
+    }
+    .sa-modal-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 1.25rem;
+    }
+    .sa-modal-list {
+        list-style: none;
+        margin: 0 0 1.1rem;
+        padding: 0;
+        display: grid;
+        gap: 0.45rem;
+    }
+    .sa-modal-list li {
+        display: flex;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        line-height: 1.55;
+        color: var(--sa-text);
+    }
+    .sa-modal-list li i {
+        color: var(--sa-leaf);
+        margin-top: 0.2rem;
+    }
+
+    /* ---------- SDG Impact & Mission ---------- */
     .sa-impact {
         max-width: 1240px;
-        margin: 2.2rem auto 0;
+        margin: 0 auto;
         padding: 0 1rem;
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 1rem;
+        gap: 1.5rem;
         align-items: stretch;
     }
-
-    .sa-impact-left h3 {
-        font-size: clamp(1.7rem, 3.3vw, 2.7rem);
-        font-weight: 800;
-        margin: 0 0 1rem;
-        color: #1a2438;
-    }
-
     .sa-sdg-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 0.72rem;
+        gap: 0.8rem;
     }
-
     .sa-sdg-item {
         display: flex;
         align-items: center;
         gap: 0.75rem;
-        background: #fff;
-        border: 1px solid rgba(15, 30, 58, 0.1);
-        border-radius: 12px;
+        background: var(--sa-card);
+        border: 1px solid var(--sa-line);
+        border-left: 4px solid var(--sa-gold);
+        border-radius: var(--sa-radius-sm);
         padding: 0.9rem 1rem;
-        box-shadow: 0 10px 20px rgba(15, 30, 58, 0.07);
+        box-shadow: 0 8px 18px rgba(11, 46, 36, 0.06);
+        transition: transform 0.2s var(--sa-ease);
     }
-
-    .sa-sdg-item i {
-        font-size: 1.55rem;
-    }
-
-    .sa-sdg-item strong {
-        display: block;
-        font-size: 1.02rem;
-        line-height: 1.1;
-    }
-
-    .sa-sdg-item span {
-        display: block;
-        color: #647691;
-        font-size: 0.95rem;
-    }
+    .sa-sdg-item:hover { transform: translateX(4px); }
+    .sa-sdg-item i { font-size: 1.35rem; color: var(--sa-leaf); }
+    .sa-sdg-item strong { display: block; font-size: 0.95rem; line-height: 1.2; color: var(--sa-ink); }
+    .sa-sdg-item span { display: block; color: var(--sa-muted); font-size: 0.85rem; }
 
     .sa-mission {
-        background: #fff;
-        border: 1px solid rgba(15, 30, 58, 0.1);
-        border-radius: 12px;
-        padding: 1.25rem 1.35rem;
-        box-shadow: 0 12px 22px rgba(15, 30, 58, 0.08);
+        background: var(--sa-card);
+        border: 1px solid var(--sa-line);
+        border-radius: var(--sa-radius);
+        padding: 1.5rem;
+        box-shadow: var(--sa-shadow);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
-
     .sa-mission h4 {
-        font-size: 2rem;
+        font-family: var(--sa-font-display);
+        font-size: 1.5rem;
         font-weight: 700;
         margin: 0 0 0.6rem;
+        color: var(--sa-ink);
     }
-
     .sa-mission p {
         margin: 0;
-        color: #2f3f5a;
-        line-height: 1.6;
-        font-size: 1.02rem;
+        color: var(--sa-text);
+        line-height: 1.65;
+        font-size: 0.98rem;
     }
-
     .sa-mission-stats {
-        margin-top: 1.2rem;
+        margin-top: 1.4rem;
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 0.8rem;
         text-align: center;
+        border-top: 1px solid var(--sa-line);
+        padding-top: 1.1rem;
     }
-
     .sa-mission-stats strong {
         display: block;
-        font-size: 2.1rem;
+        font-family: var(--sa-font-display);
+        font-size: 1.85rem;
         line-height: 1;
-        font-weight: 800;
+        font-weight: 700;
+        color: var(--sa-ink);
     }
-
     .sa-mission-stats span {
-        color: #647691;
-        font-size: 0.86rem;
+        color: var(--sa-muted);
+        font-size: 0.82rem;
     }
 
-    .sa-awareness-box {
-        border-radius: 16px;
-        padding: 1rem 1.1rem;
-        color: #fff;
-        background: linear-gradient(120deg, #1f9d62, #2a6ef2);
-        box-shadow: 0 16px 28px rgba(26, 62, 125, 0.2);
+    /* ---------- Testimonials / Community Voices ---------- */
+    .sa-testimonials {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 0 1rem;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1.25rem;
+    }
+    .sa-testimonial {
+        background: var(--sa-card);
+        border: 1px solid var(--sa-line);
+        border-left: 4px solid var(--sa-gold);
+        border-radius: var(--sa-radius-sm);
+        padding: 1.4rem;
+        box-shadow: 0 8px 18px rgba(11, 46, 36, 0.06);
+        position: relative;
+    }
+    .sa-testimonial p {
+        margin: 0 0 1.1rem;
+        font-size: 0.94rem;
+        line-height: 1.65;
+        color: var(--sa-text);
+    }
+    .sa-testimonial-who {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .sa-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--sa-gold-soft);
+        color: var(--sa-ink);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 0.92rem;
+        border: 1px solid rgba(217, 168, 78, 0.4);
+    }
+    .sa-testimonial-who strong {
+        display: block;
+        font-size: 0.92rem;
+        color: var(--sa-ink);
+    }
+    .sa-testimonial-who span {
+        display: block;
+        color: var(--sa-muted);
+        font-size: 0.8rem;
     }
 
-    .sa-awareness-box p { margin: 0.4rem 0 0; opacity: 0.95; }
-
-    @keyframes saFadeUp {
-        from { opacity: 0; transform: translateY(15px); }
-        to { opacity: 1; transform: translateY(0); }
+    /* ---------- Final CTA Banner (Clean, Well-Proportioned) ---------- */
+    .sa-cta {
+        margin-top: 4.5rem;
+        padding: 0 1rem;
+    }
+    .sa-cta-box {
+        max-width: 1240px;
+        margin: 0 auto;
+        text-align: center;
+        color: #ffffff;
+        background: linear-gradient(135deg, #07221A 0%, #10553E 55%, #071F18 100%);
+        border: 1px solid rgba(217, 168, 78, 0.4);
+        border-radius: 22px;
+        padding: 3rem 2.2rem;
+        box-shadow: 0 20px 44px rgba(11, 46, 36, 0.28);
+    }
+    .sa-cta-box h2 {
+        font-family: var(--sa-font-display);
+        font-size: clamp(1.8rem, 3.4vw, 2.5rem);
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 0.9rem;
+    }
+    .sa-cta-box p {
+        color: rgba(255, 255, 255, 0.9);
+        margin: 0 auto 0.8rem;
+        font-size: 1.02rem;
+        line-height: 1.7;
+        max-width: 760px;
+    }
+    .sa-cta-highlight {
+        color: var(--sa-gold-soft) !important;
+        font-weight: 700;
+        margin-top: 1rem !important;
+        margin-bottom: 1.8rem !important;
+        font-size: 1.05rem !important;
+    }
+    .sa-cta-btns {
+        display: flex;
+        gap: 0.85rem;
+        justify-content: center;
+        flex-wrap: wrap;
     }
 
+    /* Responsive adjustments */
     @media (max-width: 992px) {
         .sa-hero-grid { grid-template-columns: 1fr; }
-        .sa-cards { grid-template-columns: 1fr 1fr; }
-        .sa-impact { grid-template-columns: 1fr; }
-    }
-
-    @media (max-width: 768px) {
         .sa-cards { grid-template-columns: 1fr; }
-        .sa-band-grid { grid-template-columns: 1fr 1fr; }
+        .sa-feature { grid-column: span 3 !important; }
+        .sa-testimonials { grid-template-columns: 1fr; }
+        .sa-impact { grid-template-columns: 1fr; }
+        .sa-modal-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 768px) {
+        .sa-announcement-card { flex-direction: column; align-items: flex-start; }
+        .sa-feature { grid-column: span 6 !important; }
         .sa-sdg-grid { grid-template-columns: 1fr; }
-        .sa-mission h4 { font-size: 1.6rem; }
-        .sa-mission-stats strong { font-size: 1.6rem; }
+        .sa-mission-stats strong { font-size: 1.5rem; }
+        .sa-cta-box { padding: 2.2rem 1.4rem; }
+        .sa-hero-panel { padding: 2rem 1.4rem; }
+        .sa-photo-frame { height: 260px; }
+        .sa-title { max-width: none; }
     }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="sa-home">
-<section class="sa-hero">
-    <div class="sa-slide-wrap" id="saSlideWrap">
-        <div class="sa-slide active"><img src="/static/images/farmer_1.jpg" alt="{% trans 'Farmer working in a field' %}" onerror="this.src='https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=1920&q=80&fit=crop'"></div>
-        <div class="sa-slide"><img src="/static/images/farmer_2.jpg" alt="{% trans 'Farmer working in a field' %}" onerror="this.src='https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1920&q=80&fit=crop'"></div>
-        <div class="sa-slide"><img src="/static/images/farmer_3.jpg" alt="{% trans 'Farmer working in a field' %}" onerror="this.src='https://images.unsplash.com/photo-1560493676-04071c5f467b?w=1920&q=80&fit=crop'"></div>
-        <div class="sa-slide"><img src="/static/images/farmer_4.jpg" alt="{% trans 'Farmer working in a field' %}" onerror="this.src='https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=1920&q=80&fit=crop'"></div>
-        <div class="sa-slide"><img src="/static/images/farmer_5.jpg" alt="{% trans 'Farmer working in a field' %}" onerror="this.src='https://images.unsplash.com/photo-1536657464919-892534f60d6e?w=1920&q=80&fit=crop'"></div>
-        <div class="sa-slide"><img src="/static/images/farmer_6.jpg" alt="{% trans 'Farmer working in a field' %}" onerror="this.src='https://images.unsplash.com/photo-1592982537447-7440770cbfc9?w=1920&q=80&fit=crop'"></div>
-        <div class="sa-slide"><img src="/static/images/farmer_7.jpg" alt="{% trans 'Farmer working in a field' %}" onerror="this.src='https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=1920&q=80&fit=crop'"></div>
-    </div>
-    <div class="sa-overlay"></div>
 
-    <div class="sa-hero-content">
-        <div class="sa-hero-grid">
-            <div>
-                <div class="sa-badge">✨ AI + Government Schemes</div>
-                <h1 class="sa-title">{% trans "AI-Powered" %} <span>{% trans "Government Scheme Platform" %}</span></h1>
-                <p class="sa-sub">{% trans "SmartAssist bridges the digital divide by connecting citizens with government welfare schemes through dedicated volunteers and administrators." %}</p>
-                <div class="sa-btn-row">
-                    <a href="{% url 'scheme_awareness' %}" class="sa-btn sa-btn-primary"><i class="fas fa-search"></i> {% trans "Explore Schemes" %}</a>
+    <!-- ============ 1. COMMUNITY AWARENESS INITIATIVE (WHITE TOP BANNER) ============ -->
+    <section class="sa-top-announcement" aria-label="{% trans 'Community Awareness Announcement' %}">
+        <div class="sa-announcement-card">
+            <div class="sa-announcement-icon" aria-hidden="true">
+                <i class="fas fa-bullhorn"></i>
+            </div>
+            <div class="sa-announcement-content">
+                <h6>{% trans "Community Awareness Initiative" %}</h6>
+                <p>{% trans "After receiving benefits, please inform your family members, friends, and neighbors about government schemes. Together, we can build an aware and empowered community!" %}</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ 2. HERO SECTION (BALANCED 2-COLUMN PREMIUM UI) ============ -->
+    <div class="sa-hero-wrap">
+        <section class="sa-hero" aria-label="{% trans 'Platform Introduction' %}">
+            <div class="sa-hero-grid">
+
+                <!-- Left Column: Solid Opaque Dark Green Content Panel -->
+                <div class="sa-hero-panel">
+                    <div class="sa-badge">
+                        <i class="fas fa-leaf"></i> {% trans "AI + Government Schemes" %}
+                    </div>
+
+                    <!-- Main Heading -->
+                    <h1 class="sa-title">
+                        {% trans "The Support You Deserve Starts Here." %}
+                    </h1>
+
+                    <!-- Description -->
+                    <p class="sa-sub">
+                        {% trans "Thousands of farmers miss out on government support simply because they don't know what they're eligible for. Don't let valuable benefits pass you by." %}
+                    </p>
+
+                    <!-- Supporting Message -->
+                    <p class="sa-highlight">
+                        {% trans "Discover the schemes made for you. Check your eligibility. Take the first step today." %}
+                    </p>
+
+                    <!-- Primary & Secondary Buttons -->
+                    <div class="sa-btn-row">
+                        <a href="{% url 'recommend' %}" class="sa-btn sa-btn-gold">
+                            <i class="fas fa-clipboard-check"></i> {% trans "Check Eligibility" %}
+                        </a>
+                        <a href="{% if user.is_authenticated and user.userprofile.role == 'admin' %}{% url 'admin_dashboard' %}{% elif user.is_authenticated and user.userprofile.role == 'volunteer' %}{% url 'admin_dashboard' %}{% else %}{% url 'dashboard' %}{% endif %}" class="sa-btn sa-btn-secondary">
+                            <i class="fas fa-gauge"></i> {% trans "Go to Dashboard" %}
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Right Column: Visual Stage (Farmer Photo Showcase + Live Highlights Panel) -->
+                <div class="sa-hero-visual">
+
+                    <!-- 1. The Clean Farmer Photograph Showcase Window (ZERO dark overlay) -->
+                    <div class="sa-showcase-card">
+                        <div class="sa-photo-frame" id="saPhotoFrame">
+                            <div class="sa-slide active" data-index="0">
+                                <img src="{% static 'images/farmer_1.jpg' %}" alt="{% trans 'Indian farmer in agricultural field' %}">
+                            </div>
+                            <div class="sa-slide" data-index="1">
+                                <img src="{% static 'images/farmer_2.jpg' %}" alt="{% trans 'Farmer inspecting crop health' %}">
+                            </div>
+                            <div class="sa-slide" data-index="2">
+                                <img src="{% static 'images/farmer_3.jpg' %}" alt="{% trans 'Farmer in fertile field' %}">
+                            </div>
+                            <div class="sa-slide" data-index="3">
+                                <img src="{% static 'images/farmer_4.jpg' %}" alt="{% trans 'Farmer working in countryside' %}">
+                            </div>
+                            <div class="sa-slide" data-index="4">
+                                <img src="{% static 'images/farmer_5.jpg' %}" alt="{% trans 'Farmer harvesting agricultural produce' %}">
+                            </div>
+                            <div class="sa-slide" data-index="5">
+                                <img src="{% static 'images/farmer_6.jpg' %}" alt="{% trans 'Farmer with agricultural machinery' %}">
+                            </div>
+                            <div class="sa-slide" data-index="6">
+                                <img src="{% static 'images/farmer_7.jpg' %}" alt="{% trans 'Rural farming community member' %}">
+                            </div>
+                        </div>
+
+                        <!-- Dedicated Controls Bar at bottom of photo, never overlapping text or content -->
+                        <div class="sa-photo-controls">
+                            <span class="sa-photo-badge">
+                                <i class="fas fa-camera"></i> {% trans "SmartAssist Farmer Community" %}
+                            </span>
+                            <button class="sa-slide-toggle" type="button" aria-label="{% trans 'Pause slideshow' %}" aria-pressed="false" title="{% trans 'Pause slideshow' %}">
+                                <i class="fas fa-pause" aria-hidden="true"></i>
+                            </button>
+                            <div class="sa-dot-nav" id="saDots" aria-label="{% trans 'Slideshow navigation' %}"></div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Refined Live Platform Highlights Panel (Solid Opaque Dark Green) -->
+                    <div class="sa-highlights-panel">
+                        <div class="sa-highlights-head">
+                            <i class="fas fa-seedling"></i>
+                            <h5>{% trans "Live Platform Highlights" %}</h5>
+                        </div>
+                        <ul class="sa-highlights-list">
+                            <li>
+                                <i class="fas fa-landmark"></i>
+                                <span>{% trans "Central and State Government Schemes" %}</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-brain"></i>
+                                <span>{% trans "AI-Based Scheme Matching" %}</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-hands-holding-child"></i>
+                                <span>{% trans "Volunteer Assistance" %}</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-language"></i>
+                                <span>{% trans "Multilingual Support" %}</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                </div>
+
+            </div>
+        </section>
+    </div>
+
+    <!-- ============ 3. TRUST STRIP ============ -->
+    <section class="sa-trust" aria-label="{% trans 'Platform trust metrics' %}">
+        <div class="sa-trust-inner">
+            <span class="sa-trust-label">{% trans "Trusted & Inclusive" %}</span>
+            <span class="sa-trust-item"><i class="fas fa-shield-halved"></i> 100% {% trans "Official Scheme Data" %}</span>
+            <span class="sa-trust-item"><i class="fas fa-handshake-angle"></i> {% trans "Volunteer Supported" %}</span>
+            <span class="sa-trust-item"><i class="fas fa-earth-asia"></i> 28+ {% trans "States & UTs Covered" %}</span>
+            <span class="sa-trust-item"><i class="fas fa-language"></i> {% trans "Multilingual Experience" %}</span>
+        </div>
+    </section>
+
+    <!-- ============ 4. POPULAR SCHEMES MARQUEE ============ -->
+    <section class="sa-marquee" aria-label="{% trans 'Popular Government Schemes' %}">
+        <div class="sa-marquee-track">
+            <span class="sa-marquee-item"><i class="fas fa-wheat-awn"></i> PM-KISAN (Income Support)</span>
+            <span class="sa-marquee-sep">●</span>
+            <span class="sa-marquee-item"><i class="fas fa-shield-heart"></i> PM Fasal Bima Yojana (Crop Insurance)</span>
+            <span class="sa-marquee-sep">●</span>
+            <span class="sa-marquee-item"><i class="fas fa-credit-card"></i> Kisan Credit Card (KCC Loan)</span>
+            <span class="sa-marquee-sep">●</span>
+            <span class="sa-marquee-item"><i class="fas fa-sun"></i> PM-KUSUM (Solar Pumps)</span>
+            <span class="sa-marquee-sep">●</span>
+            <span class="sa-marquee-item"><i class="fas fa-droplet"></i> Pradhan Mantri Krishi Sinchayee Yojana</span>
+            <span class="sa-marquee-sep">●</span>
+            <span class="sa-marquee-item"><i class="fas fa-store"></i> e-NAM (National Agriculture Market)</span>
+            <span class="sa-marquee-sep">●</span>
+            <!-- Duplicate for infinite ticker loop -->
+            <span class="sa-marquee-item"><i class="fas fa-wheat-awn"></i> PM-KISAN (Income Support)</span>
+            <span class="sa-marquee-sep">●</span>
+            <span class="sa-marquee-item"><i class="fas fa-shield-heart"></i> PM Fasal Bima Yojana (Crop Insurance)</span>
+            <span class="sa-marquee-sep">●</span>
+            <span class="sa-marquee-item"><i class="fas fa-credit-card"></i> Kisan Credit Card (KCC Loan)</span>
+            <span class="sa-marquee-sep">●</span>
+            <span class="sa-marquee-item"><i class="fas fa-sun"></i> PM-KUSUM (Solar Pumps)</span>
+            <span class="sa-marquee-sep">●</span>
+            <span class="sa-marquee-item"><i class="fas fa-droplet"></i> Pradhan Mantri Krishi Sinchayee Yojana</span>
+            <span class="sa-marquee-sep">●</span>
+            <span class="sa-marquee-item"><i class="fas fa-store"></i> e-NAM (National Agriculture Market)</span>
+        </div>
+    </section>
+
+    <!-- ============ 5. HOW IT WORKS (3 STEPS) ============ -->
+    <section class="sa-section">
+        <div class="sa-section-head">
+            <div class="sa-kicker">{% trans "Process" %}</div>
+            <h2>{% trans "How SmartAssist Works" %}</h2>
+            <p>{% trans "Three straightforward steps connecting citizens with government welfare entitlements" %}</p>
+        </div>
+
+        <div class="sa-cards">
+            <div class="sa-card sa-card--step">
+                <span class="sa-step-num">01</span>
+                <div class="sa-card-icon"><i class="fas fa-clipboard-user"></i></div>
+                <h4>{% trans "1. Check Eligibility" %}</h4>
+                <p>{% trans "Tell us your profile or crop details. Our AI matches you to schemes you actually qualify for." %}</p>
+            </div>
+
+            <div class="sa-card sa-card--step">
+                <span class="sa-step-num">02</span>
+                <div class="sa-card-icon"><i class="fas fa-hands-holding-child"></i></div>
+                <h4>{% trans "2. Apply With Volunteer Help" %}</h4>
+                <p>{% trans "No complex paperwork. Dedicated community volunteers assist in preparing and submitting your application." %}</p>
+            </div>
+
+            <div class="sa-card sa-card--step">
+                <span class="sa-step-num">03</span>
+                <div class="sa-card-icon"><i class="fas fa-circle-check"></i></div>
+                <h4>{% trans "3. Track & Receive Benefits" %}</h4>
+                <p>{% trans "Follow application progress in real time with transparent updates until benefits are delivered." %}</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ 6. PLATFORM CAPABILITIES ============ -->
+    <section class="sa-section sa-section--alt">
+        <div class="sa-section-head">
+            <div class="sa-kicker">{% trans "Platform" %}</div>
+            <h2>{% trans "Designed for Every Citizen" %}</h2>
+            <p>{% trans "Overcoming real-world barriers of literacy, language, and technology" %}</p>
+        </div>
+
+        <div class="sa-features">
+            <div class="sa-feature">
+                <div class="sa-card-icon"><i class="fas fa-language"></i></div>
+                <h4>{% trans "Multilingual Access" %}</h4>
+                <p>{% trans "Access the platform and scheme details in English, Hindi, Telugu, and Marathi." %}</p>
+                <div class="sa-solves">
+                    <strong><i class="fas fa-lightbulb"></i> {% trans "Problem Solved" %}</strong>
+                    <div>{% trans "Language is no longer a barrier to learning about your legal rights and benefits." %}</div>
+                </div>
+            </div>
+
+            <div class="sa-feature">
+                <div class="sa-card-icon"><i class="fas fa-brain"></i></div>
+                <h4>{% trans "AI Scheme Matching" %}</h4>
+                <p>{% trans "Answer simple questions to receive filtered, high-confidence scheme recommendations instantly." %}</p>
+                <div class="sa-solves">
+                    <strong><i class="fas fa-lightbulb"></i> {% trans "Problem Solved" %}</strong>
+                    <div>{% trans "Eliminates confusion caused by hundreds of overlapping government guidelines." %}</div>
+                </div>
+            </div>
+
+            <div class="sa-feature">
+                <div class="sa-card-icon"><i class="fas fa-user-group"></i></div>
+                <h4>{% trans "Volunteer Network" %}</h4>
+                <p>{% trans "Local volunteers help verify documents and submit requests on behalf of rural citizens." %}</p>
+                <div class="sa-solves">
+                    <strong><i class="fas fa-lightbulb"></i> {% trans "Problem Solved" %}</strong>
+                    <div>{% trans "Bridges the digital divide for citizens without smartphones or internet familiarity." %}</div>
+                </div>
+            </div>
+
+            <div class="sa-feature">
+                <div class="sa-card-icon"><i class="fas fa-mobile-screen"></i></div>
+                <h4>{% trans "Mobile First & Accessible" %}</h4>
+                <p>{% trans "Works smoothly on low-bandwidth mobile connections and respects user accessibility preferences." %}</p>
+                <div class="sa-solves">
+                    <strong><i class="fas fa-lightbulb"></i> {% trans "Problem Solved" %}</strong>
+                    <div>{% trans "Ensures rural households with basic smartphones can navigate schemes with ease." %}</div>
+                </div>
+            </div>
+
+            <div class="sa-feature">
+                <div class="sa-card-icon"><i class="fas fa-magnifying-glass-chart"></i></div>
+                <h4>{% trans "Transparent Tracking" %}</h4>
+                <p>{% trans "View step-by-step updates from volunteer review to submission and official review." %}</p>
+                <div class="sa-solves">
+                    <strong><i class="fas fa-lightbulb"></i> {% trans "Problem Solved" %}</strong>
+                    <div>{% trans "Eliminates anxiety and multiple trips to government offices just to know your status." %}</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ 7. FEATURED SCHEMES PREVIEW ============ -->
+    <section class="sa-section">
+        <div class="sa-section-head">
+            <div class="sa-kicker">{% trans "Featured Schemes" %}</div>
+            <h2>{% trans "Popular Government Schemes" %}</h2>
+            <p>{% trans "Click any scheme to see key benefits, eligibility, and required documents" %}</p>
+        </div>
+
+        <div class="sa-cards">
+            <!-- Scheme 1: PM-KISAN -->
+            <div class="sa-scheme-card"
+                 data-scheme-name="PM-KISAN (Pradhan Mantri Kisan Samman Nidhi)"
+                 data-scheme-cat="Income Support"
+                 data-scheme-type="Central"
+                 data-scheme-state="All India"
+                 data-scheme-support="Financial (₹6,000 / year)"
+                 data-scheme-audience="Small & Marginal Farmers"
+                 data-scheme-desc="Provides income support of ₹6,000 per year to all landholding farmer families across the country in three equal instalments of ₹2,000 directly into their bank accounts."
+                 data-scheme-benefits="₹6,000 yearly financial assistance|Direct Benefit Transfer (DBT) to bank account|Coverage across all States and Union Territories"
+                 data-scheme-dates="Enrolment open year-round|Instalments paid every 4 months"
+                 data-scheme-docs="Aadhaar Card|Land ownership documents (Khatauni/ROR)|Active bank account linked to Aadhaar|Mobile number"
+                 data-scheme-process="Verify land records and Aadhaar details|Apply via SmartAssist volunteer assistance or portal|Track payment status in My Status dashboard">
+                <div class="sa-scheme-cat">{% trans "Income Support" %}</div>
+                <h4>PM-KISAN Samman Nidhi</h4>
+                <p>{% trans "Direct financial assistance of ₹6,000 annually in three equal installments." %}</p>
+                <div class="sa-scheme-tags">
+                    <span class="sa-chip"><i class="fas fa-indian-rupee-sign"></i> ₹6,000 / yr</span>
+                    <span class="sa-chip"><i class="fas fa-users"></i> {% trans "Landholding Farmers" %}</span>
+                </div>
+                <div class="sa-scheme-meta">
+                    <span class="sa-scheme-type sa-scheme-type--central">Central</span>
+                    <span class="sa-scheme-state"><i class="fas fa-location-dot"></i> {% trans "All India" %}</span>
+                </div>
+            </div>
+
+            <!-- Scheme 2: PMFBY -->
+            <div class="sa-scheme-card"
+                 data-scheme-name="PM Fasal Bima Yojana (PMFBY)"
+                 data-scheme-cat="Crop Insurance"
+                 data-scheme-type="Central"
+                 data-scheme-state="All India"
+                 data-scheme-support="Insurance Cover"
+                 data-scheme-audience="Kharif & Rabi Crop Growers"
+                 data-scheme-desc="Comprehensive risk insurance covering yield losses due to non-preventable natural risks like drought, flood, pests, and unseasonal rains with low premium rates."
+                 data-scheme-benefits="Comprehensive insurance from pre-sowing to post-harvest|Very low premium: 2% for Kharif, 1.5% for Rabi crops|Rapid claim assessment using satellite and smartphone tech"
+                 data-scheme-dates="Kharif cut-off: 31 July yearly|Rabi cut-off: 31 December yearly"
+                 data-scheme-docs="Aadhaar Card|Land possession certificate or sowing certificate|Bank account passbook|Sowing declaration"
+                 data-scheme-process="Check crop notification in your district|Enroll through local bank, CSC, or SmartAssist volunteer|Report crop loss within 72 hours for on-field assessment">
+                <div class="sa-scheme-cat">{% trans "Crop Insurance" %}</div>
+                <h4>PM Fasal Bima Yojana</h4>
+                <p>{% trans "Low-premium comprehensive crop insurance protecting against natural crop failure." %}</p>
+                <div class="sa-scheme-tags">
+                    <span class="sa-chip"><i class="fas fa-shield-halved"></i> 1.5% - 2% {% trans "Premium" %}</span>
+                    <span class="sa-chip"><i class="fas fa-cloud-showers-heavy"></i> {% trans "Climate Protection" %}</span>
+                </div>
+                <div class="sa-scheme-meta">
+                    <span class="sa-scheme-type sa-scheme-type--central">Central</span>
+                    <span class="sa-scheme-state"><i class="fas fa-location-dot"></i> {% trans "All India" %}</span>
+                </div>
+            </div>
+
+            <!-- Scheme 3: PM-KUSUM -->
+            <div class="sa-scheme-card"
+                 data-scheme-name="PM-KUSUM (Pradhan Mantri Kisan Urja Suraksha evam Utthaan Mahabhiyan)"
+                 data-scheme-cat="Irrigation & Clean Energy"
+                 data-scheme-type="Central + State"
+                 data-scheme-state="All India"
+                 data-scheme-support="Up to 60% Subsidy on Solar Pumps"
+                 data-scheme-audience="Individual & Group Farmers"
+                 data-scheme-desc="Promotes solar agricultural pumps to ensure reliable day-time irrigation, reduce diesel consumption, and provide extra income by selling surplus power to the grid."
+                 data-scheme-benefits="Up to 60% government subsidy on standalone solar pumps|30% bank loan support with low interest|Reliable daytime power for farm irrigation without diesel bills"
+                 data-scheme-dates="Applications accepted in state-wise seasonal batches"
+                 data-scheme-docs="Aadhaar Card|Land ownership documents|Bank passbook|Electricity bill if applicable"
+                 data-scheme-process="Verify pump capacity requirement based on farm size|Submit application with subsidy quota|Installation and inspection by approved agency">
+                <div class="sa-scheme-cat">{% trans "Solar & Irrigation" %}</div>
+                <h4>PM-KUSUM Solar Scheme</h4>
+                <p>{% trans "Up to 60% subsidy for solar water pumps, eliminating expensive diesel costs." %}</p>
+                <div class="sa-scheme-tags">
+                    <span class="sa-chip"><i class="fas fa-solar-panel"></i> 60% {% trans "Subsidy" %}</span>
+                    <span class="sa-chip"><i class="fas fa-droplet"></i> {% trans "Day Irrigation" %}</span>
+                </div>
+                <div class="sa-scheme-meta">
+                    <span class="sa-scheme-type sa-scheme-type--state">Central + State</span>
+                    <span class="sa-scheme-state"><i class="fas fa-location-dot"></i> {% trans "All India" %}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="sa-scheme-more">
+            <a href="{% url 'scheme_awareness' %}" class="sa-btn sa-btn-primary">
+                <i class="fas fa-table-list"></i> {% trans "Browse All Schemes" %}
+            </a>
+        </div>
+    </section>
+
+    <!-- Modal for Scheme Details -->
+    <div class="modal fade sa-modal" id="schemeModal" tabindex="-1" aria-labelledby="schemeModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 id="schemeModalTitle"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="sa-modal-chips" id="schemeModalChips"></div>
+
+                    <div class="sa-modal-label">{% trans "Description" %}</div>
+                    <p class="sa-modal-text" id="schemeModalDesc"></p>
+
+                    <div class="sa-modal-grid">
+                        <div>
+                            <div class="sa-modal-label">{% trans "Key Benefits" %}</div>
+                            <ul class="sa-modal-list" id="schemeModalBenefits"></ul>
+
+                            <div class="sa-modal-label">{% trans "Important Dates" %}</div>
+                            <ul class="sa-modal-list" id="schemeModalDates"></ul>
+                        </div>
+                        <div>
+                            <div class="sa-modal-label">{% trans "Required Documents" %}</div>
+                            <ul class="sa-modal-list" id="schemeModalDocs"></ul>
+
+                            <div class="sa-modal-label">{% trans "Application Process" %}</div>
+                            <ul class="sa-modal-list" id="schemeModalProcess"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ 8. SDG IMPACT & MISSION ============ -->
+    <section class="sa-section sa-section--alt">
+        <div class="sa-impact">
+            <div class="sa-impact-left">
+                <div class="sa-kicker">{% trans "Global Goals" %}</div>
+                <h3 style="font-family: var(--sa-font-display); font-size: clamp(1.6rem, 3.2vw, 2.3rem); font-weight: 700; color: var(--sa-ink); margin: 0.4rem 0 1.1rem;">{% trans "Committed to UN Sustainable Development Goals" %}</h3>
+                <div class="sa-sdg-grid">
+                    <div class="sa-sdg-item">
+                        <i class="fas fa-hand-holding-dollar"></i>
+                        <div>
+                            <strong>SDG 1</strong>
+                            <span>{% trans "No Poverty" %}</span>
+                        </div>
+                    </div>
+                    <div class="sa-sdg-item">
+                        <i class="fas fa-wheat-awn"></i>
+                        <div>
+                            <strong>SDG 2</strong>
+                            <span>{% trans "Zero Hunger" %}</span>
+                        </div>
+                    </div>
+                    <div class="sa-sdg-item">
+                        <i class="fas fa-venus-mars"></i>
+                        <div>
+                            <strong>SDG 5</strong>
+                            <span>{% trans "Gender Equality" %}</span>
+                        </div>
+                    </div>
+                    <div class="sa-sdg-item">
+                        <i class="fas fa-handshake"></i>
+                        <div>
+                            <strong>SDG 17</strong>
+                            <span>{% trans "Partnerships for Goals" %}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sa-mission">
+                <h4>{% trans "Our Mission" %}</h4>
+                <p>{% trans "To create an inclusive, transparent digital ecosystem where every farmer and citizen, regardless of literacy level or digital fluency, can discover and receive government welfare entitlements without friction." %}</p>
+                <div class="sa-mission-stats">
+                    <div>
+                        <strong style="color: #10553E;">10K+</strong>
+                        <span>{% trans "Citizens Assisted" %}</span>
+                    </div>
+                    <div>
+                        <strong style="color: var(--sa-gold-deep);">500+</strong>
+                        <span>{% trans "Dedicated Volunteers" %}</span>
+                    </div>
+                    <div>
+                        <strong style="color: #1FA971;">50+</strong>
+                        <span>{% trans "Welfare Schemes" %}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ 9. COMMUNITY VOICES / STORIES ============ -->
+    <section class="sa-section">
+        <div class="sa-section-head">
+            <div class="sa-kicker">{% trans "Voices" %}</div>
+            <h2>{% trans "Stories From The Community" %}</h2>
+            <p>{% trans "Real experiences from citizens who found their government entitlements" %}</p>
+        </div>
+
+        <div class="sa-testimonials">
+            <div class="sa-testimonial">
+                <p>{% trans "I had no idea my family was eligible for three different schemes. A volunteer helped me apply within a week, and the first instalment arrived the next month." %}</p>
+                <div class="sa-testimonial-who">
+                    <span class="sa-avatar">RS</span>
+                    <div>
+                        <strong>Ramesh S.</strong>
+                        <span>{% trans "Farmer, Maharashtra" %}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sa-testimonial">
+                <p>{% trans "The platform works in my language. I could read every scheme detail myself for the first time instead of depending on someone else to explain it." %}</p>
+                <div class="sa-testimonial-who">
+                    <span class="sa-avatar">LK</span>
+                    <div>
+                        <strong>Lakshmi K.</strong>
+                        <span>{% trans "Citizen, Karnataka" %}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sa-testimonial">
+                <p>{% trans "As a volunteer, I can see exactly which applications need my help. SmartAssist turned scattered paperwork into one clear queue." %}</p>
+                <div class="sa-testimonial-who">
+                    <span class="sa-avatar">AP</span>
+                    <div>
+                        <strong>Anita P.</strong>
+                        <span>{% trans "Volunteer, Gujarat" %}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ 10. FINAL CTA ============ -->
+        <div class="sa-cta">
+            <div class="sa-cta-box">
+                <h2>{% trans "The Support You Deserve Starts Here." %}</h2>
+                <p>{% trans "Thousands of farmers miss out on government support simply because they don't know what they're eligible for. Don't let valuable benefits pass you by." %}</p>
+                <p class="sa-cta-highlight">{% trans "Discover the schemes made for you. Check your eligibility. Take the first step today." %}</p>
+                <div class="sa-cta-btns">
                     {% if not user.is_authenticated %}
-                    <a href="{% url 'login' %}" class="sa-btn sa-btn-ghost"><i class="fas fa-user"></i> {% trans "Login" %}</a>
+                    <a href="{% url 'register' %}" class="sa-btn sa-btn-gold">
+                        <i class="fas fa-user-plus"></i> {% trans "Create Free Account" %}
+                    </a>
+                    <a href="{% url 'scheme_awareness' %}" class="sa-btn sa-btn-secondary">
+                        <i class="fas fa-search"></i> {% trans "Browse Schemes" %}
+                    </a>
                     {% else %}
-                    <a href="{% url 'dashboard' %}" class="sa-btn sa-btn-ghost"><i class="fas fa-gauge"></i> {% trans "Dashboard" %}</a>
+                    <a href="{% url 'recommend' %}" class="sa-btn sa-btn-gold">
+                        <i class="fas fa-clipboard-check"></i> {% trans "Check Eligibility" %}
+                    </a>
+                    <a href="{% if user.userprofile.role == 'admin' or user.userprofile.role == 'volunteer' %}{% url 'admin_dashboard' %}{% else %}{% url 'dashboard' %}{% endif %}" class="sa-btn sa-btn-secondary">
+                        <i class="fas fa-gauge"></i> {% trans "Go to Dashboard" %}
+                    </a>
                     {% endif %}
                 </div>
             </div>
-
-            <div class="sa-hero-card">
-                <h5>🚜 {% trans "Live Platform Highlights" %}</h5>
-                <ul class="sa-mini-list">
-                    <li>✅ {% trans "Find Central and State Schemes Quickly" %}</li>
-                    <li>🎯 {% trans "AI-based recommendations for better matching" %}</li>
-                    <li>📋 {% trans "Volunteer-assisted application support" %}</li>
-                    <li>📱 {% trans "Mobile-friendly and multilingual access" %}</li>
-                </ul>
-            </div>
         </div>
-    </div>
+    </section>
 
-    <div class="sa-dot-nav" id="saDots"></div>
-</section>
-
-<section class="sa-band">
-    <div class="sa-band-grid">
-        <div class="sa-band-item"><strong>500+</strong><span>{% trans "Schemes" %}</span></div>
-        <div class="sa-band-item"><strong>28+</strong><span>{% trans "States Covered" %}</span></div>
-        <div class="sa-band-item"><strong>AI</strong><span>{% trans "Smart Matching" %}</span></div>
-        <div class="sa-band-item"><strong>24x7</strong><span>{% trans "Online Access" %}</span></div>
-    </div>
-</section>
-
-<section class="sa-section">
-    <div class="sa-section-head">
-        <h2>{% trans "How It Works" %}</h2>
-        <p>{% trans "Simple steps to access government welfare schemes" %}</p>
-    </div>
-
-    <div class="sa-cards">
-        <div class="sa-card" style="animation-delay:0.04s;">
-            <i class="fas fa-user-plus"></i>
-            <h4>{% trans "1. Register" %}</h4>
-            <p>{% trans "Create your account with basic details. No complex forms required." %}</p>
-        </div>
-
-        <div class="sa-card" style="animation-delay:0.12s;">
-            <i class="fas fa-hands-helping"></i>
-            <h4>{% trans "2. Get Assistance" %}</h4>
-            <p>{% trans "Our volunteers review your details and apply for suitable schemes on your behalf." %}</p>
-        </div>
-
-        <div class="sa-card" style="animation-delay:0.2s;">
-            <i class="fas fa-check-circle"></i>
-            <h4>{% trans "3. Track & Receive" %}</h4>
-            <p>{% trans "Track your application status and receive benefits when approved." %}</p>
-        </div>
-    </div>
-
-    <div class="sa-impact">
-        <div class="sa-impact-left">
-            <h3>{% trans "SDG Impact" %}</h3>
-            <div class="sa-sdg-grid">
-                <div class="sa-sdg-item">
-                    <i class="fas fa-users text-primary"></i>
-                    <div>
-                        <strong>SDG 1</strong>
-                        <span>{% trans "No Poverty" %}</span>
-                    </div>
-                </div>
-                <div class="sa-sdg-item">
-                    <i class="fas fa-graduation-cap text-success"></i>
-                    <div>
-                        <strong>SDG 4</strong>
-                        <span>{% trans "Quality Education" %}</span>
-                    </div>
-                </div>
-                <div class="sa-sdg-item">
-                    <i class="fas fa-venus-mars text-warning"></i>
-                    <div>
-                        <strong>SDG 5</strong>
-                        <span>{% trans "Gender Equality" %}</span>
-                    </div>
-                </div>
-                <div class="sa-sdg-item">
-                    <i class="fas fa-handshake text-info"></i>
-                    <div>
-                        <strong>SDG 17</strong>
-                        <span>{% trans "Partnerships" %}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="sa-mission">
-            <h4>{% trans "Our Mission" %}</h4>
-            <p>{% trans "To create an inclusive digital ecosystem where every citizen, regardless of literacy level or digital skills, can access government welfare schemes and contribute to community development." %}</p>
-            <div class="sa-mission-stats">
-                <div>
-                    <strong style="color:#2a6ef2;">10K+</strong>
-                    <span>{% trans "Citizens Helped" %}</span>
-                </div>
-                <div>
-                    <strong style="color:#1f9d62;">500+</strong>
-                    <span>{% trans "Volunteers" %}</span>
-                </div>
-                <div>
-                    <strong style="color:#18b5d9;">50+</strong>
-                    <span>{% trans "Schemes" %}</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="sa-awareness">
-        <div class="sa-awareness-box">
-            <strong><i class="fas fa-bullhorn"></i> {% trans "Community Awareness Initiative" %}</strong>
-            <p>{% trans "After receiving benefits, please inform your family members, friends, and neighbors about government schemes. Together, we can build an aware and empowered community!" %}</p>
-        </div>
-    </div>
-</section>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 (function() {
-    const slides = document.querySelectorAll('.sa-slide');
+    // ---- Hero Photograph Slideshow (Smooth Crossfade, 0 Dark Overlays, Controlled Animation) ----
+    const slides = document.querySelectorAll('.sa-photo-frame .sa-slide');
     const dotsWrap = document.getElementById('saDots');
+    const toggle = document.querySelector('.sa-slide-toggle');
     let current = 0;
     let timer = null;
+    let userPaused = false;
+    let hoverPaused = false;
 
-    if (!slides.length || !dotsWrap) return;
-
-    slides.forEach((_, i) => {
-        const dot = document.createElement('button');
-        dot.className = 'sa-dot' + (i === 0 ? ' active' : '');
-        dot.type = 'button';
-        dot.setAttribute('aria-label', '{% trans "Slide" %} ' + (i + 1));
-        dot.addEventListener('click', () => go(i));
-        dotsWrap.appendChild(dot);
-    });
-
-    function go(next) {
-        slides[current].classList.remove('active');
-        dotsWrap.children[current].classList.remove('active');
-        current = next;
-        slides[current].classList.add('active');
-        dotsWrap.children[current].classList.add('active');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) {
+        userPaused = true;
+        if (toggle) {
+            toggle.setAttribute('aria-pressed', 'true');
+            toggle.setAttribute('aria-label', 'Play slideshow');
+            toggle.setAttribute('title', 'Play slideshow');
+            toggle.innerHTML = '<i class="fas fa-play" aria-hidden="true"></i>';
+        }
     }
 
-    function next() {
-        go((current + 1) % slides.length);
-    }
-
-    function start() {
-        timer = setInterval(next, 4200);
-    }
-
-    function stop() {
-        clearInterval(timer);
-    }
-
-    const hero = document.querySelector('.sa-hero');
-    if (hero) {
-        hero.addEventListener('mouseenter', stop);
-        hero.addEventListener('mouseleave', start);
-    }
-
-    // Subtle parallax for slide images
-    window.addEventListener('scroll', function() {
-        const y = window.scrollY * 0.1;
-        slides.forEach(function(slide) {
-            const img = slide.querySelector('img');
-            if (img) img.style.transform = 'scale(1.05) translateY(' + y + 'px)';
+    if (slides.length && dotsWrap) {
+        slides.forEach((_, i) => {
+            const dot = document.createElement('button');
+            dot.className = 'sa-dot' + (i === 0 ? ' active' : '');
+            dot.type = 'button';
+            dot.setAttribute('aria-label', 'Slide ' + (i + 1));
+            if (i === 0) dot.setAttribute('aria-current', 'true');
+            dot.addEventListener('click', function() {
+                goToSlide(i);
+            });
+            dotsWrap.appendChild(dot);
         });
-    }, { passive: true });
 
-    start();
+        function goToSlide(next) {
+            slides[current].classList.remove('active');
+            if (dotsWrap.children[current]) {
+                dotsWrap.children[current].classList.remove('active');
+                dotsWrap.children[current].removeAttribute('aria-current');
+            }
+            current = next;
+            slides[current].classList.add('active');
+            if (dotsWrap.children[current]) {
+                dotsWrap.children[current].classList.add('active');
+                dotsWrap.children[current].setAttribute('aria-current', 'true');
+            }
+        }
+
+        function nextSlide() {
+            goToSlide((current + 1) % slides.length);
+        }
+
+        function startSlideshow() {
+            if (userPaused || hoverPaused || timer) return;
+            timer = setInterval(nextSlide, 4500);
+        }
+
+        function stopSlideshow() {
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+            }
+        }
+
+        const showcase = document.querySelector('.sa-showcase-card');
+        if (showcase) {
+            showcase.addEventListener('mouseenter', function() {
+                hoverPaused = true;
+                stopSlideshow();
+            });
+            showcase.addEventListener('mouseleave', function() {
+                hoverPaused = false;
+                startSlideshow();
+            });
+        }
+        if (toggle) {
+            toggle.addEventListener('click', function() {
+                userPaused = !userPaused;
+                if (userPaused) {
+                    stopSlideshow();
+                } else {
+                    hoverPaused = false;
+                    startSlideshow();
+                }
+                toggle.setAttribute('aria-pressed', String(userPaused));
+                toggle.setAttribute('aria-label', userPaused ? 'Play slideshow' : 'Pause slideshow');
+                toggle.setAttribute('title', userPaused ? 'Play slideshow' : 'Pause slideshow');
+                toggle.innerHTML = '<i class="fas fa-' + (userPaused ? 'play' : 'pause') + '" aria-hidden="true"></i>';
+            });
+        }
+
+        startSlideshow();
+    }
+
+    // ---- Scheme Detail Modal ----
+    const modalEl = document.getElementById('schemeModal');
+    if (modalEl && typeof bootstrap !== 'undefined') {
+        const modal = new bootstrap.Modal(modalEl);
+
+        document.querySelectorAll('.sa-scheme-card').forEach(function(card) {
+            card.setAttribute('role', 'button');
+            card.setAttribute('tabindex', '0');
+            card.addEventListener('click', function() { openSchemeModal(card); });
+            card.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    openSchemeModal(card);
+                }
+            });
+        });
+
+        function fillList(id, value, icon) {
+            const ul = document.getElementById(id);
+            if (!ul) return;
+            ul.innerHTML = '';
+            (value || '').split('|').filter(Boolean).forEach(function(item) {
+                const li = document.createElement('li');
+                li.innerHTML = '<i class="fas ' + icon + '"></i> ' + item.trim();
+                ul.appendChild(li);
+            });
+        }
+
+        function openSchemeModal(card) {
+            const d = card.dataset;
+            const titleEl = document.getElementById('schemeModalTitle');
+            if (titleEl) titleEl.textContent = d.schemeName || '';
+
+            const chips = document.getElementById('schemeModalChips');
+            if (chips) {
+                chips.innerHTML = '';
+                if (d.schemeType) {
+                    const typeClass = d.schemeType.includes('Central') ? 'sa-scheme-type--central' : 'sa-scheme-type--state';
+                    const t = document.createElement('span');
+                    t.className = 'sa-scheme-type ' + typeClass;
+                    t.textContent = d.schemeType;
+                    chips.appendChild(t);
+                }
+                if (d.schemeState) {
+                    const s = document.createElement('span');
+                    s.className = 'sa-chip';
+                    s.innerHTML = '<i class="fas fa-location-dot"></i> ' + d.schemeState;
+                    chips.appendChild(s);
+                }
+                if (d.schemeSupport) {
+                    const sp = document.createElement('span');
+                    sp.className = 'sa-chip';
+                    sp.innerHTML = '<i class="fas fa-hand-holding-heart"></i> ' + d.schemeSupport;
+                    chips.appendChild(sp);
+                }
+                if (d.schemeAudience) {
+                    const au = document.createElement('span');
+                    au.className = 'sa-chip';
+                    au.innerHTML = '<i class="fas fa-user-group"></i> ' + d.schemeAudience;
+                    chips.appendChild(au);
+                }
+            }
+
+            const descEl = document.getElementById('schemeModalDesc');
+            if (descEl) descEl.textContent = d.schemeDesc || '';
+
+            fillList('schemeModalBenefits', d.schemeBenefits, 'fa-check');
+            fillList('schemeModalDates', d.schemeDates, 'fa-calendar-days');
+            fillList('schemeModalDocs', d.schemeDocs, 'fa-file-lines');
+            fillList('schemeModalProcess', d.schemeProcess, 'fa-list-ol');
+
+            modal.show();
+        }
+    }
 })();
 </script>
 {% endblock %}

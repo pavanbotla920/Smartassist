@@ -4,6 +4,7 @@
 {% block title %}{% trans "Profile - SmartAssist" %}{% endblock %}
 
 {% block content %}
+<script id="location-data" type="application/json">{{ location_json|safe }}</script>
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-8">
@@ -60,11 +61,28 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 {{ profile_form.state.label_tag }}
-                                {{ profile_form.state }}
+                                <select name="{{ profile_form.state.html_name }}" id="id_state">
+                                    <option value="">{% trans "Select state" %}</option>
+                                    {% for value, label in state_choices %}
+                                        <option value="{{ value }}" {% if profile_form.state.value == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                    {% if profile_form.state.value and profile_form.state.value not in state_values %}
+                                        <option value="{{ profile_form.state.value }}" selected>{{ profile_form.state.value }}</option>
+                                    {% endif %}
+                                </select>
+                                {% if profile_form.state.errors %}
+                                    <div class="text-danger small">{{ profile_form.state.errors }}</div>
+                                {% endif %}
                             </div>
                             <div class="col-md-6 mb-3">
                                 {{ profile_form.district.label_tag }}
-                                {{ profile_form.district }}
+                                <select name="{{ profile_form.district.html_name }}" id="id_district"
+                                        data-selected-district="{{ profile_form.district.value|default:'' }}">
+                                    <option value="">{% trans "Select district" %}</option>
+                                </select>
+                                {% if profile_form.district.errors %}
+                                    <div class="text-danger small">{{ profile_form.district.errors }}</div>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="row">
@@ -105,4 +123,38 @@ form input, form select {
     border-radius: 0.375rem;
 }
 </style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(() => {
+    const stateSelect = document.getElementById('id_state');
+    const districtSelect = document.getElementById('id_district');
+    const locationDataElement = document.getElementById('location-data');
+    if (!stateSelect || !districtSelect || !locationDataElement) return;
+
+    let locations = {};
+    try {
+        locations = JSON.parse(locationDataElement.textContent || '{}');
+    } catch (error) {
+        console.error('Unable to load location data.', error);
+        return;
+    }
+
+    const selectedDistrict = districtSelect.dataset.selectedDistrict || '';
+    const updateDistricts = () => {
+        const districts = locations[stateSelect.value] || [];
+        districtSelect.replaceChildren(new Option('{% trans "Select district" %}', ''));
+        districts.forEach((district) => {
+            districtSelect.add(new Option(district, district, false, district === selectedDistrict));
+        });
+    };
+
+    stateSelect.addEventListener('change', () => {
+        districtSelect.dataset.selectedDistrict = '';
+        updateDistricts();
+    });
+    updateDistricts();
+})();
+</script>
 {% endblock %}

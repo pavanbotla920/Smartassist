@@ -5,7 +5,8 @@ from django.utils.translation import deactivate_all
 from unittest.mock import patch
 
 from aiohttp import ClientResponseError
-from farmers.models import Scheme
+from farmers.models import ApplicationRequest, Notification, Scheme, UserProfile
+from farmers.forms import UserProfileForm
 from farmers.views import VoiceServiceError, _scheme_voice_text, _synthesize_scheme_voice
 
 
@@ -48,6 +49,157 @@ class SmartAssistVerificationTests(TestCase):
         self.assertContains(response, 'Central Test Scheme')
         self.assertNotContains(response, 'State Test Scheme')
         self.assertEqual(len(response.context['schemes']), 1)
+
+    def test_recommendation_page_renders_for_authenticated_user(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('recommend'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'eligibilityForm')
+        self.assertContains(response, 'id="step-4"', html=False)
+        self.assertContains(response, 'Transgender')
+        self.assertContains(response, 'rural_urban')
+        self.assertContains(response, 'Skip to Results')
+        for category in ('General', 'Other Backward Class (OBC)', 'Scheduled Caste (SC)', 'Scheduled Tribe (ST)', 'Economically Weaker Section (EWS)'):
+            self.assertContains(response, category)
+
+    def test_recommendation_handles_optional_fields_and_returns_matches(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('recommend'),
+            {'age': '', 'income': '', 'category': '', 'state': ''},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Central Test Scheme')
+        self.assertEqual(response.context['form_data'], {
+            'age': 0,
+            'income': 0,
+            'category': '',
+            'state': '',
+        })
+
+    def test_recommendation_requires_authentication(self):
+        response = self.client.get(reverse('recommend'))
+
+        self.assertRedirects(
+            response,
+            f"{reverse('login')}?next={reverse('recommend')}",
+            fetch_redirect_response=False,
+        )
+
+    def test_profile_form_allows_incomplete_profile(self):
+        form = UserProfileForm(data={})
+
+        self.assertTrue(form.is_valid())
+
+    def test_profile_page_exposes_location_data_and_dropdowns(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('profile'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="id_state"', html=False)
+        self.assertContains(response, 'id="id_district"', html=False)
+        self.assertContains(response, 'id="location-data"', html=False)
+
+    def test_registration_rejects_weak_password_server_side(self):
+        response = self.client.post(
+            reverse('register'),
+            {
+                'username': 'newfarmer',
+                'email': 'farmer@example.com',
+                'password1': 'password123',
+                'password2': 'password123',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Avoid common passwords')
+        self.assertFalse(User.objects.filter(username='newfarmer').exists())
+
+    def test_registration_accepts_strong_password_with_confirmation(self):
+        response = self.client.post(
+            reverse('register'),
+            {
+                'username': 'newfarmer',
+                'email': 'farmer@example.com',
+                'password1': 'Mango!River42',
+                'password2': 'Mango!River42',
+            },
+        )
+
+        self.assertRedirects(response, reverse('login'), fetch_redirect_response=False)
+        self.assertTrue(User.objects.filter(username='newfarmer').exists())
+
+    def test_management_templates_render_for_staff_roles(self):
+        profile = UserProfile.objects.get(user=self.user)
+        profile.role = 'admin'
+        profile.save(update_fields=['role'])
+        profile.refresh_from_db()
+        self.assertEqual(profile.role, 'admin')
+        self.user.refresh_from_db()
+        self.client.force_login(self.user)
+
+        manage_response = self.client.get(reverse('manage_schemes'))
+        self.assertEqual(manage_response.status_code, 200)
+        self.assertContains(manage_response, 'Add scheme')
+
+        form_response = self.client.get(reverse('add_scheme'))
+        self.assertEqual(form_response.status_code, 200)
+        self.assertContains(form_response, 'Save scheme')
+
+        application = ApplicationRequest.objects.create(
+            user=self.user,
+            name='Test Applicant',
+            age=30,
+            gender='Other',
+            mobile='9876543210',
+            email='applicant@example.com',
+            education='Graduate',
+            income=100000,
+            category='General',
+            state='Test State',
+            district='Test District',
+        )
+        status_response = self.client.get(reverse('update_status', args=[application.id]))
+        self.assertEqual(status_response.status_code, 200)
+        self.assertContains(status_response, 'New status')
+
+    @patch('farmers.emails.send_mail', side_effect=RuntimeError('SMTP unavailable'))
+    def test_status_update_saves_and_creates_one_notification_when_email_fails(self, send_mail):
+        profile = UserProfile.objects.get(user=self.user)
+        profile.role = 'admin'
+        profile.save(update_fields=['role'])
+        self.user.refresh_from_db()
+        self.client.force_login(self.user)
+        application = ApplicationRequest.objects.create(
+            user=self.user,
+            name='Test Applicant',
+            age=30,
+            gender='Other',
+            mobile='9876543210',
+            email='applicant@example.com',
+            education='Graduate',
+            income=100000,
+            category='General',
+            state='Test State',
+            district='Test District',
+        )
+
+        response = self.client.post(
+            reverse('update_status', args=[application.id]),
+            {'status': 'Approved', 'notes': 'Approved for testing.'},
+        )
+
+        self.assertRedirects(response, reverse('admin_dashboard'), fetch_redirect_response=False)
+        application.refresh_from_db()
+        self.assertEqual(application.status, 'Approved')
+        self.assertEqual(application.notes, 'Approved for testing.')
+        self.assertEqual(Notification.objects.filter(user=self.user).count(), 1)
+        send_mail.assert_called_once()
 
     def test_official_website_link_has_security_attributes(self):
         response = self.client.get(reverse('scheme_awareness'), {'type': 'Central'})

@@ -124,7 +124,7 @@ farmers/
 ## 4. Templates, Static Assets, Translations, Datasets & Migrations
 
 ### 4.1 Templates (`templates/`)
-Templates use Django's template engine with Bootstrap 5 and custom CSS. All user-facing strings are wrapped with `{% trans %}` or `{% blocktrans %}` for internationalization.
+Templates use Django's template engine with Bootstrap 5 and custom CSS. All user-facing strings are wrapped with `&#123;% trans %&#125;` or `&#123;% blocktrans %&#125;` for internationalization.
 
 - **Layout & Shared**:
   - `base.html`: Common HTML shell, navigation bar, Bootstrap imports, and footer.

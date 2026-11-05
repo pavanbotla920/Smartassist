@@ -165,10 +165,25 @@ class Notification(models.Model):
     message = models.TextField()
     sent_at = models.DateTimeField(auto_now_add=True)
     is_sent = models.BooleanField(default=False)
+    email_recipient = models.EmailField(blank=True, default='')
+    delivery_status = models.CharField(
+        max_length=10,
+        choices=[
+            ('pending', 'Pending'),
+            ('sent', 'Sent'),
+            ('failed', 'Failed'),
+        ],
+        default='pending',
+    )
+    retry_count = models.PositiveIntegerField(default=0)
+    last_error = models.TextField(blank=True, default='')
+    next_attempt_at = models.DateTimeField(null=True, blank=True)
+    last_attempt_at = models.DateTimeField(null=True, blank=True)
+    delivered_at = models.DateTimeField(null=True, blank=True)
+    is_permanent_failure = models.BooleanField(default=False)
+    is_legacy_notification = models.BooleanField(db_default=False, default=False)
 
-
-
-        # Notification tracking
+    # Notification tracking
     is_read = models.BooleanField(default=False)
     read_at = models.DateTimeField(null=True, blank=True)
     email_error = models.TextField(blank=True, default='')

@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.core import mail
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management import call_command
 from django.test import Client, RequestFactory, TestCase, override_settings
 from django.urls import reverse, translate_url
 from django.utils import timezone
@@ -14,6 +15,7 @@ import sys
 from types import SimpleNamespace
 
 from aiohttp import ClientResponseError
+from farmers.admin import NotificationAdmin
 from farmers.models import ApplicationRequest, Notification, Scheme, UserProfile
 from farmers.forms import CitizenApplicationForm, SchemeForm, UserProfileForm
 from farmers.views import (
@@ -23,6 +25,7 @@ from farmers.views import (
     _transcribe_audio_without_openai,
     _validate_audio_content,
 )
+from farmers.notification_queue import process_notification, process_pending_notifications
 from smartassist.settings import (
     _get_allowed_hosts,
     _get_bool_setting,
@@ -36,6 +39,42 @@ from smartassist.settings import (
 normalize_legacy_pending_status = import_module(
     'farmers.migrations.0009_normalize_legacy_pending_status'
 ).normalize_legacy_pending_status
+reconcile_legacy_notifications = import_module(
+    'farmers.migrations.0015_reconcile_legacy_notifications'
+).reconcile_legacy_notifications
+
+
+class NotificationAdminTests(TestCase):
+    def test_error_columns_preserve_both_values_and_detail_editability(self):
+        admin_instance = NotificationAdmin(Notification, None)
+        notification = SimpleNamespace(
+            email_error='historical delivery error',
+            last_error='current queue error',
+        )
+
+        self.assertEqual(
+            admin_instance.email_error_preview(notification),
+            'historical delivery error',
+        )
+        self.assertEqual(
+            admin_instance.last_error_preview(notification),
+            'current queue error',
+        )
+        self.assertNotIn('email_error', admin_instance.readonly_fields)
+        self.assertNotIn('last_error', admin_instance.readonly_fields)
+
+    def test_error_columns_truncate_long_values(self):
+        admin_instance = NotificationAdmin(Notification, None)
+        long_error = 'x' * 100
+
+        self.assertEqual(len(admin_instance.email_error_preview(
+            SimpleNamespace(email_error=long_error)
+        )), 80)
+        self.assertTrue(
+            admin_instance.last_error_preview(
+                SimpleNamespace(last_error=long_error)
+            ).endswith('...')
+        )
 
 
 class SmartAssistVerificationTests(TestCase):
@@ -1504,7 +1543,7 @@ class SmartAssistVerificationTests(TestCase):
         awareness_response = self.client.get(reverse('scheme_awareness'))
         self.assertContains(awareness_response, self.central_scheme.apply_link)
 
-    @patch('farmers.emails.send_mail', side_effect=RuntimeError('SMTP unavailable'))
+    @patch('farmers.notification_queue.mail.send_mail', side_effect=RuntimeError('SMTP unavailable'))
     def test_status_update_saves_and_creates_one_notification_when_email_fails(self, send_mail):
         profile = UserProfile.objects.get(user=self.user)
         profile.role = 'admin'
@@ -1535,9 +1574,10 @@ class SmartAssistVerificationTests(TestCase):
         self.assertEqual(application.status, 'Approved')
         self.assertEqual(application.notes, 'Approved for testing.')
         self.assertEqual(Notification.objects.filter(user=self.user).count(), 1)
+        process_pending_notifications()
         send_mail.assert_called_once()
 
-    @patch('farmers.emails.send_mail')
+    @patch('farmers.notification_queue.mail.send_mail')
     def test_application_submission_uses_notification_helper(self, send_mail):
         self.client.force_login(self.user)
 
@@ -1572,7 +1612,7 @@ class SmartAssistVerificationTests(TestCase):
         )
         self.assertEqual(application.status, 'Submitted')
 
-    @patch('farmers.emails.send_mail')
+    @patch('farmers.notification_queue.mail.send_mail')
     def test_admin_scheme_application_uses_notification_helper(self, send_mail):
         profile = UserProfile.objects.get(user=self.user)
         profile.role = 'admin'
@@ -1613,6 +1653,7 @@ class SmartAssistVerificationTests(TestCase):
             notification.message,
             'We have applied for Central Test Scheme on your behalf.',
         )
+        process_pending_notifications()
         send_mail.assert_called_once()
 
     def test_admin_scheme_application_rejects_get_without_side_effects(self):
@@ -1645,7 +1686,7 @@ class SmartAssistVerificationTests(TestCase):
         self.assertEqual(application.status, 'Submitted')
         self.assertFalse(Notification.objects.filter(user=self.user).exists())
 
-    @patch('farmers.emails.send_mail')
+    @patch('farmers.notification_queue.mail.send_mail')
     def test_admin_scheme_application_does_not_reset_processed_statuses(self, send_mail):
         profile = UserProfile.objects.get(user=self.user)
         profile.role = 'admin'
@@ -1695,7 +1736,7 @@ class SmartAssistVerificationTests(TestCase):
 
         send_mail.assert_not_called()
 
-    @patch('farmers.emails.send_mail')
+    @patch('farmers.notification_queue.mail.send_mail')
     def test_rejected_application_can_be_reapplied_to_same_scheme(self, send_mail):
         profile = UserProfile.objects.get(user=self.user)
         profile.role = 'admin'
@@ -1733,6 +1774,7 @@ class SmartAssistVerificationTests(TestCase):
         application.refresh_from_db()
         self.assertEqual(application.status, 'Applied')
         self.assertEqual(Notification.objects.filter(user=self.user).count(), 1)
+        process_pending_notifications()
         send_mail.assert_called_once()
 
     def test_apply_scheme_admin_csrf_protection(self):
@@ -2627,7 +2669,7 @@ class SmartAssistVerificationTests(TestCase):
                 send_mail.assert_not_called()
                 existing.delete()
 
-    @patch('farmers.emails.send_mail')
+    @patch('farmers.notification_queue.mail.send_mail')
     def test_rejected_scheme_application_allows_reapplication(self, send_mail):
         self.client.login(username='citizen', password='secret123')
         ApplicationRequest.objects.create(
@@ -2680,6 +2722,7 @@ class SmartAssistVerificationTests(TestCase):
             1,
         )
         self.assertEqual(Notification.objects.filter(user=self.user).count(), 1)
+        process_pending_notifications()
         send_mail.assert_called_once()
 
     def test_invalid_assistance_form_renders_errors_and_preserves_scheme(self):
@@ -3000,6 +3043,7 @@ class ApplicationStatusEmailTests(TestCase):
             'Documents need further verification. Internal only.',
         )
         self.assertIn('Your application has been approved.', self.application.farmer_message)
+        process_pending_notifications()
         self.assertEqual(len(mail.outbox), 1)
         sent = mail.outbox[0]
         self.assertEqual(sent.to, ['registered-farmer@example.com'])
@@ -3041,6 +3085,7 @@ class ApplicationStatusEmailTests(TestCase):
             },
         )
 
+        process_pending_notifications()
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, ['application-fallback@example.com'])
         self.assertNotIn('Internal rejection review note.', mail.outbox[0].body)
@@ -3078,6 +3123,7 @@ class ApplicationStatusEmailTests(TestCase):
 
         self.application.refresh_from_db()
         self.assertEqual(self.application.status, 'Rejected')
+        process_pending_notifications()
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn('Rejected', mail.outbox[0].subject)
         self.assertIn('Please review the eligibility requirements and reapply.', mail.outbox[0].body)
@@ -3222,29 +3268,34 @@ class NotificationCenterTests(TestCase):
         self.assertEqual(response.context['unread_notification_count'], 1)
         self.assertContains(response, 'class="sa-notification-count"')
 
-    @patch('farmers.emails.send_mail', return_value=1)
+    @patch('farmers.notification_queue.mail.send_mail', return_value=1)
     def test_email_delivery_success_is_recorded(self, send_mail):
         from farmers.emails import notify
 
         notification = notify(self.user, 'Delivered', 'Message')
+        process_notification(notification.pk)
 
         notification.refresh_from_db()
         self.assertTrue(notification.is_sent)
+        self.assertEqual(notification.delivery_status, 'sent')
         self.assertEqual(notification.email_error, '')
         send_mail.assert_called_once()
 
-    @patch('farmers.emails.send_mail', side_effect=RuntimeError('SMTP unavailable'))
+    @patch('farmers.notification_queue.mail.send_mail', side_effect=RuntimeError('SMTP unavailable'))
     def test_email_delivery_failure_is_recorded_without_raising(self, send_mail):
         from farmers.emails import notify
 
         notification = notify(self.user, 'Failed', 'Message')
+        process_notification(notification.pk)
 
         notification.refresh_from_db()
         self.assertFalse(notification.is_sent)
         self.assertEqual(notification.email_error, 'SMTP unavailable')
+        self.assertEqual(notification.delivery_status, 'failed')
+        self.assertEqual(notification.retry_count, 1)
         send_mail.assert_called_once()
 
-    @patch('farmers.emails.send_mail')
+    @patch('farmers.notification_queue.mail.send_mail')
     def test_disabled_email_preference_stores_without_sending(self, send_mail):
         from farmers.emails import notify
 
@@ -3258,6 +3309,304 @@ class NotificationCenterTests(TestCase):
             'Email notifications are disabled in your settings.',
         )
         send_mail.assert_not_called()
+
+    @patch('farmers.notification_queue.mail.send_mail', return_value=1)
+    def test_notify_persists_pending_queue_without_smtp_in_request(self, send_mail):
+        from farmers.emails import notify
+
+        notification = notify(self.user, 'Queued', 'Message')
+
+        notification.refresh_from_db()
+        self.assertEqual(notification.delivery_status, 'pending')
+        self.assertFalse(notification.is_sent)
+        send_mail.assert_not_called()
+
+    def test_notification_command_supports_dry_run(self):
+        from farmers.emails import notify
+
+        notification = notify(self.user, 'Dry run', 'Message')
+        with patch('farmers.notification_queue.mail.send_mail') as send_mail:
+            call_command('process_notifications', '--dry-run')
+
+        notification.refresh_from_db()
+        self.assertEqual(notification.delivery_status, 'pending')
+        send_mail.assert_not_called()
+
+    @patch('farmers.notification_queue.mail.send_mail', side_effect=RuntimeError('SMTP unavailable'))
+    def test_temporary_failure_is_retryable_with_backoff(self, send_mail):
+        from farmers.emails import notify
+
+        notification = notify(self.user, 'Retry', 'Message')
+        process_notification(notification.pk)
+
+        notification.refresh_from_db()
+        self.assertEqual(notification.delivery_status, 'failed')
+        self.assertFalse(notification.is_permanent_failure)
+        self.assertIsNotNone(notification.next_attempt_at)
+        self.assertEqual(notification.retry_count, 1)
+
+    @patch('farmers.notification_queue.mail.send_mail', side_effect=RuntimeError('SMTP unavailable'))
+    def test_maximum_retry_limit_marks_failure_permanent(self, send_mail):
+        from farmers.emails import notify
+
+        with patch.dict(os.environ, {'SMARTASSIST_EMAIL_MAX_RETRIES': '2'}):
+            notification = notify(self.user, 'Retry limit', 'Message')
+            process_notification(notification.pk)
+            notification.refresh_from_db()
+            notification.next_attempt_at = timezone.now()
+            notification.save(update_fields=['next_attempt_at'])
+            process_notification(notification.pk)
+
+        notification.refresh_from_db()
+        self.assertTrue(notification.is_permanent_failure)
+        self.assertEqual(notification.retry_count, 2)
+        self.assertIsNone(notification.next_attempt_at)
+        self.assertEqual(send_mail.call_count, 2)
+
+    @patch('farmers.notification_queue.mail.send_mail', side_effect=ValueError('invalid recipient'))
+    def test_permanent_recipient_failure_is_not_retried(self, send_mail):
+        from farmers.emails import notify
+
+        notification = notify(self.user, 'Permanent', 'Message')
+        process_notification(notification.pk)
+        process_notification(notification.pk)
+
+        notification.refresh_from_db()
+        self.assertTrue(notification.is_permanent_failure)
+        self.assertEqual(notification.retry_count, 1)
+        send_mail.assert_called_once()
+
+    @patch('farmers.notification_queue.mail.send_mail', return_value=1)
+    def test_sent_notification_is_not_delivered_twice(self, send_mail):
+        from farmers.emails import notify
+
+        notification = notify(self.user, 'Once', 'Message')
+        process_pending_notifications()
+        process_pending_notifications()
+
+        notification.refresh_from_db()
+        self.assertEqual(notification.delivery_status, 'sent')
+        send_mail.assert_called_once()
+
+    def test_legacy_reconciliation_preserves_records_and_errors(self):
+        legacy_sent = [
+            Notification.objects.create(
+                user=self.user,
+                subject=f'Legacy sent {index}',
+                message='Historical message',
+                is_sent=True,
+                is_legacy_notification=True,
+                email_error='historical error',
+                last_error='historical queue error',
+            )
+            for index in range(7)
+        ]
+        legacy_unsent = [
+            Notification.objects.create(
+                user=self.user,
+                subject=f'Legacy unsent {index}',
+                message='Historical message',
+                is_sent=False,
+                is_legacy_notification=True,
+                email_error='historical error',
+                last_error='historical queue error',
+            )
+            for index in range(36)
+        ]
+        original_ids = set(Notification.objects.values_list('pk', flat=True))
+
+        class HistoricalApps:
+            @staticmethod
+            def get_model(app_label, model_name):
+                self.assertEqual((app_label, model_name), ('farmers', 'Notification'))
+                return Notification
+
+        reconcile_legacy_notifications(HistoricalApps(), None)
+
+        self.assertEqual(Notification.objects.count(), len(original_ids))
+        self.assertEqual(
+            set(Notification.objects.values_list('pk', flat=True)),
+            original_ids,
+        )
+        for notification in legacy_sent:
+            notification.refresh_from_db()
+            self.assertTrue(notification.is_sent)
+            self.assertTrue(notification.is_legacy_notification)
+            self.assertEqual(notification.delivery_status, 'sent')
+            self.assertFalse(notification.is_permanent_failure)
+            self.assertEqual(notification.email_recipient, '')
+            self.assertEqual(notification.retry_count, 0)
+            self.assertIsNone(notification.delivered_at)
+            self.assertIsNone(notification.last_attempt_at)
+            self.assertIsNone(notification.next_attempt_at)
+            self.assertEqual(notification.email_error, 'historical error')
+            self.assertEqual(notification.last_error, 'historical queue error')
+        for notification in legacy_unsent:
+            notification.refresh_from_db()
+            self.assertFalse(notification.is_sent)
+            self.assertTrue(notification.is_legacy_notification)
+            self.assertEqual(notification.delivery_status, 'failed')
+            self.assertTrue(notification.is_permanent_failure)
+            self.assertEqual(notification.email_recipient, '')
+            self.assertEqual(notification.retry_count, 0)
+            self.assertIsNone(notification.delivered_at)
+            self.assertIsNone(notification.last_attempt_at)
+            self.assertIsNone(notification.next_attempt_at)
+            self.assertEqual(notification.email_error, 'historical error')
+            self.assertEqual(notification.last_error, 'historical queue error')
+
+    @patch('farmers.notification_queue.mail.send_mail')
+    def test_reconciled_legacy_notifications_are_not_sent_again(self, send_mail):
+        sent = Notification.objects.create(
+            user=self.user,
+            subject='Historical sent',
+            message='Historical message',
+            is_sent=True,
+            is_legacy_notification=True,
+        )
+        unsent = Notification.objects.create(
+            user=self.user,
+            subject='Historical unsent',
+            message='Historical message',
+            is_sent=False,
+            is_legacy_notification=True,
+        )
+
+        class HistoricalApps:
+            @staticmethod
+            def get_model(app_label, model_name):
+                return Notification
+
+        reconcile_legacy_notifications(HistoricalApps(), None)
+        results = process_pending_notifications()
+
+        sent.refresh_from_db()
+        unsent.refresh_from_db()
+        self.assertEqual(results['eligible'], 0)
+        self.assertEqual(results['sent'], 0)
+        self.assertTrue(sent.is_sent)
+        self.assertFalse(unsent.is_sent)
+        send_mail.assert_not_called()
+
+    def test_reconciliation_does_not_change_nonlegacy_notifications(self):
+        from farmers.emails import notify
+
+        current_sent = Notification.objects.create(
+            user=self.user,
+            subject='Current sent',
+            message='Current message',
+            is_sent=True,
+            delivery_status='sent',
+            delivered_at=timezone.now(),
+        )
+        current_unsent = notify(self.user, 'Current pending', 'Current message')
+        legacy = Notification.objects.create(
+            user=self.user,
+            subject='Historical',
+            message='Historical message',
+            is_sent=False,
+            is_legacy_notification=True,
+        )
+
+        class HistoricalApps:
+            @staticmethod
+            def get_model(app_label, model_name):
+                return Notification
+
+        reconcile_legacy_notifications(HistoricalApps(), None)
+
+        current_sent.refresh_from_db()
+        current_unsent.refresh_from_db()
+        legacy.refresh_from_db()
+        self.assertFalse(current_sent.is_legacy_notification)
+        self.assertEqual(current_sent.delivery_status, 'sent')
+        self.assertIsNotNone(current_sent.delivered_at)
+        self.assertFalse(current_unsent.is_legacy_notification)
+        self.assertEqual(current_unsent.delivery_status, 'pending')
+        self.assertFalse(current_unsent.is_sent)
+        self.assertEqual(legacy.delivery_status, 'failed')
+        self.assertTrue(legacy.is_permanent_failure)
+
+    def test_new_notification_remains_pending_and_admin_labels_distinguish_history(self):
+        from farmers.emails import notify
+
+        legacy_sent = Notification.objects.create(
+            user=self.user,
+            subject='Historical sent',
+            message='Historical message',
+            is_sent=True,
+            is_legacy_notification=True,
+        )
+        legacy_unsent = Notification.objects.create(
+            user=self.user,
+            subject='Historical unsent',
+            message='Historical message',
+            is_sent=False,
+            is_legacy_notification=True,
+        )
+
+        class HistoricalApps:
+            @staticmethod
+            def get_model(app_label, model_name):
+                return Notification
+
+        reconcile_legacy_notifications(HistoricalApps(), None)
+        current = notify(self.user, 'Current', 'Current message')
+
+        self.assertEqual(current.delivery_status, 'pending')
+        self.assertFalse(current.is_sent)
+        self.assertFalse(current.is_legacy_notification)
+        self.assertEqual(
+            Notification.objects.filter(
+                delivery_status='sent',
+                delivered_at__isnull=True,
+            ).count(),
+            1,
+        )
+        self.assertEqual(
+            Notification.objects.filter(
+                subject='Historical unsent',
+                delivery_status='failed',
+                is_permanent_failure=True,
+                last_attempt_at__isnull=True,
+            ).count(),
+            1,
+        )
+
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('notifications'))
+        self.assertContains(response, 'Email marked as sent (historical)')
+        self.assertContains(response, 'Email not delivered (historical)')
+
+        profile = UserProfile.objects.get(user=self.user)
+        profile.role = 'admin'
+        profile.save(update_fields=['role'])
+        self.user.refresh_from_db()
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('admin_dashboard'))
+        self.assertEqual(response.context['notification_queue_counts']['sent'], 1)
+        self.assertEqual(response.context['notification_queue_counts']['sent_historical'], 1)
+        self.assertEqual(response.context['notification_queue_counts']['sent_verified'], 0)
+
+    def test_in_app_notification_is_available_without_email_delivery(self):
+        from farmers.emails import notify
+
+        user_without_email = User.objects.create_user(
+            username='offline-notification-user',
+            password='secret123',
+        )
+        notification = notify(user_without_email, 'Offline', 'Message')
+
+        self.assertTrue(
+            Notification.objects.filter(
+                pk=notification.pk,
+                subject='Offline',
+                message='Message',
+            ).exists()
+        )
+        notification.refresh_from_db()
+        self.assertEqual(notification.delivery_status, 'failed')
+        self.assertTrue(notification.is_permanent_failure)
 
 
 class DeploymentSettingsTests(TestCase):

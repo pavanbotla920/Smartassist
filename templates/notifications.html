@@ -179,10 +179,20 @@
                             {% endif %}
                             <div class="sa-notification-meta">
                                 {% if notification.notification_type == 'email' %}
-                                    {% if notification.is_sent %}
-                                        <span class="sa-notification-status sent"><i class="fas fa-check-circle" aria-hidden="true"></i> {% trans "Email delivered" %}</span>
+                                    {% if notification.delivery_status == 'sent' %}
+                                        {% if notification.delivered_at %}
+                                            <span class="sa-notification-status sent"><i class="fas fa-check-circle" aria-hidden="true"></i> {% trans "Email delivered" %}</span>
+                                        {% else %}
+                                            <span class="sa-notification-status sent"><i class="fas fa-check-circle" aria-hidden="true"></i> {% trans "Email marked as sent (historical)" %}</span>
+                                        {% endif %}
+                                    {% elif notification.delivery_status == 'pending' %}
+                                        <span class="sa-notification-status read"><i class="fas fa-clock" aria-hidden="true"></i> {% trans "Email pending" %}</span>
                                     {% else %}
-                                        <span class="sa-notification-status failed"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i> {% trans "Email not delivered" %}</span>
+                                        {% if notification.is_permanent_failure and not notification.last_attempt_at %}
+                                            <span class="sa-notification-status failed"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i> {% trans "Email not delivered (historical)" %}</span>
+                                        {% else %}
+                                            <span class="sa-notification-status failed"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i> {% trans "Email not delivered" %}</span>
+                                        {% endif %}
                                     {% endif %}
                                 {% endif %}
                                 {% if notification.is_read %}

@@ -5,8 +5,6 @@
 {% block title %}Admin Dashboard - SmartAssist{% endblock %}
 
 {% block extra_head %}
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
     .sa-admin-bg { background: var(--sa-paper); min-height: calc(100vh - 72px); padding: 2.5rem 1rem 4rem; }
 
@@ -139,6 +137,12 @@
             <div class="sa-stat-card applied"><h3>{{ applied }}</h3><p>Applied</p></div>
             <div class="sa-stat-card approved"><h3>{{ approved }}</h3><p>Approved</p></div>
             <div class="sa-stat-card rejected"><h3>{{ rejected }}</h3><p>Rejected</p></div>
+        </div>
+        <div class="sa-stat-grid" aria-label="Notification delivery status">
+            <div class="sa-stat-card pending"><h3>{{ notification_queue_counts.pending }}</h3><p>Email Pending</p></div>
+            <div class="sa-stat-card approved"><h3>{{ notification_queue_counts.sent_verified }}</h3><p>Email Delivered</p></div>
+            <div class="sa-stat-card approved"><h3>{{ notification_queue_counts.sent_historical }}</h3><p>Email Marked Sent (Historical)</p></div>
+            <div class="sa-stat-card rejected"><h3>{{ notification_queue_counts.failed }}</h3><p>Email Failed</p></div>
         </div>
 
         <!-- Existing Main Grid (Apps & Actions) -->
@@ -412,6 +416,10 @@
     }
 
     document.addEventListener("DOMContentLoaded", function() {
+        if (typeof Chart !== 'function') {
+            console.warn('Chart.js is unavailable; admin dashboard charts were skipped.');
+            return;
+        }
         document.querySelectorAll('[data-range]').forEach(button => {
             button.addEventListener('click', () => {
                 updateFarmers(button.dataset.range, button.dataset.count, button);

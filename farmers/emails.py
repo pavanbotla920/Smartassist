@@ -2,18 +2,16 @@
 
 Design notes
 ------------
-Email is sent explicitly from the views, never from ``Model.save()``. Sending
-inside ``save()`` fires on fixtures, ``loaddata`` and migrations, hides network
-I/O inside a database write, and makes the test suite try to reach the real SMTP
-server. Keeping it explicit makes the behaviour obvious and testable.
+Email is queued explicitly from the views, never from ``Model.save()``.
+Delivery is performed by a management command or worker, so requests never
+wait for SMTP.
 
 ``notify()`` never raises: a mail failure is logged and must not roll back the
 status change or turn the admin's action into a 500.
 """
 import logging
 
-from django.conf import settings
-from django.core.mail import send_mail
+from django.core.mail import send_mail  # Backward-compatible test/import surface.
 
 from .models import Notification, UserProfile
 
@@ -29,17 +27,15 @@ def get_farmer_status_message(new_status, farmer_message=''):
 
 
 def notify(user, subject, message, email_to=None, application=None):
-    """Store an in-app notification and attempt email delivery.
-
-    The notification is always stored. Email delivery is best-effort:
-    failures are persisted but never interrupt the application workflow.
-    """
+    """Store an in-app notification and queue email delivery."""
     notification = Notification.objects.create(
         user=user,
         application=application,
         notification_type='email',
         subject=subject,
         message=message,
+        email_recipient=(email_to or user.email or '').strip(),
+        is_legacy_notification=False,
     )
 
     # Preserve temporary attributes for existing callers.
@@ -53,7 +49,13 @@ def notify(user, subject, message, email_to=None, application=None):
     if email_notifications_enabled is False:
         notification.is_sent = False
         notification.email_error = 'Email notifications are disabled in your settings.'
-        notification.save(update_fields=['is_sent', 'email_error'])
+        notification.last_error = notification.email_error
+        notification.delivery_status = 'failed'
+        notification.is_permanent_failure = True
+        notification.save(update_fields=[
+            'is_sent', 'email_error', 'last_error', 'delivery_status',
+            'is_permanent_failure',
+        ])
         logger.info(
             'Notification %s stored in-app only: email notifications disabled.',
             notification.pk,
@@ -65,7 +67,13 @@ def notify(user, subject, message, email_to=None, application=None):
 
         notification.is_sent = False
         notification.email_error = error
-        notification.save(update_fields=['is_sent', 'email_error'])
+        notification.last_error = error
+        notification.delivery_status = 'failed'
+        notification.is_permanent_failure = True
+        notification.save(update_fields=[
+            'is_sent', 'email_error', 'last_error', 'delivery_status',
+            'is_permanent_failure',
+        ])
 
         logger.info(
             'Notification %s stored in-app only: no email address on file.',
@@ -73,41 +81,10 @@ def notify(user, subject, message, email_to=None, application=None):
         )
         return notification
 
-    try:
-        sent_count = send_mail(
-            subject=subject,
-            message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[recipient],
-            fail_silently=False,
-        )
-
-        notification.is_sent = bool(sent_count)
-        notification.email_sent = bool(sent_count)
-
-        if not notification.is_sent:
-            notification.email_error = 'Email backend did not report a successful delivery.'
-
-    except Exception as exc:
-        notification.is_sent = False
-        notification.email_sent = False
-        notification.email_error = str(exc) or type(exc).__name__
-
-        logger.exception(
-            'Failed to email notification %s to %s',
-            notification.pk,
-            recipient,
-        )
-
-    else:
-        if notification.is_sent:
-            logger.info(
-                'Emailed notification %s to %s',
-                notification.pk,
-                recipient,
-            )
-
-    notification.save(update_fields=['is_sent', 'email_error'])
+    notification.delivery_status = 'pending'
+    notification.is_sent = False
+    notification.save(update_fields=['is_sent', 'delivery_status'])
+    logger.info('Notification %s queued for delivery.', notification.pk)
 
     return notification
 

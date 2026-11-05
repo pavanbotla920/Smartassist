@@ -857,6 +857,23 @@ def admin_dashboard(request):
     year_start = subtract_months(month_start, 12)
 
     total_farmers = UserProfile.objects.filter(role='citizen').count()
+    notification_queue_counts = {
+        status: Notification.objects.filter(
+            notification_type='email',
+            delivery_status=status,
+        ).count()
+        for status in ('pending', 'sent', 'failed')
+    }
+    notification_queue_counts['sent_historical'] = Notification.objects.filter(
+        notification_type='email',
+        delivery_status='sent',
+        delivered_at__isnull=True,
+    ).count()
+    notification_queue_counts['sent_verified'] = Notification.objects.filter(
+        notification_type='email',
+        delivery_status='sent',
+        delivered_at__isnull=False,
+    ).count()
     farmers_week = UserProfile.objects.filter(
         role='citizen', user__date_joined__gte=week_start
     ).count()
@@ -966,6 +983,7 @@ def admin_dashboard(request):
         'approved': status_counts['Approved'],
         'rejected': status_counts['Rejected'],
         'status_counts': status_counts,
+        'notification_queue_counts': notification_queue_counts,
 
         # Additional analytics
         'total_schemes': total_schemes,

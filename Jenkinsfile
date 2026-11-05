@@ -71,18 +71,22 @@ PY
                     set +x
                     ci_secret="$("$CI_VENV/bin/python" -c 'import secrets; print(secrets.token_urlsafe(32))')"
                     DJANGO_ENV=production \
+                    DJANGO_SETTINGS_MODULE=smartassist.settings \
                     DJANGO_SECRET_KEY="$ci_secret" \
                     DJANGO_ALLOWED_HOSTS=127.0.0.1 \
                     DJANGO_CSRF_TRUSTED_ORIGINS=http://127.0.0.1:8003 \
-                    DJANGO_DEBUG=True \
+                    DJANGO_CACHE_URL=redis://127.0.0.1:6379/0 \
+                    DJANGO_DEBUG=False \
                         "$CI_VENV/bin/python" -c \
-                        'from django.conf import settings; assert settings.SECRET_KEY; assert settings.DEBUG is False'
+                        'import django; django.setup(); from django.conf import settings; assert settings.SECRET_KEY; assert settings.DEBUG is False'
                     unset ci_secret
                     set -x
 
                     if env -u DJANGO_SECRET_KEY DJANGO_ENV=production \
+                        DJANGO_SETTINGS_MODULE=smartassist.settings \
                         DJANGO_ALLOWED_HOSTS=127.0.0.1 \
                         DJANGO_CSRF_TRUSTED_ORIGINS=http://127.0.0.1:8003 \
+                        DJANGO_CACHE_URL=redis://127.0.0.1:6379/0 \
                         DJANGO_DEBUG=False \
                         "$CI_VENV/bin/python" -c 'import smartassist.settings'; then
                         echo 'Production settings accepted a missing DJANGO_SECRET_KEY.'

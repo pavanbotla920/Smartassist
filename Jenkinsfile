@@ -17,7 +17,7 @@ pipeline {
     environment {
         CI_VENV = '.venv-ci'
         DJANGO_DB_PATH = '.ci-db.sqlite3'
-        APP_PORT = '8003'
+        APP_PORT_FILE = '.ci-app-port'
         APP_PID_FILE = '.ci-server.pid'
         APP_LOG_FILE = '.ci-server.log'
     }
@@ -82,14 +82,18 @@ PY
                     unset ci_secret
                     set -x
 
-                    if env -u DJANGO_SECRET_KEY DJANGO_ENV=production \
+                    if negative_output="$(env -u DJANGO_SECRET_KEY DJANGO_ENV=production \
                         DJANGO_SETTINGS_MODULE=smartassist.settings \
                         DJANGO_ALLOWED_HOSTS=127.0.0.1 \
                         DJANGO_CSRF_TRUSTED_ORIGINS=http://127.0.0.1:8003 \
                         DJANGO_CACHE_URL=redis://127.0.0.1:6379/0 \
                         DJANGO_DEBUG=False \
-                        "$CI_VENV/bin/python" -c 'import smartassist.settings'; then
+                        "$CI_VENV/bin/python" -c 'import smartassist.settings' 2>&1)"; then
                         echo 'Production settings accepted a missing DJANGO_SECRET_KEY.'
+                        exit 1
+                    elif ! printf '%s' "$negative_output" | grep -Fq \
+                        'ImproperlyConfigured: DJANGO_SECRET_KEY must be configured in production.'; then
+                        echo 'Production settings failed for an unexpected reason during the missing-secret test.'
                         exit 1
                     fi
                 '''
@@ -106,10 +110,10 @@ PY
             steps {
                 sh '''
                     set -eu
-                    if curl --fail --silent --show-error "http://127.0.0.1:$APP_PORT/" -o /dev/null; then
-                        echo "Port $APP_PORT is already in use; refusing to test an unrelated process."
-                        exit 1
-                    fi
+                    rm -f "$APP_PORT_FILE" "$APP_PID_FILE"
+                    APP_PORT="$("$CI_VENV/bin/python" -c \
+                        'import socket; s = socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1]); s.close()')"
+                    printf '%s\n' "$APP_PORT" > "$APP_PORT_FILE"
                     "$CI_VENV/bin/python" manage.py migrate --noinput
                     nohup "$CI_VENV/bin/python" manage.py runserver --noreload "0.0.0.0:$APP_PORT" \
                         > "$APP_LOG_FILE" 2>&1 &
@@ -122,6 +126,11 @@ PY
             steps {
                 sh '''
                     set -eu
+                    if [ ! -s "$APP_PORT_FILE" ]; then
+                        echo "Application port file is missing."
+                        exit 1
+                    fi
+                    APP_PORT="$(cat "$APP_PORT_FILE")"
                     url="http://127.0.0.1:$APP_PORT/"
                     ready=false
                     for attempt in $(seq 1 60); do
@@ -197,12 +206,19 @@ PY
             sh '''
                 if [ -f "$APP_PID_FILE" ]; then
                     pid="$(cat "$APP_PID_FILE")"
-                    if kill -0 "$pid" 2>/dev/null; then
-                        kill "$pid" || true
+                    if [ -f "$APP_PORT_FILE" ]; then
+                        port="$(cat "$APP_PORT_FILE")"
+                        command="$(ps -p "$pid" -o args= 2>/dev/null || true)"
+                        case "$command" in
+                            *"manage.py runserver --noreload 0.0.0.0:$port"*)
+                                kill "$pid" || true
+                                ;;
+                        esac
                     fi
                     rm -f "$APP_PID_FILE"
                 fi
                 rm -f "$APP_LOG_FILE"
+                rm -f "$APP_PORT_FILE"
                 rm -f "$DJANGO_DB_PATH" "$DJANGO_DB_PATH"-journal "$DJANGO_DB_PATH"-wal "$DJANGO_DB_PATH"-shm
             '''
             echo 'SmartAssist-Kisan CI/CD pipeline finished.'

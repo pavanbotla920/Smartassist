@@ -38,13 +38,13 @@ pipeline {
                     set -eu
                     command -v python3
                     python3 - <<'PY'
-                    import sys
-                    if sys.version_info < (3, 12):
-                        raise SystemExit(
-                            f"Python 3.12+ is required; found {sys.version.split()[0]}"
-                        )
-                    print(f"Using Python {sys.version.split()[0]}")
-                    PY
+import sys
+if sys.version_info < (3, 12):
+    raise SystemExit(
+        f"Python 3.12+ is required; found {sys.version.split()[0]}"
+    )
+print(f"Using Python {sys.version.split()[0]}")
+PY
                     python3 -m venv "$CI_VENV"
                     "$CI_VENV/bin/python" -m pip install --upgrade pip
                     "$CI_VENV/bin/python" -m pip install -r requirements.txt

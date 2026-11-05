@@ -10,7 +10,7 @@ pipeline {
         booleanParam(
             name: 'BUILD_DOCKER_IMAGE',
             defaultValue: false,
-            description: 'Build the Docker image after CI checks; never publishes it.'
+            description: 'Build and publish the Docker image after CI and Selenium checks.'
         )
     }
 
@@ -152,17 +152,38 @@ pipeline {
                 '''
             }
         }
-
-        stage('Docker Build') {
+        stage('Docker Build and Hub Push') {
             when {
                 expression { params.BUILD_DOCKER_IMAGE }
             }
             steps {
-                sh '''
-                    docker build \
-                        -t smartassist-kisan:ci \
-                        .
-                '''
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-credentials',
+                        usernameVariable: 'DOCKERHUB_USERNAME',
+                        passwordVariable: 'DOCKERHUB_TOKEN'
+                    )
+                ]) {
+                    sh '''
+                        set +x
+                        set -eu
+
+                        trap 'docker logout >/dev/null 2>&1 || true' EXIT
+
+                        IMAGE="pavanbotla/smartassist-kisan"
+
+                        docker build \
+                            -t "$IMAGE:1.0.1" \
+                            -t "$IMAGE:latest" .
+
+                        echo "$DOCKERHUB_TOKEN" | docker login \
+                            --username "$DOCKERHUB_USERNAME" \
+                            --password-stdin
+
+                        docker push "$IMAGE:1.0.1"
+                        docker push "$IMAGE:latest"
+                    '''
+                }
             }
         }
     }

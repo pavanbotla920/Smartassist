@@ -26,8 +26,14 @@
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label" for="notes">{% trans "Notes" %}</label>
-                            <textarea class="form-control" id="notes" name="notes" rows="4">{{ application.notes|default:'' }}</textarea>
+                            <label class="form-label" for="notes">{% trans "Internal Admin Notes (private)" %}</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="4" aria-describedby="notes-help">{{ application.notes|default:'' }}</textarea>
+                            <div class="form-text" id="notes-help">{% trans "Visible only to authorized staff. These notes are never sent to the farmer." %}</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="farmer_message">{% trans "Message to Farmer (visible)" %}</label>
+                            <textarea class="form-control" id="farmer_message" name="farmer_message" rows="4" aria-describedby="farmer-message-help">{{ application.farmer_message|default:'' }}</textarea>
+                            <div class="form-text" id="farmer-message-help">{% trans "This message will appear in the farmer's Notification Center and email. Leave blank for a default status message." %}</div>
                         </div>
                         <button class="btn btn-primary" type="submit">{% trans "Save status" %}</button>
                         <a class="btn btn-outline-secondary" href="{% url 'admin_dashboard' %}">{% trans "Cancel" %}</a>

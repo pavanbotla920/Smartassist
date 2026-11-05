@@ -2673,6 +2673,9 @@ msgstr "चयनित योजना का विवरण"
 msgid "Choose a state to view scheme intelligence and details."
 msgstr "योजना संबंधी जानकारी और विवरण देखने के लिए कोई राज्य चुनें।"
 
+msgid "Viewing welfare schemes for {state}."
+msgstr "{state} के लिए कल्याणकारी योजनाओं की जानकारी।"
+
 msgid "Tap Listen on any card to play the natural Indian voice version."
 msgstr "प्राकृतिक भारतीय आवाज़ सुनने के लिए किसी भी कार्ड पर सुनें दबाएँ।"
 

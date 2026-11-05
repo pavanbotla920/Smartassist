@@ -2677,6 +2677,9 @@ msgstr "ఎంచుకున్న పథకం వివరాలు"
 msgid "Choose a state to view scheme intelligence and details."
 msgstr "పథకాల సమాచారం మరియు వివరాలను చూడటానికి ఒక రాష్ట్రాన్ని ఎంచుకోండి."
 
+msgid "Viewing welfare schemes for {state}."
+msgstr "{state} కోసం సంక్షేమ పథకాల సమాచారం."
+
 msgid "Tap Listen on any card to play the natural Indian voice version."
 msgstr "సహజమైన భారతీయ స్వరాన్ని వినడానికి ఏదైనా కార్డ్‌లో వినండి నొక్కండి."
 

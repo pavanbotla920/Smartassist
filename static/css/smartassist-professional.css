@@ -83,6 +83,37 @@ body {
 .navbar .dropdown-menu { border: 1px solid var(--sa-border); border-radius: 9px; box-shadow: var(--sa-shadow); }
 .navbar-toggler { border-color: var(--sa-border); border-radius: 8px; padding: .38rem .55rem; }
 .navbar-toggler:focus { box-shadow: 0 0 0 3px rgba(37, 99, 235, .14); }
+.sa-notification-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  color: #334155;
+  text-decoration: none;
+}
+.sa-notification-link:hover,
+.sa-notification-link:focus-visible {
+  color: var(--sa-blue);
+  background: #eff6ff;
+}
+.sa-notification-count {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: .68rem;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+}
 
 .sa-home { color: var(--sa-ink); }
 .sa-hero {
@@ -153,6 +184,7 @@ body {
   .navbar .navbar-collapse { padding: .5rem 0 .75rem; }
   .navbar .navbar-nav { gap: .1rem; }
   .navbar .btn { margin: .2rem 0; }
+  .sa-notification-link { margin: .25rem 0; }
 }
 @media (max-width: 768px) {
   .navbar { min-height: 64px; }
@@ -168,4 +200,111 @@ body {
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+
+/* Dev visual language (green/cream/gold) applied to all pages via .sa-dev-page.
+   The recommendation wizard also uses these variables for its styling. */
+.sa-dev-page {
+  --sa-ink: #0b2e24;
+  --sa-ink-2: #0e3a2c;
+  --sa-emerald: #10553e;
+  --sa-leaf: #1fa971;
+  --sa-gold: #d9a84e;
+  --sa-gold-deep: #b8862f;
+  --sa-gold-soft: #f4e8ce;
+  --sa-ivory: #f7f1e3;
+  --sa-paper: #faf7ef;
+  --sa-card: #ffffff;
+  --sa-text: #1f2a26;
+  --sa-muted: #5d6b64;
+  --sa-line: rgba(11, 46, 36, .12);
+  --sa-font-display: Georgia, "Times New Roman", serif;
+  --sa-font-body: "Segoe UI", system-ui, sans-serif;
+  --sa-radius: 16px;
+  --sa-radius-sm: 12px;
+  --sa-radius-lg: 24px;
+  --sa-shadow: 0 14px 30px rgba(11, 46, 36, .1);
+  --sa-shadow-lg: 0 24px 48px rgba(11, 46, 36, .16);
+  --sa-ease: cubic-bezier(.22, .61, .36, 1);
+  background: var(--sa-paper);
+  color: var(--sa-text);
+  font-family: var(--sa-font-body);
+}
+
+.sa-dev-page h1,
+.sa-dev-page h2,
+.sa-dev-page h3,
+.sa-dev-page h4,
+.sa-dev-page h5,
+.sa-dev-page h6 {
+  font-family: var(--sa-font-display);
+  color: var(--sa-ink);
+}
+
+.sa-dev-page .navbar {
+  background: var(--sa-ink) !important;
+  border-bottom: 1px solid rgba(217, 168, 78, .35);
+  box-shadow: 0 4px 18px rgba(11, 46, 36, .16) !important;
+}
+
+.sa-dev-page .navbar-brand,
+.sa-dev-page .navbar .nav-link,
+.sa-dev-page .navbar .navbar-toggler {
+  color: #fff !important;
+}
+
+.sa-dev-page .navbar .nav-link:hover,
+.sa-dev-page .navbar .nav-link:focus-visible,
+.sa-dev-page .navbar .nav-link.active {
+  color: var(--sa-gold) !important;
+  background: rgba(255, 255, 255, .08);
+}
+
+.sa-dev-page .navbar .btn-outline-primary {
+  color: #fff;
+  border-color: rgba(255, 255, 255, .55);
+}
+
+.sa-dev-page .navbar .btn-outline-primary:hover,
+.sa-dev-page .navbar .btn-outline-primary:focus-visible {
+  color: var(--sa-ink);
+  background: var(--sa-gold);
+  border-color: var(--sa-gold);
+}
+
+.sa-dev-page .site-language-label {
+  color: rgba(255, 255, 255, .8) !important;
+}
+
+.sa-dev-page .site-language-select {
+  border-color: rgba(255, 255, 255, .35) !important;
+  color: var(--sa-ink) !important;
+}
+
+.sa-dev-page .dropdown-menu {
+  border-color: var(--sa-line);
+  box-shadow: var(--sa-shadow);
+}
+
+.sa-dev-page .dropdown-item.active,
+.sa-dev-page .dropdown-item:hover,
+.sa-dev-page .dropdown-item:focus-visible {
+  color: var(--sa-ink);
+  background: var(--sa-gold-soft);
+}
+
+.sa-dev-page :focus-visible {
+  outline: 3px solid rgba(217, 168, 78, .8);
+  outline-offset: 2px;
+}
+
+.sa-dev-page .gov-footer {
+  color: rgba(255, 255, 255, .82);
+  background: var(--sa-ink);
+  border-top-color: rgba(217, 168, 78, .35);
+  box-shadow: 0 -10px 35px rgba(11, 46, 36, .18);
+}
+
+.sa-dev-page .gov-footer::before {
+  background: linear-gradient(90deg, var(--sa-gold), var(--sa-leaf), var(--sa-gold));
 }

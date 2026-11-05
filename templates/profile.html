@@ -1,128 +1,389 @@
 {% extends 'base.html' %}
 {% load i18n %}
 
-{% block title %}{% trans "Profile - SmartAssist" %}{% endblock %}
+{% block title %}{% trans "My Profile - SmartAssist" %}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .profile-page {
+        min-height: calc(100vh - 72px);
+        padding: 3rem 1rem 5rem;
+        background: #f7f3e9;
+    }
+
+    .profile-layout {
+        display: grid;
+        grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+        gap: 1.75rem;
+        max-width: 1080px;
+        margin: 0 auto;
+        align-items: start;
+    }
+
+    .profile-card,
+    .profile-form-card {
+        border: 1px solid #e2dfd5;
+        border-radius: 16px;
+        background: #fff;
+        box-shadow: 0 10px 28px rgba(22, 51, 40, 0.08);
+    }
+
+    .profile-card {
+        padding: 1.75rem 1.25rem;
+        text-align: center;
+        position: sticky;
+        top: 1.25rem;
+    }
+
+    .profile-avatar {
+        width: 82px;
+        height: 82px;
+        margin: 0 auto 1rem;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background: #0b2e24;
+        color: #f4c542;
+        font-size: 2rem;
+        font-weight: 800;
+    }
+
+    .profile-card h1 {
+        margin: 0;
+        color: #183f31;
+        font-size: 1.25rem;
+    }
+
+    .profile-card .profile-email {
+        margin: .35rem 0 1.5rem;
+        color: #68756f;
+        font-size: .9rem;
+        overflow-wrap: anywhere;
+    }
+
+    .profile-progress-label {
+        display: flex;
+        justify-content: space-between;
+        gap: .75rem;
+        margin-bottom: .5rem;
+        color: #405148;
+        font-size: .85rem;
+        font-weight: 700;
+    }
+
+    .profile-progress {
+        height: 9px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #e7e8df;
+    }
+
+    .profile-progress span {
+        display: block;
+        width: {{ profile_completion }}%;
+        height: 100%;
+        border-radius: inherit;
+        background: #d8a928;
+    }
+
+    .profile-form-card {
+        padding: 2rem;
+    }
+
+    .profile-header {
+        margin-bottom: 1.75rem;
+    }
+
+    .profile-header h2 {
+        margin: 0 0 .35rem;
+        color: #0b2e24;
+        font-size: clamp(1.5rem, 2vw, 2rem);
+    }
+
+    .profile-header p {
+        margin: 0;
+        color: #68756f;
+    }
+
+    .profile-alert,
+    .profile-errors {
+        display: flex;
+        gap: .65rem;
+        padding: .85rem 1rem;
+        margin-bottom: 1.25rem;
+        border-radius: 10px;
+        color: #7b2f25;
+        background: #fff2ef;
+        border: 1px solid #efc5bd;
+    }
+
+    .profile-section {
+        padding-top: 1.5rem;
+        margin-top: 1.5rem;
+        border-top: 1px solid #e8e6de;
+    }
+
+    .profile-section:first-of-type {
+        padding-top: 0;
+        margin-top: 0;
+        border-top: 0;
+    }
+
+    .profile-section h3 {
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        margin: 0 0 1rem;
+        color: #174f3b;
+        font-size: 1.05rem;
+    }
+
+    .profile-section h3 i {
+        color: #c5961f;
+    }
+
+    .profile-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem 1.1rem;
+    }
+
+    .profile-field label {
+        display: block;
+        margin-bottom: .4rem;
+        color: #34463e;
+        font-size: .88rem;
+        font-weight: 700;
+    }
+
+    .profile-field input,
+    .profile-field select {
+        width: 100%;
+        min-height: 44px;
+        padding: .65rem .75rem;
+        border: 1px solid #cfd7d0;
+        border-radius: 9px;
+        color: #263b32;
+        background: #fff;
+        box-sizing: border-box;
+    }
+
+    .profile-field input:focus,
+    .profile-field select:focus {
+        outline: 3px solid rgba(216, 169, 40, .24);
+        border-color: #174f3b;
+    }
+
+    .profile-error {
+        margin-top: .35rem;
+        color: #a13b2e;
+        font-size: .8rem;
+    }
+
+    .profile-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 1.75rem;
+    }
+
+    .profile-submit {
+        min-height: 45px;
+        padding: .7rem 1.35rem;
+        border: 0;
+        border-radius: 9px;
+        color: #fff;
+        background: #0b2e24;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .profile-submit:hover {
+        background: #174f3b;
+    }
+
+    @media (max-width: 760px) {
+        .profile-page {
+            padding: 1.5rem .75rem 3rem;
+        }
+
+        .profile-layout,
+        .profile-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .profile-card {
+            position: static;
+        }
+
+        .profile-form-card {
+            padding: 1.25rem;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .profile-submit {
+            transition: none;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <script id="location-data" type="application/json">{{ location_json|safe }}</script>
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow">
-                <div class="card-header bg-info text-white">
-                    <h4 class="mb-0">
-                        <i class="fas fa-user-edit"></i>
-                        {% trans "Update Profile" %}
-                    </h4>
-                </div>
-                <div class="card-body">
-                    <form method="POST">
-                        {% csrf_token %}
-
-                        <h5 class="mb-3">{% trans "Account Information" %}</h5>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                {{ user_form.username.label_tag }}
-                                {{ user_form.username }}
-                                {% if user_form.username.errors %}
-                                    <div class="text-danger small">{{ user_form.username.errors }}</div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                {{ user_form.email.label_tag }}
-                                {{ user_form.email }}
-                                {% if user_form.email.errors %}
-                                    <div class="text-danger small">{{ user_form.email.errors }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <h5 class="mb-3">{% trans "Personal Information" %}</h5>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                {{ profile_form.phone.label_tag }}
-                                {{ profile_form.phone }}
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                {{ profile_form.age.label_tag }}
-                                {{ profile_form.age }}
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                {{ profile_form.gender.label_tag }}
-                                {{ profile_form.gender }}
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                {{ profile_form.education.label_tag }}
-                                {{ profile_form.education }}
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                {{ profile_form.state.label_tag }}
-                                <select name="{{ profile_form.state.html_name }}" id="id_state">
-                                    <option value="">{% trans "Select state" %}</option>
-                                    {% for value, label in state_choices %}
-                                        <option value="{{ value }}" {% if profile_form.state.value == value %}selected{% endif %}>{{ label }}</option>
-                                    {% endfor %}
-                                    {% if profile_form.state.value and profile_form.state.value not in state_values %}
-                                        <option value="{{ profile_form.state.value }}" selected>{{ profile_form.state.value }}</option>
-                                    {% endif %}
-                                </select>
-                                {% if profile_form.state.errors %}
-                                    <div class="text-danger small">{{ profile_form.state.errors }}</div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                {{ profile_form.district.label_tag }}
-                                <select name="{{ profile_form.district.html_name }}" id="id_district"
-                                        data-selected-district="{{ profile_form.district.value|default:'' }}">
-                                    <option value="">{% trans "Select district" %}</option>
-                                </select>
-                                {% if profile_form.district.errors %}
-                                    <div class="text-danger small">{{ profile_form.district.errors }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                {{ profile_form.income_range.label_tag }}
-                                {{ profile_form.income_range }}
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                {{ profile_form.category.label_tag }}
-                                {{ profile_form.category }}
-                            </div>
-                        </div>
-
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-info">
-                                <i class="fas fa-save"></i>
-                                {% trans "Update Profile" %}
-                            </button>
-                        </div>
-                    </form>
-                </div>
+<main class="profile-page">
+    <div class="profile-layout">
+        <aside class="profile-card" aria-labelledby="profile-summary-title">
+            <div class="profile-avatar" aria-hidden="true">{{ request.user.username|first|upper }}</div>
+            <h1 id="profile-summary-title">{{ request.user.get_full_name|default:request.user.username }}</h1>
+            <p class="profile-email">
+                {% if request.user.email %}{{ request.user.email }}{% else %}{% trans "Add an email address" %}{% endif %}
+            </p>
+            <div class="profile-progress-label">
+                <span>{% trans "Profile completeness" %}</span>
+                <span>{{ profile_completion }}%</span>
             </div>
-        </div>
+            <div class="profile-progress" role="progressbar" aria-valuenow="{{ profile_completion }}" aria-valuemin="0" aria-valuemax="100">
+                <span></span>
+            </div>
+        </aside>
+
+        <section class="profile-form-card" aria-labelledby="profile-title">
+            <header class="profile-header">
+                <h2 id="profile-title">{% trans "Update Profile" %}</h2>
+                <p>{% trans "Keep your details up to date for better scheme recommendations." %}</p>
+            </header>
+
+            {% if user_form.errors or profile_form.errors %}
+                <div class="profile-alert" role="alert">
+                    <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
+                    <span>{% trans "Please check the highlighted fields and try again." %}</span>
+                </div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+
+                <section class="profile-section" aria-labelledby="account-heading">
+                    <h3 id="account-heading"><i class="fas fa-user-lock" aria-hidden="true"></i>{% trans "Account Information" %}</h3>
+                    <div class="profile-grid">
+                        <div class="profile-field">
+                            {{ user_form.username.label_tag }}
+                            {{ user_form.username }}
+                            {% for error in user_form.username.errors %}<div class="profile-error">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="profile-field">
+                            {{ user_form.email.label_tag }}
+                            {{ user_form.email }}
+                            {% for error in user_form.email.errors %}<div class="profile-error">{{ error }}</div>{% endfor %}
+                        </div>
+                    </div>
+                </section>
+
+                <section class="profile-section" aria-labelledby="personal-heading">
+                    <h3 id="personal-heading"><i class="fas fa-id-card" aria-hidden="true"></i>{% trans "Personal Details" %}</h3>
+                    <div class="profile-grid">
+                        <div class="profile-field">
+                            {{ profile_form.phone.label_tag }}
+                            {{ profile_form.phone }}
+                            {% for error in profile_form.phone.errors %}<div class="profile-error">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="profile-field">
+                            {{ profile_form.age.label_tag }}
+                            {{ profile_form.age }}
+                            {% for error in profile_form.age.errors %}<div class="profile-error">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="profile-field">
+                            {{ profile_form.gender.label_tag }}
+                            {{ profile_form.gender }}
+                            {% for error in profile_form.gender.errors %}<div class="profile-error">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="profile-field">
+                            {{ profile_form.education.label_tag }}
+                            {{ profile_form.education }}
+                            {% for error in profile_form.education.errors %}<div class="profile-error">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="profile-field">
+                            {{ profile_form.income_range.label_tag }}
+                            {{ profile_form.income_range }}
+                            {% for error in profile_form.income_range.errors %}<div class="profile-error">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="profile-field">
+                            {{ profile_form.category.label_tag }}
+                            {{ profile_form.category }}
+                            {% for error in profile_form.category.errors %}<div class="profile-error">{{ error }}</div>{% endfor %}
+                        </div>
+                    </div>
+                </section>
+
+                <section class="profile-section" aria-labelledby="location-heading">
+                    <h3 id="location-heading"><i class="fas fa-location-dot" aria-hidden="true"></i>{% trans "Location Details" %}</h3>
+                    <div class="profile-grid">
+                        <div class="profile-field">
+                            {{ profile_form.state.label_tag }}
+                            <select name="{{ profile_form.state.html_name }}" id="id_state">
+                                <option value="">{% trans "Select state" %}</option>
+                                {% for value, label in state_choices %}
+                                    {% if value %}<option value="{{ value }}" {% if profile_form.state.value == value %}selected{% endif %}>{{ label }}</option>{% endif %}
+                                {% endfor %}
+                                {% if profile_form.state.value and profile_form.state.value not in state_values %}
+                                    <option value="{{ profile_form.state.value }}" selected>{{ profile_form.state.value }}</option>
+                                {% endif %}
+                            </select>
+                            {% for error in profile_form.state.errors %}<div class="profile-error">{{ error }}</div>{% endfor %}
+                        </div>
+                        <div class="profile-field">
+                            {{ profile_form.district.label_tag }}
+                            <select name="{{ profile_form.district.html_name }}" id="id_district" data-selected-district="{{ profile_form.district.value|default:'' }}">
+                                <option value="">{% trans "Select district" %}</option>
+                            </select>
+                            {% for error in profile_form.district.errors %}<div class="profile-error">{{ error }}</div>{% endfor %}
+                        </div>
+                    </div>
+                </section>
+
+                <section class="profile-section" aria-labelledby="farmer-heading">
+                    <h3 id="farmer-heading"><i class="fas fa-tractor" aria-hidden="true"></i>{% trans "Farmer Details" %}</h3>
+                    <div class="profile-grid">
+                        {% for field in profile_form %}
+                            {% if field.name == "taluka" or field.name == "village_panchayat" or field.name == "rural_urban" or field.name == "pin_code" or field.name == "family_size" or field.name == "occupation" or field.name == "farmer_type" or field.name == "ration_card_type" %}
+                                <div class="profile-field">
+                                    {{ field.label_tag }}{{ field }}
+                                    {% for error in field.errors %}<div class="profile-error">{{ error }}</div>{% endfor %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <section class="profile-section" aria-labelledby="land-heading">
+                    <h3 id="land-heading"><i class="fas fa-seedling" aria-hidden="true"></i>{% trans "Land and Crop Details" %}</h3>
+                    <div class="profile-grid">
+                        {% for field in profile_form %}
+                            {% if field.name == "landholding_size" or field.name == "ownership_type" or field.name == "crops_grown" %}
+                                <div class="profile-field">
+                                    {{ field.label_tag }}{{ field }}
+                                    {% for error in field.errors %}<div class="profile-error">{{ error }}</div>{% endfor %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                        <div class="profile-field" style="grid-column: 1 / -1;">
+                            {{ profile_form.livestock_assets.label_tag }}
+                            {{ profile_form.livestock_assets }}
+                            {% for error in profile_form.livestock_assets.errors %}<div class="profile-error">{{ error }}</div>{% endfor %}
+                        </div>
+                    </div>
+                </section>
+
+                <div class="profile-actions">
+                    <button class="profile-submit" type="submit">
+                        <i class="fas fa-save" aria-hidden="true"></i>
+                        {% trans "Save Changes" %}
+                    </button>
+                </div>
+            </form>
+        </section>
     </div>
-</div>
-
-<style>
-form label {
-    font-weight: 500;
-    color: #495057;
-    margin-bottom: 0.5rem;
-}
-
-form input, form select {
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid #ced4da;
-    border-radius: 0.375rem;
-}
-</style>
+</main>
 {% endblock %}
 
 {% block extra_js %}
@@ -141,20 +402,19 @@ form input, form select {
         return;
     }
 
-    const selectedDistrict = districtSelect.dataset.selectedDistrict || '';
-    const updateDistricts = () => {
-        const districts = locations[stateSelect.value] || [];
-        districtSelect.replaceChildren(new Option('{% trans "Select district" %}', ''));
-        districts.forEach((district) => {
+    const placeholder = '{% trans "Select district" %}';
+    const updateDistricts = (selectedDistrict = '') => {
+        districtSelect.replaceChildren(new Option(placeholder, ''));
+        (locations[stateSelect.value] || []).forEach((district) => {
             districtSelect.add(new Option(district, district, false, district === selectedDistrict));
         });
     };
 
+    updateDistricts(districtSelect.dataset.selectedDistrict || '');
     stateSelect.addEventListener('change', () => {
         districtSelect.dataset.selectedDistrict = '';
         updateDistricts();
     });
-    updateDistricts();
 })();
 </script>
 {% endblock %}

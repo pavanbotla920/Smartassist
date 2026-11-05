@@ -3,520 +3,92 @@
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE }}">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="icon" href="data:," />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
   <title>{% trans "Explore Government Schemes Across India" %}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="{% static 'css/language-switcher.css' %}" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <style>
-    body { font-family: 'Inter', sans-serif; background: #020617; color: #e2e8f0; }
-    .glass-card { background: rgba(15, 23, 42, 0.72); backdrop-filter: blur(18px); border: 1px solid rgba(255,255,255,0.08); }
-    .glow-border { box-shadow: 0 0 28px rgba(16, 185, 129, 0.22), inset 0 0 1px rgba(255,255,255,0.08); }
-    .neon-badge { background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.24); color: #8affd0; }
-    .leaflet-container { border-radius: 1.75rem !important; overflow: hidden; }
-    .scheme-card { transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease; }
-    .scheme-card:hover { transform: translateY(-6px); box-shadow: 0 28px 80px rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.36); }
-    .state-tooltip { pointer-events: none; position: absolute; z-index: 50; min-width: 230px; max-width: 280px; background: rgba(15, 23, 42, 0.94); border: 1px solid rgba(16, 185, 129, 0.32); backdrop-filter: blur(20px); box-shadow: 0 30px 80px rgba(16, 185, 129, 0.16); border-radius: 1.25rem; color: #f8fafc; padding: 1rem 1.1rem; opacity: 0; transform: translate(-50%, -120%) scale(0.94); transition: opacity 180ms ease, transform 180ms ease; }
-    .state-tooltip.visible { opacity: 1; transform: translate(-50%, -120%) scale(1); }
-    .gradient-text { background: linear-gradient(90deg, #22d3ee, #84cc16, #14b8a6); -webkit-background-clip: text; color: transparent; }
-    .pulse-ring { border-radius: 9999px; animation: pulseRing 2.5s ease-out infinite; }
-    @keyframes pulseRing { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.28); } 70% { box-shadow: 0 0 0 28px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
-    .floating-blob { position: absolute; border-radius: 56%; filter: blur(48px); opacity: 0.55; }
-    .fade-in-up { animation: fadeUp 0.7s ease both; }
-    .audio-panel { position: fixed; right: 1.5rem; bottom: 1.5rem; z-index: 50; width: min(380px, calc(100% - 2rem)); max-width: 380px; }
-    .audio-button { min-width: 86px; }
-    .audio-wave { min-height: 40px; }
-    .wave-bar { display: inline-block; width: 5px; height: 14px; border-radius: 9999px; background: linear-gradient(180deg, #22d3ee 0%, #0f766e 100%); opacity: 0.48; transform-origin: bottom; animation: wavePulse 1.2s ease-in-out infinite; }
-    .wave-bar:nth-child(1) { animation-delay: 0.05s; }
-    .wave-bar:nth-child(2) { animation-delay: 0.18s; }
-    .wave-bar:nth-child(3) { animation-delay: 0.32s; }
-    .wave-bar:nth-child(4) { animation-delay: 0.46s; }
-    .wave-bar:nth-child(5) { animation-delay: 0.58s; }
-    .wave-bar.active { opacity: 1; animation: wavePulse 0.7s ease-in-out infinite; }
-    @keyframes wavePulse { 0%,100% { transform: scaleY(0.6); } 50% { transform: scaleY(1.8); } }
-    .audio-spinner { width: 22px; height: 22px; border: 2px solid rgba(148, 163, 184, 0.25); border-top-color: #22d3ee; border-radius: 9999px; animation: spin 0.95s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
-  </style>
+  <link rel="stylesheet" href="{% static 'css/language-switcher.css' %}">
+  <link rel="stylesheet" href="{% static 'css/smartassist-portal.css' %}">
+  <link rel="stylesheet" href="{% static 'css/india-map.css' %}">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
 </head>
-<body class="relative overflow-x-hidden"
-      data-overview-url="{% url 'india_map_overview_api' %}"
-      data-state-api-url="{% url 'state_schemes_api' state_name='__state__' %}"
-      data-state-dashboard-url="{% url 'state_dashboard' state_name='__state__' %}">
-  <div class="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.12),_transparent_33%),radial-gradient(circle_at_25%_40%,_rgba(56,189,248,0.14),_transparent_25%),linear-gradient(180deg,_rgba(4,8,27,0.95),_rgba(7,9,30,0.98))]"></div>
-  <div class="floating-blob w-72 h-72 left-1/4 top-10 bg-cyan-400/20"></div>
-  <div class="floating-blob w-80 h-80 right-20 top-44 bg-emerald-400/18"></div>
-  <div class="floating-blob w-64 h-64 left-10 bottom-24 bg-sky-500/15"></div>
-
-  <div class="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-    <div class="mb-4 flex justify-end">
-      {% include "partials/language_selector.html" %}
+<body class="india-map-page"
+  data-overview-url="{% url 'india_map_overview_api' %}"
+  data-state-api-url="{% url 'state_schemes_api' state_name='__state__' %}"
+  data-state-dashboard-url="{% url 'state_dashboard' state_name='__state__' %}"
+  data-geojson-url="{% static 'india_states.geojson' %}"
+  data-map-unavailable="{% trans 'Data unavailable' %}"
+  data-map-load-error="{% trans 'The map could not be loaded. Please refresh and try again.' %}"
+  data-map-schemes-label="{% trans 'schemes' %}"
+  data-map-central-label="{% trans 'central' %}"
+  data-map-state-label="{% trans 'state' %}"
+  data-map-selected-label="{% trans 'State selected' %}"
+  data-map-viewing-label="{% trans 'Viewing welfare schemes for {state}.' %}">
+  <nav class="sa-portal-navbar" aria-label="{% trans 'Main navigation' %}">
+    <a class="sa-portal-brand" href="{% url 'home' %}"><span class="sa-portal-logo" aria-hidden="true">SA</span><span>SmartAssist</span></a>
+    <div class="sa-portal-links">
+      <a href="{% url 'home' %}">{% trans "Home" %}</a>
+      <a href="{% url 'scheme_awareness' %}">{% trans "Schemes" %}</a>
+      <a href="{% url 'india_map_schemes' %}" aria-current="page">{% trans "India Map" %}</a>
     </div>
-    <header class="mb-10 grid gap-8 rounded-[2rem] border border-white/10 bg-slate-950/75 p-8 shadow-2xl shadow-cyan-500/10 backdrop-blur-xl">
-      <div class="space-y-6">
-        <div class="inline-flex items-center gap-3 rounded-full bg-slate-900/70 px-4 py-2 text-sm text-cyan-200 ring-1 ring-cyan-500/20">
-          <span class="h-2 w-2 rounded-full bg-cyan-300 animate-pulse"></span>
-          {% trans "AI-powered public welfare analytics" %}
-        </div>
-        <div class="max-w-3xl space-y-4">
-          <h1 class="text-4xl font-semibold tracking-tight text-white sm:text-5xl">{% trans "Explore Government Schemes Across India" %}</h1>
-          <p class="text-lg leading-8 text-slate-300">{% trans "Interactive AI-powered dashboard for discovering central and state welfare schemes with modern analytics and voice-enabled insights." %}</p>
-        </div>
+    {% include "partials/language_selector.html" %}
+  </nav>
+
+  <main class="india-map-shell">
+    <header class="map-hero">
+      <div>
+        <p class="map-eyebrow">{% trans "SmartAssist · public welfare navigator" %}</p>
+        <h1>{% trans "Find the right scheme, wherever you live." %}</h1>
+        <p class="map-lede">{% trans "Explore government support across India. Select a state to see its central and local scheme coverage in plain language." %}</p>
       </div>
-      <div class="grid gap-4 sm:grid-cols-2">
-        <div class="glass-card rounded-[1.75rem] p-6 text-slate-200 shadow-xl shadow-cyan-500/10">
-          <p class="text-sm uppercase tracking-[0.28em] text-slate-400">{% trans "Platform status" %}</p>
-          <p class="mt-3 text-2xl font-semibold text-white">{% trans "Live India scheme explorer" %}</p>
-        </div>
-        <div class="glass-card rounded-[1.75rem] p-6 text-slate-200 shadow-xl shadow-emerald-500/8">
-          <p class="text-sm uppercase tracking-[0.28em] text-slate-400">{% trans "Audio support" %}</p>
-          <p class="mt-3 text-2xl font-semibold text-white">{% trans "4 languages" %}</p>
-          <p class="mt-2 text-sm leading-6 text-slate-300">{% trans "English, Hindi, Marathi, and Telugu voice assistance is available on each scheme card." %}</p>
-        </div>
-      </div>
+      <div class="map-instruction" role="note"><span aria-hidden="true">⌖</span><span>{% trans "Hover to preview · Select to explore" %}</span></div>
     </header>
 
-    <main class="grid gap-8 xl:grid-cols-[1.35fr_0.65fr]">
-      <section class="space-y-8">
-        <div class="glass-card relative overflow-hidden rounded-[2rem] border border-white/10 p-6 shadow-2xl shadow-slate-950/20">
-          <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(34,211,238,0.18),_transparent_24%),radial-gradient(circle_at_bottom_right,_rgba(132,204,22,0.18),_transparent_28%)]"></div>
-          <div class="relative z-10 flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p class="text-sm uppercase tracking-[0.32em] text-slate-400">{% trans "National Map View" %}</p>
-              <h2 class="mt-2 text-3xl font-semibold text-white">{% trans "India scheme terrain" %}</h2>
-              <p class="mt-3 max-w-xl text-sm leading-6 text-slate-300">{% trans "Hover states to preview analytics, click to open detailed schemes with voice narration." %}</p>
-            </div>
-            <div class="rounded-3xl border border-white/10 bg-slate-900/75 px-4 py-3 text-sm text-slate-200">{% trans "Hover for insights • Click for details" %}</div>
-          </div>
-          <div id="india-map" class="mt-8 h-[620px] min-h-[520px]"></div>
-          <div id="state-tooltip" class="state-tooltip"></div>
-        </div>
-
-        <section class="grid gap-6 xl:grid-cols-[1fr_1fr]">
-          <div class="glass-card rounded-[2rem] p-6 shadow-xl shadow-cyan-500/10">
-            <p class="text-xs uppercase tracking-[0.32em] text-slate-400">{% trans "Selected region" %}</p>
-            <h3 id="selected-state-name" class="mt-3 text-3xl font-semibold text-white">India</h3>
-            <p id="selected-state-subtitle" class="mt-2 text-sm text-slate-400">{% trans "Choose a state to view scheme intelligence and details." %}</p>
-          </div>
-          <div class="grid gap-4 sm:grid-cols-3">
-            <div class="glass-card rounded-[1.75rem] p-5 text-center text-slate-200">
-              <p class="text-xs uppercase tracking-[0.32em] text-slate-400">{% trans "Total schemes" %}</p>
-              <p id="scheme-count" class="mt-4 text-3xl font-semibold text-white">0</p>
-            </div>
-            <div class="glass-card rounded-[1.75rem] p-5 text-center text-slate-200">
-              <p class="text-xs uppercase tracking-[0.32em] text-slate-400">{% trans "Central schemes" %}</p>
-              <p id="central-scheme-count" class="mt-4 text-3xl font-semibold text-white">0</p>
-            </div>
-            <div class="glass-card rounded-[1.75rem] p-5 text-center text-slate-200">
-              <p class="text-xs uppercase tracking-[0.32em] text-slate-400">{% trans "State schemes" %}</p>
-              <p id="state-scheme-count" class="mt-4 text-3xl font-semibold text-white">0</p>
-            </div>
-          </div>
-        </section>
-      </section>
-
-      <aside class="space-y-6">
-        <div class="glass-card rounded-[2rem] p-6 shadow-xl shadow-slate-950/20">
-          <p class="text-sm uppercase tracking-[0.32em] text-slate-400">{% trans "Voice assistance" %}</p>
-          <h3 class="mt-3 text-xl font-semibold text-white">{% trans "Speech-enabled discovery" %}</h3>
-          <p class="mt-3 text-sm leading-6 text-slate-300">{% trans "Choose a state on the map to open its scheme list, then select a language and press Listen on the specific scheme." %}</p>
-          <p class="mt-4 text-xs leading-5 text-slate-400">{% trans "When requested, only the selected scheme’s public name, description, eligibility, and document details are sent to free online translation and speech services. No account or application data is sent. Verify eligibility with the official scheme source." %}</p>
-        </div>
-        <div class="glass-card rounded-[2rem] p-6 shadow-xl shadow-emerald-500/10">
-          <p class="text-sm uppercase tracking-[0.32em] text-slate-400">{% trans "Live scheme feed" %}</p>
-          <h3 class="mt-3 text-xl font-semibold text-white">{% trans "Always up to date" %}</h3>
-          <p class="mt-3 text-sm leading-6 text-slate-300">{% trans "Data is loaded from the backend for every state, showing central and local welfare schemes in one place." %}</p>
-        </div>
-      </aside>
-    </main>
-
-    <section class="mt-10 grid gap-6 xl:grid-cols-[0.85fr_0.45fr]">
-      <div class="glass-card rounded-[2rem] p-6 shadow-2xl shadow-slate-950/10">
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p class="text-sm uppercase tracking-[0.32em] text-slate-400">{% trans "India analytics" %}</p>
-            <h2 class="mt-2 text-3xl font-semibold text-white">{% trans "Election-style state scorecard" %}</h2>
-            <p class="mt-3 text-sm leading-6 text-slate-300">{% trans "Real-time scheme distribution, top performing states and category intelligence." %}</p>
-          </div>
-          <div class="grid gap-3 sm:grid-cols-3">
-            <div class="rounded-[1.75rem] border border-white/10 bg-slate-900/80 p-4 text-center">
-              <p class="text-xs uppercase tracking-[0.28em] text-slate-400">{% trans "Active states" %}</p>
-              <p id="active-state-count" class="mt-3 text-2xl font-semibold text-white">0</p>
-            </div>
-            <div class="rounded-[1.75rem] border border-white/10 bg-slate-900/80 p-4 text-center">
-              <p class="text-xs uppercase tracking-[0.28em] text-slate-400">{% trans "Top state" %}</p>
-              <p id="top-state-name" class="mt-3 text-2xl font-semibold text-white">—</p>
-            </div>
-            <div class="rounded-[1.75rem] border border-white/10 bg-slate-900/80 p-4 text-center">
-              <p class="text-xs uppercase tracking-[0.28em] text-slate-400">{% trans "Top category" %}</p>
-              <p id="top-category-name" class="mt-3 text-2xl font-semibold text-white">—</p>
-            </div>
-          </div>
-        </div>
-        <div class="mt-8 grid gap-6 lg:grid-cols-2">
-          <div class="rounded-[1.75rem] border border-white/10 bg-slate-950/80 p-5">
-            <p class="text-sm uppercase tracking-[0.28em] text-slate-400">{% trans "Scheme mix" %}</p>
-            <div class="chart-container">
-              <canvas id="categoryChart"></canvas>
-            </div>
-          </div>
-          <div class="grid gap-6">
-            <div class="rounded-[1.75rem] border border-white/10 bg-slate-950/80 p-5">
-              <p class="text-sm uppercase tracking-[0.28em] text-slate-400">{% trans "Scheme balance" %}</p>
-              <div class="chart-container">
-                <canvas id="centralBarChart"></canvas>
-              </div>
-            </div>
-            <div class="rounded-[1.75rem] border border-white/10 bg-slate-950/80 p-5">
-              <p class="text-sm uppercase tracking-[0.28em] text-slate-400">{% trans "State leaders" %}</p>
-              <div class="chart-container">
-                <canvas id="topStatesChart"></canvas>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <section class="map-kpis" aria-label="{% trans 'India scheme summary' %}">
+      <article class="map-kpi"><span class="kpi-icon" aria-hidden="true">◌</span><div><p>{% trans "States & UTs covered" %}</p><strong id="active-state-count" aria-live="polite">—</strong></div></article>
+      <article class="map-kpi"><span class="kpi-icon" aria-hidden="true">▦</span><div><p>{% trans "Total schemes" %}</p><strong id="overview-total">—</strong></div></article>
+      <article class="map-kpi"><span class="kpi-icon" aria-hidden="true">◎</span><div><p>{% trans "Central schemes" %}</p><strong id="overview-central">—</strong></div></article>
+      <article class="map-kpi"><span class="kpi-icon" aria-hidden="true">⌂</span><div><p>{% trans "State schemes" %}</p><strong id="overview-state">—</strong></div></article>
     </section>
 
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script>
-    const mapI18n = {
-      schemes: '{% trans "Schemes" %}',
-      totalSchemes: '{% trans "Total Schemes" %}',
-      centralSchemes: '{% trans "Central Schemes" %}',
-      stateSchemes: '{% trans "State Schemes" %}',
-      central: '{% trans "Central" %}',
-      state: '{% trans "State" %}',
-      unavailable: '{% trans "Unavailable" %}',
-      stateInsight: '{% trans "State insight" %}',
-      viewingSchemes: '{% trans "Viewing welfare schemes for {state}." %}',
-      chooseState: '{% trans "Choose a state to view scheme intelligence and details." %}',
-      mapUnavailable: '{% trans "Unable to render the India map." %}',
-    };
-
-    document.addEventListener('DOMContentLoaded', function() {
-      const stateNameElement = document.getElementById('selected-state-name');
-      const stateSubtitle = document.getElementById('selected-state-subtitle');
-      const schemeCountEl = document.getElementById('scheme-count');
-      const centralSchemeCountEl = document.getElementById('central-scheme-count');
-      const stateSchemeCountEl = document.getElementById('state-scheme-count');
-      const panelStatus = document.getElementById('panel-status');
-
-      const stateTooltip = document.getElementById('state-tooltip');
-      const activeStateCountEl = document.getElementById('active-state-count');
-      const topStateNameEl = document.getElementById('top-state-name');
-      const topCategoryNameEl = document.getElementById('top-category-name');
-      const categoryChartCtx = document.getElementById('categoryChart').getContext('2d');
-      const centralBarChartCtx = document.getElementById('centralBarChart').getContext('2d');
-      const topStatesChartCtx = document.getElementById('topStatesChart').getContext('2d');
-      let categoryChart = null;
-      let centralBarChart = null;
-      let topStatesChart = null;
-
-      // Chart initialization functions
-      const updateCategoryChart = (data) => {
-        if (categoryChart) categoryChart.destroy();
-        categoryChart = new Chart(categoryChartCtx, {
-          type: 'doughnut',
-          data: {
-            labels: data.labels,
-            datasets: [{
-              data: data.values,
-              backgroundColor: [
-                '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
-                '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6b7280'
-              ],
-              borderWidth: 0,
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                position: 'bottom',
-                labels: {
-                  color: '#e2e8f0',
-                  font: { size: 12 },
-                  padding: 20,
-                }
-              }
-            }
-          }
-        });
-      };
-
-      const updateCentralBarChart = (data) => {
-        if (centralBarChart) centralBarChart.destroy();
-        centralBarChart = new Chart(centralBarChartCtx, {
-          type: 'bar',
-          data: {
-            labels: data.labels,
-            datasets: [{
-              label: mapI18n.centralSchemes,
-              data: data.central,
-              backgroundColor: '#3b82f6',
-              borderWidth: 0,
-            }, {
-              label: mapI18n.stateSchemes,
-              data: data.state,
-              backgroundColor: '#10b981',
-              borderWidth: 0,
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              x: {
-                stacked: true,
-                ticks: { color: '#e2e8f0', font: { size: 11 } },
-                grid: { color: 'rgba(255,255,255,0.1)' }
-              },
-              y: {
-                stacked: true,
-                ticks: { color: '#e2e8f0', font: { size: 11 } },
-                grid: { color: 'rgba(255,255,255,0.1)' }
-              }
-            },
-            plugins: {
-              legend: {
-                labels: { color: '#e2e8f0' }
-              }
-            }
-          }
-        });
-      };
-
-      const updateTopStatesChart = (data) => {
-        if (topStatesChart) topStatesChart.destroy();
-        topStatesChart = new Chart(topStatesChartCtx, {
-          type: 'bar',
-          data: {
-            labels: data.labels,
-            datasets: [{
-              data: data.values,
-              backgroundColor: '#f59e0b',
-              borderWidth: 0,
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            indexAxis: 'y',
-            scales: {
-              x: {
-                ticks: { color: '#e2e8f0', font: { size: 11 } },
-                grid: { color: 'rgba(255,255,255,0.1)' }
-              },
-              y: {
-                ticks: { color: '#e2e8f0', font: { size: 11 } },
-                grid: { color: 'rgba(255,255,255,0.1)' }
-              }
-            },
-            plugins: {
-              legend: { display: false }
-            }
-          }
-        });
-      };
-
-      const loadOverviewAnalytics = async () => {
-        try {
-          const response = await fetch(document.body.dataset.overviewUrl);
-          if (!response.ok) throw new Error(`Overview request failed: ${response.status}`);
-          const data = await response.json();
-          
-          activeStateCountEl.textContent = data.active_states ?? 0;
-          topStateNameEl.textContent = data.top_state || '—';
-          topCategoryNameEl.textContent = data.top_category || '—';
-          setSummary('India', data.total_schemes, data.central_schemes, data.state_schemes);
-          
-          const categories = data.category_counts || {};
-          updateCategoryChart({
-            labels: Object.keys(categories),
-            values: Object.values(categories)
-          });
-          updateCentralBarChart({
-            labels: ['Schemes'],
-            central: [data.central_schemes || 0],
-            state: [data.state_schemes || 0]
-          });
-          updateTopStatesChart({
-            labels: (data.top_states || []).map((state) => state.state),
-            values: (data.top_states || []).map((state) => state.count)
-          });
-        } catch (error) {
-          console.error('Failed to load overview analytics:', error);
-          activeStateCountEl.textContent = '—';
-          topStateNameEl.textContent = mapI18n.unavailable;
-          topCategoryNameEl.textContent = mapI18n.unavailable;
-        }
-      };
-
-      const setSummary = (name, total, central, state) => {
-        stateNameElement.textContent = name || 'India';
-        stateSubtitle.textContent = name
-          ? mapI18n.viewingSchemes.replace('{state}', name)
-          : mapI18n.chooseState;
-        schemeCountEl.textContent = total;
-        centralSchemeCountEl.textContent = central;
-        stateSchemeCountEl.textContent = state;
-      };
-
-      const formatNumber = (value) => Number(value || 0).toLocaleString('en-IN');
-
-      const paletteForCategories = (count) => {
-        const palette = ['#22d3ee', '#38bdf8', '#60a5fa', '#22c55e', '#a855f7', '#f472b6', '#f59e0b', '#84cc16'];
-        return palette.slice(0, Math.max(count, 1));
-      };
-
-      const updateTooltipPosition = (event) => {
-        const bounds = document.getElementById('india-map').getBoundingClientRect();
-        const tooltipX = Math.min(bounds.right - 20, Math.max(bounds.left + 20, event.clientX));
-        const tooltipY = Math.max(bounds.top + 40, event.clientY - 16);
-        stateTooltip.style.left = `${tooltipX}px`;
-        stateTooltip.style.top = `${tooltipY}px`;
-      };
-
-      const hideTooltip = () => {
-        stateTooltip.classList.remove('visible');
-      };
-
-      const showTooltip = (state, total, central, stateCount) => {
-        stateTooltip.innerHTML = `
-          <div class="space-y-2">
-            <p class="text-sm uppercase tracking-[0.32em] text-slate-400">${mapI18n.stateInsight}</p>
-            <h4 class="text-lg font-semibold text-white">${state}</h4>
-            <div class="space-y-1 text-sm text-slate-300">
-              <p><span class="font-semibold text-white">${mapI18n.totalSchemes}:</span> ${total}</p>
-              <p><span class="font-semibold text-white">${mapI18n.central}:</span> ${central}</p>
-              <p><span class="font-semibold text-white">${mapI18n.state}:</span> ${stateCount}</p>
-            </div>
+    <section class="map-dashboard" aria-label="{% trans 'Interactive India map and state insight' %}">
+      <article class="map-card">
+        <div class="map-card-head">
+          <div><p class="section-label">{% trans "India map" %}</p><h2>{% trans "Scheme coverage by state" %}</h2></div>
+          <div class="map-legend" aria-label="{% trans 'Map legend' %}">
+            <span><i class="legend-swatch legend-default"></i>{% trans "Available" %}</span>
+            <span><i class="legend-swatch legend-hover"></i>{% trans "Hover" %}</span>
+            <span><i class="legend-swatch legend-selected"></i>{% trans "Selected" %}</span>
           </div>
-        `;
-        stateTooltip.classList.add('visible');
-      };
+        </div>
+        <div class="map-frame">
+          <div id="india-map" aria-label="{% trans 'Interactive map of India. Use Tab to focus states, then Enter to select.' %}"></div>
+          <div id="map-loading" class="map-overlay" role="status"><span class="loading-dot"></span>{% trans "Loading India map…" %}</div>
+          <div id="map-error" class="map-overlay map-error" role="alert" hidden></div>
+          <div id="state-tooltip" class="state-tooltip" role="status" aria-live="polite"></div>
+        </div>
+        <p id="map-announcement" class="sr-only" aria-live="polite"></p>
+      </article>
 
-      const getStateName = (feature) => {
-        return (feature.properties?.name || feature.properties?.ST_NM || feature.properties?.state || feature.properties?.STATE_NAME || '').toString().trim();
-      };
+      <aside class="insight-card" aria-labelledby="insight-title">
+        <div class="insight-top"><p class="section-label">{% trans "State insight" %}</p><span id="panel-status" class="status-pill">{% trans "Ready to explore" %}</span></div>
+        <h2 id="insight-title"><span id="selected-state-name">{% trans "Choose a state" %}</span></h2>
+        <p id="selected-state-subtitle" class="insight-copy">{% trans "Choose a state to view scheme intelligence and details." %}</p>
+        <div class="insight-stats">
+          <div><span>{% trans "Total schemes" %}</span><strong id="scheme-count">—</strong></div>
+          <div><span>{% trans "Central" %}</span><strong id="central-scheme-count">—</strong></div>
+          <div><span>{% trans "State" %}</span><strong id="state-scheme-count">—</strong></div>
+        </div>
+        <a id="view-schemes" class="insight-action is-disabled" href="#" aria-disabled="true">{% trans "View schemes" %}<span aria-hidden="true">→</span></a>
+        <div class="voice-note"><span aria-hidden="true">◖</span><div><strong>{% trans "Voice assistance is available" %}</strong><p>{% trans "Choose a state to open its scheme list, then select a language and press Listen on the specific scheme." %}</p></div></div>
+      </aside>
+    </section>
 
-      const stateMetricsCache = {};
-      const fetchStateMetrics = async (name) => {
-        if (!name) return { total: 0, central: 0, state: 0 };
-        if (stateMetricsCache[name]) return stateMetricsCache[name];
-        try {
-          const url = document.body.dataset.stateApiUrl.replace('__state__', encodeURIComponent(name));
-          const response = await fetch(url);
-          if (!response.ok) throw new Error('Metrics unavailable');
-          const schemes = await response.json();
-          const central = schemes.filter((item) => (item.scheme_type || '').toLowerCase() === 'central').length;
-          const stateOnly = schemes.filter((item) => (item.scheme_type || '').toLowerCase() !== 'central').length;
-          const metrics = { total: schemes.length, central, state: stateOnly };
-          stateMetricsCache[name] = metrics;
-          return metrics;
-        } catch (error) {
-          return { total: 0, central: 0, state: 0 };
-        }
-      };
-
-      const fetchStateSchemes = async (name) => {
-        const url = document.body.dataset.stateDashboardUrl.replace('__state__', encodeURIComponent(name));
-        window.location.href = url;
-      };
-
-      const map = L.map('india-map', {
-        center: [22.0, 79.0],
-        zoom: 5,
-        minZoom: 4,
-        maxZoom: 7,
-        zoomControl: true,
-        scrollWheelZoom: false,
-        doubleClickZoom: true,
-      });
-
-      const activeStyle = {
-        color: '#34d399',
-        weight: 3.4,
-        opacity: 1,
-        fillColor: '#0f766e',
-        fillOpacity: 0.32,
-      };
-      const hoverStyle = {
-        color: '#22d3ee',
-        weight: 2.8,
-        opacity: 1,
-        fillColor: '#0f172a',
-        fillOpacity: 0.3,
-      };
-      const defaultStyle = {
-        color: '#38bdf8',
-        weight: 1.8,
-        opacity: 0.8,
-        fillColor: '#0f172a',
-        fillOpacity: 0.16,
-        dashArray: '4 6',
-      };
-
-      let activeLayer = null;
-      const loadGeoJson = async () => {
-        const response = await fetch('{% static "india_states.geojson" %}');
-        if (!response.ok) throw new Error(`GeoJSON request failed: ${response.status}`);
-        const data = await response.json();
-        if (!data.features || !data.features.length) throw new Error('India state GeoJSON contains no features.');
-        const layer = L.geoJSON(data, {
-          style: defaultStyle,
-          onEachFeature: (feature, layer) => {
-            const stateName = getStateName(feature) || 'Unknown';
-            layer.on({
-              mouseover: async (e) => {
-                layer.setStyle(hoverStyle);
-                if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) layer.bringToFront();
-                const metrics = await fetchStateMetrics(stateName);
-                showTooltip(stateName, metrics.total, metrics.central, metrics.state);
-              },
-              mousemove: (e) => {
-                updateTooltipPosition(e.originalEvent);
-              },
-              mouseout: (e) => {
-                if (activeLayer !== e.target) layer.setStyle(defaultStyle);
-                hideTooltip();
-              },
-              click: async (e) => {
-                if (activeLayer && activeLayer !== e.target) activeLayer.setStyle(defaultStyle);
-                activeLayer = e.target;
-                layer.setStyle(activeStyle);
-                const metrics = await fetchStateMetrics(stateName);
-                showTooltip(stateName, metrics.total, metrics.central, metrics.state);
-                fetchStateSchemes(stateName);
-                map.flyToBounds(e.target.getBounds(), { duration: 0.7, padding: [30, 30] });
-              }
-            });
-          }
-        }).addTo(map);
-        map.fitBounds(layer.getBounds(), { padding: [20, 20] });
-        setTimeout(() => map.invalidateSize(), 250);
-      };
-
-      stateTooltip.addEventListener('mouseover', () => stateTooltip.classList.add('visible'));
-      stateTooltip.addEventListener('mouseleave', hideTooltip);
-      loadOverviewAnalytics();
-      loadGeoJson().catch(() => {
-        schemeCards.innerHTML = `<div class="glass-card rounded-[2rem] p-8 text-center text-slate-300">${mapI18n.mapUnavailable}</div>`;
-      });
-
-      setSummary('India', 0, 0, 0);
-    });
-  </script>
+    <section class="map-status" id="data-status" hidden></section>
+  </main>
+  <footer class="sa-portal-footer" role="contentinfo"><p>{% trans "SmartAssist Government Scheme Platform" %} · <a href="{% url 'scheme_awareness' %}">{% trans "Browse Schemes" %}</a> · <a href="{% url 'home' %}">{% trans "Home" %}</a></p></footer>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="{% static 'js/india-map.js' %}"></script>
   <script src="{% static 'js/language-switcher.js' %}"></script>
 </body>
 </html>

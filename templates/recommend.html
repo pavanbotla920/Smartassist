@@ -5,67 +5,58 @@
 
 {% block extra_head %}
 <style>
-    .sa-wizard-bg {
-        --sa-ink: #0B2E24;
-        --sa-ink-2: #0E3A2C;
-        --sa-emerald: #10553E;
-        --sa-gold: #D9A84E;
-        --sa-gold-deep: #B8862F;
-        --sa-gold-soft: #F4E8CE;
-        --sa-paper: #FAF7EF;
-        --sa-card: #FFFFFF;
-        --sa-text: #1F2A26;
-        --sa-muted: #5D6B64;
-        --sa-line: rgba(11,46,36,0.12);
-        --sa-radius: 16px;
-        --sa-radius-sm: 12px;
-        --sa-shadow-lg: 0 24px 48px rgba(11,46,36,.16);
-        --sa-ease: cubic-bezier(.22,.61,.36,1);
-        --sa-font-display: Georgia, 'Times New Roman', serif;
-        --sa-font-body: 'Segoe UI', system-ui, sans-serif;
-        background: var(--sa-paper, #faf7ef); min-height: calc(100vh - 72px); padding: 3rem 1rem 5rem;
-    }
-    .sa-wizard-card { max-width: 650px; margin: 0 auto; background: var(--sa-card, #fff); border: 1px solid var(--sa-line, rgba(11,46,36,.12)); border-radius: var(--sa-radius, 16px); box-shadow: var(--sa-shadow-lg, 0 24px 48px rgba(11,46,36,.16)); padding: 3rem 2.5rem; position: relative; overflow: hidden; }
+    .sa-wizard-bg { background: var(--sa-paper); min-height: calc(100vh - 72px); padding: 3rem 1rem 5rem; }
+    .sa-wizard-card { max-width: 650px; margin: 0 auto; background: var(--sa-card); border: 1px solid var(--sa-line); border-radius: var(--sa-radius-lg); box-shadow: var(--sa-shadow-lg); padding: 3rem 2.5rem; position: relative; overflow: hidden; }
+
+    /* Progress Bar */
     .sa-progress-container { display: flex; justify-content: center; align-items: center; margin-bottom: 2.5rem; position: relative; }
-    .sa-progress-line { position: absolute; top: 50%; left: 10%; right: 10%; height: 3px; background: var(--sa-line, rgba(11,46,36,.12)); z-index: 1; transform: translateY(-50%); }
-    .sa-progress-step { width: 32px; height: 32px; border-radius: 50%; background: var(--sa-card, #fff); border: 2px solid var(--sa-line, rgba(11,46,36,.12)); color: var(--sa-muted, #5d6b64); display: flex; align-items: center; justify-content: center; font-size: .8rem; font-weight: 800; position: relative; z-index: 2; margin: 0 1.5rem; transition: var(--sa-ease, cubic-bezier(.22,.61,.36,1)); }
-    .sa-progress-step.active { background: var(--sa-emerald, #10553e); border-color: var(--sa-emerald, #10553e); color: #fff; box-shadow: 0 0 0 4px rgba(31,169,113,.15); }
-    .sa-progress-step.completed { background: var(--sa-gold, #d9a84e); border-color: var(--sa-gold, #d9a84e); color: var(--sa-ink, #0b2e24); }
-    .sa-step { display: none; animation: fadeIn .4s ease; }
+    .sa-progress-line { position: absolute; top: 50%; left: 10%; right: 10%; height: 3px; background: var(--sa-line); z-index: 1; transform: translateY(-50%); }
+    .sa-progress-step { width: 32px; height: 32px; border-radius: 50%; background: var(--sa-card); border: 2px solid var(--sa-line); color: var(--sa-muted); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800; position: relative; z-index: 2; margin: 0 1.5rem; transition: var(--sa-ease); }
+    .sa-progress-step.active { background: var(--sa-emerald); border-color: var(--sa-emerald); color: #fff; box-shadow: 0 0 0 4px rgba(31,169,113,0.15); }
+    .sa-progress-step.completed { background: var(--sa-gold); border-color: var(--sa-gold); color: var(--sa-ink); }
+
+    /* Steps */
+    .sa-step { display: none; animation: fadeIn 0.4s ease; }
     .sa-step.active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    .sa-step h2 { font-family: var(--sa-font-display, Georgia, 'Times New Roman', serif); font-size: 1.6rem; font-weight: 700; color: var(--sa-ink, #0b2e24); margin-bottom: .5rem; text-align: center; }
-    .sa-step p.subtitle { text-align: center; color: var(--sa-muted, #5d6b64); font-size: .95rem; margin-bottom: 2rem; }
+
+    .sa-step h2 { font-family: var(--sa-font-display); font-size: 1.6rem; font-weight: 700; color: var(--sa-ink); margin-bottom: 0.5rem; text-align: center; }
+    .sa-step p.subtitle { text-align: center; color: var(--sa-muted); font-size: 0.95rem; margin-bottom: 2rem; }
+
+    /* Selection Cards */
     .sa-choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; }
     @media (max-width: 500px) { .sa-choice-grid { grid-template-columns: 1fr; } }
-    .sa-choice-card { border: 2px solid var(--sa-line, rgba(11,46,36,.12)); border-radius: var(--sa-radius-sm, 12px); padding: 1.2rem; cursor: pointer; text-align: center; transition: var(--sa-ease, cubic-bezier(.22,.61,.36,1)); background: var(--sa-paper, #faf7ef); }
-    .sa-choice-card:hover { border-color: var(--sa-gold, #d9a84e); }
-    .sa-choice-card.selected { border-color: var(--sa-emerald, #10553e); background: rgba(31,169,113,.05); box-shadow: 0 0 0 3px rgba(31,169,113,.15); }
-    .sa-choice-card i { font-size: 2rem; color: var(--sa-muted, #5d6b64); margin-bottom: .5rem; }
-    .sa-choice-card.selected i { color: var(--sa-emerald, #10553e); }
-    .sa-choice-card span { display: block; font-weight: 700; color: var(--sa-ink, #0b2e24); }
-    .sa-input-group label { font-size: .85rem; font-weight: 800; color: var(--sa-muted, #5d6b64); text-transform: uppercase; margin-bottom: .5rem; display: block; }
-    .sa-input-group select, .sa-input-group input { width: 100%; padding: .8rem 1rem; border: 1.5px solid var(--sa-line, rgba(11,46,36,.12)); border-radius: var(--sa-radius-sm, 12px); background: var(--sa-paper, #faf7ef); font-family: var(--sa-font-body, 'Segoe UI', system-ui, sans-serif); color: var(--sa-text, #1f2a26); margin-bottom: 1.5rem; }
-    .sa-input-group select:focus, .sa-input-group input:focus { outline: none; border-color: var(--sa-emerald, #10553e); box-shadow: 0 0 0 3px rgba(31,169,113,.15); }
-    .sa-wizard-actions { display: flex; justify-content: space-between; margin-top: 2rem; border-top: 1px solid var(--sa-line, rgba(11,46,36,.12)); padding-top: 1.5rem; align-items: center; gap: .75rem; flex-wrap: wrap; }
-    .sa-btn-back { background: transparent; border: 1px solid var(--sa-line, rgba(11,46,36,.12)); color: var(--sa-muted, #5d6b64); padding: .6rem 1.5rem; border-radius: var(--sa-radius-sm, 12px); font-weight: 700; cursor: pointer; }
-    .sa-btn-next { background: var(--sa-emerald, #10553e); border: none; color: #fff; padding: .6rem 2rem; border-radius: var(--sa-radius-sm, 12px); font-weight: 700; cursor: pointer; transition: var(--sa-ease, cubic-bezier(.22,.61,.36,1)); }
-    .sa-btn-next:hover { background: var(--sa-ink, #0b2e24); }
-    .sa-btn-skip { background: transparent; border: none; color: var(--sa-gold-deep, #b8862f); font-weight: 700; cursor: pointer; text-decoration: underline; font-size: .9rem; }
+    .sa-choice-card { border: 2px solid var(--sa-line); border-radius: var(--sa-radius-sm); padding: 1.2rem; cursor: pointer; text-align: center; transition: var(--sa-ease); background: var(--sa-paper); }
+    .sa-choice-card:hover { border-color: var(--sa-gold); }
+    .sa-choice-card.selected { border-color: var(--sa-emerald); background: rgba(31,169,113,0.05); box-shadow: 0 0 0 3px rgba(31,169,113,0.15); }
+    .sa-choice-card i { font-size: 2rem; color: var(--sa-muted); margin-bottom: 0.5rem; }
+    .sa-choice-card.selected i { color: var(--sa-emerald); }
+    .sa-choice-card span { display: block; font-weight: 700; color: var(--sa-ink); }
+
+    /* Inputs */
+    .sa-input-group label { font-size: 0.85rem; font-weight: 800; color: var(--sa-muted); text-transform: uppercase; margin-bottom: 0.5rem; display: block; }
+    .sa-input-group select, .sa-input-group input { width: 100%; padding: 0.8rem; border: 1.5px solid var(--sa-line); border-radius: var(--sa-radius-sm); background: var(--sa-paper); font-family: var(--sa-font-body); color: var(--sa-text); margin-bottom: 1.5rem; }
+    .sa-input-group select:focus, .sa-input-group input:focus { outline: none; border-color: var(--sa-emerald); box-shadow: 0 0 0 3px rgba(31,169,113,0.15); }
+
+    /* Buttons */
+    .sa-wizard-actions { display: flex; justify-content: space-between; margin-top: 2rem; border-top: 1px solid var(--sa-line); padding-top: 1.5rem; align-items: center; }
+    .sa-btn-back { background: transparent; border: 1px solid var(--sa-line); color: var(--sa-muted); padding: 0.6rem 1.5rem; border-radius: var(--sa-radius-sm); font-weight: 700; cursor: pointer; }
+    .sa-btn-next { background: var(--sa-emerald); border: none; color: #fff; padding: 0.6rem 2rem; border-radius: var(--sa-radius-sm); font-weight: 700; cursor: pointer; transition: var(--sa-ease); }
+    .sa-btn-next:hover { background: var(--sa-ink); }
+    .sa-btn-skip { background: transparent; border: none; color: var(--sa-gold-deep); font-weight: 700; cursor: pointer; text-decoration: underline; font-size: 0.9rem; }
+
+    /* Results */
     .sa-result-list { display: grid; gap: 1rem; margin-top: 1.5rem; }
-    .sa-result-card { background: var(--sa-paper, #faf7ef); border: 1px solid var(--sa-line, rgba(11,46,36,.12)); border-left: 4px solid var(--sa-gold, #d9a84e); padding: 1.2rem; border-radius: var(--sa-radius-sm, 12px); }
-    @media (max-width: 640px) {
-        .sa-wizard-bg { padding: 1.5rem .75rem 3rem; }
-        .sa-wizard-card { padding: 2rem 1.25rem; }
-        .sa-progress-step { margin: 0 .75rem; }
-    }
+    .sa-result-card { background: var(--sa-paper); border: 1px solid var(--sa-line); border-left: 4px solid var(--sa-gold); padding: 1.2rem; border-radius: var(--sa-radius-sm); }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="sa-wizard-bg">
     <div class="sa-wizard-card">
-        <div class="sa-progress-container" aria-label="{% trans 'Eligibility progress' %}">
+
+        <!-- Progress Bar -->
+        <div class="sa-progress-container">
             <div class="sa-progress-line"></div>
             <div class="sa-progress-step active" id="step-indicator-1">1</div>
             <div class="sa-progress-step" id="step-indicator-2">2</div>
@@ -73,171 +64,202 @@
             <div class="sa-progress-step" id="step-indicator-4">4</div>
         </div>
 
-        <div id="results-view" style="display: none;">
-            <h2 style="text-align:center;color:var(--sa-emerald);"><i class="fas fa-check-circle"></i> {% trans "Great! Here are your matches" %}</h2>
-            <div class="sa-result-list">
-                {% for item in schemes %}
-                <div class="sa-result-card">
-                    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;">
-                        <h4 style="font-weight:800;font-size:1.1rem;color:var(--sa-ink);margin-bottom:.3rem;">{{ item.scheme.scheme_name }}</h4>
-                        <span style="background:rgba(31,169,113,.15);color:var(--sa-emerald);font-weight:800;font-size:.75rem;padding:.2rem .6rem;border-radius:99px;white-space:nowrap;">{{ item.score }}% Match</span>
-                    </div>
-                    <p style="font-size:.85rem;color:var(--sa-muted);margin-bottom:.8rem;">{{ item.scheme.description|default:item.scheme.benefits|truncatechars:100 }}</p>
-                    {% if item.reasons %}<small class="text-muted">{{ item.reasons|join:", " }}</small>{% endif %}
-                    <div class="mt-3"><a href="{% url 'scheme_detail' item.scheme.id %}" class="btn btn-success btn-sm">{% trans "View Details" %}</a></div>
-                </div>
-                {% endfor %}
-            </div>
-            <div style="text-align:center;margin-top:2rem;"><a href="{% url 'recommend' %}" class="sa-btn-back" style="text-decoration:none;display:inline-block;">{% trans "Start Over" %}</a></div>
-        </div>
         <form method="POST" id="eligibilityForm">
             {% csrf_token %}
+            {% if validation_error %}
+                <p class="alert alert-warning" role="alert">{{ validation_error }}</p>
+            {% endif %}
+
+            <!-- STEP 1: Basic Info -->
             <div class="sa-step active" id="step-1">
                 <h2>Help us find the best schemes for you</h2>
                 <p class="subtitle">Tell us about yourself</p>
+
                 <div class="sa-input-group">
                     <label>Gender *</label>
                     <div class="sa-choice-grid">
-                        <button type="button" class="sa-choice-card" data-choice-name="gender" data-choice-value="Male"><i class="fas fa-mars"></i><span>Male</span></button>
-                        <button type="button" class="sa-choice-card" data-choice-name="gender" data-choice-value="Female"><i class="fas fa-venus"></i><span>Female</span></button>
-                        <button type="button" class="sa-choice-card" data-choice-name="gender" data-choice-value="Transgender"><i class="fas fa-transgender"></i><span>Transgender</span></button>
+                        <div class="sa-choice-card" onclick="selectChoice(this, 'gender', 'Male')">
+                            <i class="fas fa-mars"></i><span>Male</span>
+                        </div>
+                        <div class="sa-choice-card" onclick="selectChoice(this, 'gender', 'Female')">
+                            <i class="fas fa-venus"></i><span>Female</span>
+                        </div>
+                        <div class="sa-choice-card" onclick="selectChoice(this, 'gender', 'Transgender')">
+                            <i class="fas fa-transgender"></i><span>Transgender</span>
+                        </div>
                     </div>
-                    <input type="hidden" name="gender" id="input-gender" value="{{ form_data.gender|default:'' }}">
+                    <input type="hidden" name="gender" id="input-gender" required>
                 </div>
+
                 <div class="sa-input-group">
-                    <label for="input-age">Age *</label>
-                    <input type="number" name="age" id="input-age" min="1" max="120" placeholder="Enter your age (e.g. 35)" value="{{ form_data.age|default:'' }}" required>
+                    <label>Age *</label>
+                    <input type="number" name="age" id="input-age" min="1" max="120" placeholder="Enter your age (e.g. 35)" required>
                 </div>
-                <div class="sa-wizard-actions"><div></div><button type="button" class="sa-btn-next" data-next="2">Next &rarr;</button></div>
+
+                <div class="sa-wizard-actions">
+                    <div></div>
+                    <!-- Validation happens here before moving to step 2 -->
+                    <button type="button" class="sa-btn-next" onclick="validateAndNext()">Next &rarr;</button>
+                </div>
             </div>
 
+            <!-- STEP 2: Location & Income -->
             <div class="sa-step" id="step-2">
-                <h2>Location &amp; Income</h2>
+                <h2>Location & Income</h2>
                 <p class="subtitle">Where do you live and what is your annual income?</p>
+
                 <div class="sa-input-group">
-                    <label for="input-state">State *</label>
-                    <input type="text" name="state" id="input-state" placeholder="e.g. Maharashtra" value="{{ form_data.state|default:'' }}">
+                    <label>State *</label>
+                    <input type="text" name="state" placeholder="e.g. Maharashtra">
                 </div>
                 <div class="sa-input-group">
                     <label>Area of Residence</label>
                     <div class="sa-choice-grid">
-                        <button type="button" class="sa-choice-card" data-choice-name="rural_urban" data-choice-value="Urban"><i class="fas fa-city"></i><span>Urban</span></button>
-                        <button type="button" class="sa-choice-card" data-choice-name="rural_urban" data-choice-value="Rural"><i class="fas fa-tractor"></i><span>Rural</span></button>
+                        <div class="sa-choice-card" onclick="selectChoice(this, 'rural_urban', 'Urban')">
+                            <i class="fas fa-city"></i><span>Urban</span>
+                        </div>
+                        <div class="sa-choice-card" onclick="selectChoice(this, 'rural_urban', 'Rural')">
+                            <i class="fas fa-tractor"></i><span>Rural</span>
+                        </div>
                     </div>
-                    <input type="hidden" name="rural_urban" id="input-rural_urban" value="{{ form_data.rural_urban|default:'' }}">
+                    <input type="hidden" name="rural_urban" id="input-rural_urban">
                 </div>
                 <div class="sa-input-group">
-                    <label for="input-income">Annual Income (₹)</label>
-                    <input type="number" name="income" id="input-income" min="0" placeholder="e.g. 150000" value="{{ form_data.income|default:'' }}">
+                    <label>Annual Income (₹)</label>
+                    <input type="number" name="income" min="0" placeholder="e.g. 150000">
                 </div>
+
                 <div class="sa-wizard-actions">
-                    <button type="button" class="sa-btn-back" data-previous="1">&larr; Back</button>
-                    <button type="button" class="sa-btn-skip" id="skip-results">Skip to Results</button>
-                    <button type="button" class="sa-btn-next" data-next="3">Next &rarr;</button>
+                    <button type="button" class="sa-btn-back" onclick="nextStep(1)">&larr; Back</button>
+                    <button type="button" class="sa-btn-skip" onclick="document.getElementById('eligibilityForm').submit()">Skip to Results</button>
+                    <button type="button" class="sa-btn-next" onclick="nextStep(3)">Next &rarr;</button>
                 </div>
             </div>
 
+            <!-- STEP 3: Category -->
             <div class="sa-step" id="step-3">
                 <h2>You belong to...</h2>
                 <p class="subtitle">Select your social category</p>
-                <div style="display:flex;flex-direction:column;gap:.8rem;">
-                    <button type="button" class="sa-choice-card" data-choice-name="category" data-choice-value="General" style="text-align:left;">General</button>
-                    <button type="button" class="sa-choice-card" data-choice-name="category" data-choice-value="OBC" style="text-align:left;">Other Backward Class (OBC)</button>
-                    <button type="button" class="sa-choice-card" data-choice-name="category" data-choice-value="SC" style="text-align:left;">Scheduled Caste (SC)</button>
-                    <button type="button" class="sa-choice-card" data-choice-name="category" data-choice-value="ST" style="text-align:left;">Scheduled Tribe (ST)</button>
-                    <button type="button" class="sa-choice-card" data-choice-name="category" data-choice-value="EWS" style="text-align:left;">Economically Weaker Section (EWS)</button>
+
+                <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+                    <div class="sa-choice-card" onclick="selectChoice(this, 'category', 'General')" style="text-align: left;">General</div>
+                    <div class="sa-choice-card" onclick="selectChoice(this, 'category', 'OBC')" style="text-align: left;">Other Backward Class (OBC)</div>
+                    <div class="sa-choice-card" onclick="selectChoice(this, 'category', 'SC')" style="text-align: left;">Scheduled Caste (SC)</div>
+                    <div class="sa-choice-card" onclick="selectChoice(this, 'category', 'ST')" style="text-align: left;">Scheduled Tribe (ST)</div>
+                    <div class="sa-choice-card" onclick="selectChoice(this, 'category', 'EWS')" style="text-align: left;">Economically Weaker Section (EWS)</div>
                 </div>
-                <input type="hidden" name="category" id="input-category" value="{{ form_data.category|default:'' }}">
+                <input type="hidden" name="category" id="input-category">
+
                 <div class="sa-wizard-actions">
-                    <button type="button" class="sa-btn-back" data-previous="2">&larr; Back</button>
-                    <button type="button" class="sa-btn-skip" id="skip-results-category">Skip to Results</button>
-                    <button type="button" class="sa-btn-next" data-next="4">Next &rarr;</button>
+                    <button type="button" class="sa-btn-back" onclick="nextStep(2)">&larr; Back</button>
+                    <button type="button" class="sa-btn-skip" onclick="document.getElementById('eligibilityForm').submit()">Skip to Results</button>
+                    <button type="button" class="sa-btn-next" onclick="nextStep(4)">Next &rarr;</button>
                 </div>
             </div>
 
+            <!-- STEP 4: Disability & Minority -->
             <div class="sa-step" id="step-4">
                 <h2>Additional Details</h2>
+
                 <div class="sa-input-group">
                     <label>Do you identify as a person with a disability?</label>
                     <div class="sa-choice-grid">
-                        <button type="button" class="sa-choice-card" data-choice-name="disability" data-choice-value="Yes">Yes</button>
-                        <button type="button" class="sa-choice-card" data-choice-name="disability" data-choice-value="No">No</button>
+                        <div class="sa-choice-card" onclick="selectChoice(this, 'disability', 'Yes')">Yes</div>
+                        <div class="sa-choice-card" onclick="selectChoice(this, 'disability', 'No')">No</div>
                     </div>
-                    <input type="hidden" name="disability" id="input-disability" value="{{ form_data.disability|default:'' }}">
+                    <input type="hidden" name="disability" id="input-disability">
                 </div>
+
                 <div class="sa-input-group">
                     <label>Do you belong to a minority community?</label>
                     <div class="sa-choice-grid">
-                        <button type="button" class="sa-choice-card" data-choice-name="minority" data-choice-value="Yes">Yes</button>
-                        <button type="button" class="sa-choice-card" data-choice-name="minority" data-choice-value="No">No</button>
+                        <div class="sa-choice-card" onclick="selectChoice(this, 'minority', 'Yes')">Yes</div>
+                        <div class="sa-choice-card" onclick="selectChoice(this, 'minority', 'No')">No</div>
                     </div>
-                    <input type="hidden" name="minority" id="input-minority" value="{{ form_data.minority|default:'' }}">
+                    <input type="hidden" name="minority" id="input-minority">
                 </div>
-                <div class="sa-wizard-actions" style="flex-direction:column;gap:1rem;border:none;">
-                    <button type="submit" class="sa-btn-next" style="width:100%;">Show My Eligible Schemes</button>
+
+                <div class="sa-wizard-actions" style="flex-direction: column; gap: 1rem; border: none;">
+                    <button type="submit" class="sa-btn-next" style="width: 100%;">Show My Eligible Schemes</button>
                 </div>
             </div>
         </form>
+
+        <!-- RESULTS VIEW -->
+        {% if schemes %}
+        <div id="results-view" style="display: none;">
+            <h2 style="text-align: center; color: var(--sa-emerald);"><i class="fas fa-check-circle"></i> Great! Here are your matches</h2>
+            <div class="sa-result-list">
+                {% for item in schemes %}
+                <div class="sa-result-card">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <h4 style="font-weight: 800; font-size: 1.1rem; color: var(--sa-ink); margin-bottom: 0.3rem;">{{ item.scheme.scheme_name }}</h4>
+                        <span style="background: rgba(31,169,113,0.15); color: var(--sa-emerald); font-weight: 800; font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 99px; white-space: nowrap;">{{ item.score }}% Match</span>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--sa-muted); margin-bottom: 0.8rem;">{{ item.scheme.description|truncatechars:100 }}</p>
+                    <a href="{% url 'scheme_detail' item.scheme.id %}" class="sa-btn sa-btn-primary" style="font-size: 0.8rem; padding: 0.4rem 1rem;">View Details</a>
+                </div>
+                {% endfor %}
+            </div>
+            <div style="text-align: center; margin-top: 2rem;">
+                <a href="{% url 'recommend' %}" class="sa-btn-back" style="text-decoration: none; display: inline-block;">Start Over</a>
+            </div>
+        </div>
+        {% endif %}
+
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-(() => {
-    const form = document.getElementById('eligibilityForm');
-    if (!form) return;
-    const steps = [...form.querySelectorAll('.sa-step')];
-    const indicators = [...document.querySelectorAll('.sa-progress-step')];
+    // 1. Logic to switch steps
+    function nextStep(stepNumber) {
+        document.querySelectorAll('.sa-step').forEach(step => step.classList.remove('active'));
+        document.getElementById('step-' + stepNumber).classList.add('active');
 
-    const showStep = (stepNumber) => {
-        steps.forEach((step) => step.classList.toggle('active', step.id === `step-${stepNumber}`));
-        indicators.forEach((indicator, index) => {
-            const value = index + 1;
-            indicator.classList.toggle('active', value === stepNumber);
-            indicator.classList.toggle('completed', value < stepNumber);
-            indicator.innerHTML = value < stepNumber ? '<i class="fas fa-check"></i>' : String(value);
-        });
-    };
-
-    const submitResults = () => form.submit();
-    document.querySelectorAll('[data-next]').forEach((button) => {
-        button.addEventListener('click', () => {
-            if (button.dataset.next === '2') {
-                const age = document.getElementById('input-age');
-                const gender = document.getElementById('input-gender');
-                if (!age.value || !gender.value) {
-                    alert('Please select your Gender and enter your Age to continue.');
-                    return;
-                }
+        for (let i = 1; i <= 4; i++) {
+            const indicator = document.getElementById('step-indicator-' + i);
+            if (i < stepNumber) {
+                indicator.classList.add('completed');
+                indicator.classList.remove('active');
+                indicator.innerHTML = '<i class="fas fa-check"></i>';
+            } else if (i === stepNumber) {
+                indicator.classList.add('active');
+                indicator.classList.remove('completed');
+                indicator.innerHTML = i;
+            } else {
+                indicator.classList.remove('active', 'completed');
+                indicator.innerHTML = i;
             }
-            showStep(Number(button.dataset.next));
-        });
-    });
-    document.querySelectorAll('[data-previous]').forEach((button) => {
-        button.addEventListener('click', () => showStep(Number(button.dataset.previous)));
-    });
-    document.querySelectorAll('[data-choice-name]').forEach((choice) => {
-        choice.addEventListener('click', () => {
-            const name = choice.dataset.choiceName;
-            document.querySelectorAll(`[data-choice-name="${name}"]`).forEach((item) => item.classList.remove('selected'));
-            choice.classList.add('selected');
-            document.getElementById(`input-${name}`).value = choice.dataset.choiceValue;
-        });
-    });
-    document.getElementById('skip-results')?.addEventListener('click', submitResults);
-    document.getElementById('skip-results-category')?.addEventListener('click', submitResults);
+        }
+    }
 
-    document.querySelectorAll('[data-choice-name]').forEach((choice) => {
-        const input = document.getElementById(`input-${choice.dataset.choiceName}`);
-        if (input && input.value === choice.dataset.choiceValue) choice.classList.add('selected');
-    });
-})();
+    // 2. Validation for Step 1
+    function validateAndNext() {
+        const gender = document.getElementById('input-gender').value;
+        const age = document.getElementById('input-age').value;
 
-{% if schemes %}
-document.getElementById('eligibilityForm').style.display = 'none';
-document.querySelector('.sa-progress-container').style.display = 'none';
-document.getElementById('results-view').style.display = 'block';
-{% endif %}
+        if (!gender || !age) {
+            alert("Please select your Gender and enter your Age to continue.");
+            return;
+        }
+        nextStep(2);
+    }
+
+    // 3. Logic to select cards
+    function selectChoice(cardElement, inputName, value) {
+        const parent = cardElement.parentElement;
+        parent.querySelectorAll('.sa-choice-card').forEach(c => c.classList.remove('selected'));
+        cardElement.classList.add('selected');
+        document.getElementById('input-' + inputName).value = value;
+    }
+
+    // 4. Show results if form was submitted
+    {% if schemes %}
+        document.getElementById('eligibilityForm').style.display = 'none';
+        document.querySelector('.sa-progress-container').style.display = 'none';
+        document.getElementById('results-view').style.display = 'block';
+    {% endif %}
 </script>
 {% endblock %}

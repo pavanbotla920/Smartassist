@@ -14,22 +14,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom CSS -->
     <style>
-        .navbar-brand {
-            font-weight: bold;
-            color: #2c3e50 !important;
+        .sa-flash-messages {
+            position: relative;
+            z-index: 10;
+            max-width: 920px;
         }
-        .hero-section {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 100px 0;
-        }
-        .card-scheme {
-            transition: transform 0.3s;
-            border: none;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .card-scheme:hover {
-            transform: translateY(-5px);
+        .sa-flash-message {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            min-height: 54px;
+            margin: 0 auto;
+            border-width: 2px;
+            box-shadow: 0 6px 18px rgba(11, 46, 36, .12);
+            font-weight: 600;
         }
         .status-badge {
             font-size: 0.8em;
@@ -40,40 +38,6 @@
         .status-applied { background-color: #007bff; }
         .status-approved { background-color: #28a745; }
         .status-rejected { background-color: #dc3545; }
-        .language-switcher {
-            margin-left: auto;
-        }
-        .site-language-selector {
-            display: flex;
-            align-items: center;
-            gap: 0.45rem;
-            margin-left: auto;
-        }
-        .site-language-label {
-            margin: 0;
-            color: #334155;
-            font-size: 0.82rem;
-            white-space: nowrap;
-        }
-        .site-language-select {
-            max-width: 175px;
-            border: 1px solid #cbd5e1;
-            border-radius: 0.5rem;
-            background: #fff;
-            color: #0f172a;
-            padding: 0.45rem 0.6rem;
-        }
-        @media (max-width: 900px) {
-            .site-language-selector { margin: 0.75rem 0; }
-        }
-        .awareness-message {
-            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 20px 0;
-        }
-
         .gov-footer {
             position: relative;
             margin-top: 56px;
@@ -262,51 +226,82 @@
 
     {% block extra_head %}{% endblock %}
     <link rel="stylesheet" href="{% static 'css/smartassist-professional.css' %}">
+    {% if request.resolver_match.url_name != 'recommend' and request.resolver_match.url_name != 'ai_recommendation' %}
+        <link rel="stylesheet" href="{% static 'css/smartassist-dev.css' %}">
+    {% endif %}
+    <style>
+        body.settings-dark {
+            background: #10251f;
+            color: #edf7f1;
+        }
+        body.settings-dark .bg-white,
+        body.settings-dark .card,
+        body.settings-dark .dropdown-menu {
+            background-color: #17352b !important;
+            color: #edf7f1;
+        }
+        body.settings-dark .navbar,
+        body.settings-dark .navbar-light .navbar-nav .nav-link,
+        body.settings-dark .dropdown-item {
+            color: #edf7f1;
+        }
+        body.settings-dark .dropdown-item:hover {
+            background-color: #245442;
+        }
+        body.settings-font-small { font-size: 0.9em; }
+        body.settings-font-large { font-size: 1.12em; }
+    </style>
 </head>
-<body>
+<body class="sa-dev-page{% if request.session.settings_appearance == 'dark' %} settings-dark{% endif %} settings-font-{{ request.session.settings_font_size|default:'normal' }}">
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
-        <div class="container">
-            <a class="navbar-brand" href="{% url 'home' %}">
-                <i class="fas fa-hand-holding-heart text-primary"></i>
-                SmartAssist
+    <nav class="navbar navbar-expand-xl navbar-light bg-white shadow-sm sa-navbar" aria-label="{% trans 'Primary navigation' %}">
+        <div class="container sa-navbar__container">
+            <a class="navbar-brand sa-navbar__brand" href="{% url 'home' %}">
+                <span class="sa-navbar__logo" aria-hidden="true"><i class="fas fa-hand-holding-heart"></i></span>
+                <span>SmartAssist</span>
             </a>
 
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-label="{% trans 'Toggle navigation' %}">
+            <button class="navbar-toggler sa-navbar__toggle" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="{% trans 'Toggle navigation' %}">
                 <span class="navbar-toggler-icon"></span>
             </button>
 
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
+                <ul class="navbar-nav sa-navbar__links me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'home' %}">{% trans "Home" %}</a>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}" {% if request.resolver_match.url_name == 'home' %}aria-current="page"{% endif %}>{% trans "Home" %}</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'india_map_schemes' %}">{% trans "India Map" %}</a>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'india_map_schemes' %}active{% endif %}" href="{% url 'india_map_schemes' %}" {% if request.resolver_match.url_name == 'india_map_schemes' %}aria-current="page"{% endif %}>{% trans "India Map" %}</a>
                     </li>
                     {% if user.is_authenticated %}
                         {% if user.userprofile.role == 'citizen' %}
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'scheme_awareness' %}">{% trans "Schemes" %}</a>
+                                <a class="nav-link {% if request.resolver_match.url_name == 'scheme_awareness' %}active{% endif %}" href="{% url 'scheme_awareness' %}" {% if request.resolver_match.url_name == 'scheme_awareness' %}aria-current="page"{% endif %}>{% trans "Schemes" %}</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'apply_assistance' %}">{% trans "Apply" %}</a>
+                                <a class="nav-link {% if request.resolver_match.url_name == 'recommend' %}active{% endif %}" href="{% url 'recommend' %}" {% if request.resolver_match.url_name == 'recommend' %}aria-current="page"{% endif %}>{% trans "Eligibility" %}</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'application_status' %}">{% trans "My Status" %}</a>
+                                <a class="nav-link {% if request.resolver_match.url_name == 'apply_assistance' %}active{% endif %}" href="{% url 'apply_assistance' %}" {% if request.resolver_match.url_name == 'apply_assistance' %}aria-current="page"{% endif %}>{% trans "Apply" %}</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'dashboard' %}">{% trans "Dashboard" %}</a>
+                                <a class="nav-link {% if request.resolver_match.url_name == 'application_status' %}active{% endif %}" href="{% url 'application_status' %}" {% if request.resolver_match.url_name == 'application_status' %}aria-current="page"{% endif %}>{% trans "My Status" %}</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}aria-current="page"{% endif %}>{% trans "Dashboard" %}</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'farmer_dashboard' %}active{% endif %}" href="{% url 'farmer_dashboard' %}" {% if request.resolver_match.url_name == 'farmer_dashboard' %}aria-current="page"{% endif %}>{% trans "Farmer Dashboard" %}</a>
                             </li>
                         {% elif user.userprofile.role == 'volunteer' or user.userprofile.role == 'admin' %}
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'admin_dashboard' %}">{% trans "Admin Dashboard" %}</a>
+                                <a class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}" href="{% url 'admin_dashboard' %}" {% if request.resolver_match.url_name == 'admin_dashboard' %}aria-current="page"{% endif %}>{% trans "Admin Dashboard" %}</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'manage_schemes' %}">{% trans "Manage Schemes" %}</a>
+                                <a class="nav-link {% if request.resolver_match.url_name == 'manage_schemes' %}active{% endif %}" href="{% url 'manage_schemes' %}" {% if request.resolver_match.url_name == 'manage_schemes' %}aria-current="page"{% endif %}>{% trans "Manage Schemes" %}</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'reports' %}">{% trans "Reports" %}</a>
+                                <a class="nav-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}" href="{% url 'reports' %}" {% if request.resolver_match.url_name == 'reports' %}aria-current="page"{% endif %}>{% trans "Reports" %}</a>
                             </li>
                         {% endif %}
                     {% endif %}
@@ -316,19 +311,31 @@
                 {% include "partials/language_selector.html" %}
 
                 {% if user.is_authenticated %}
-                    <div class="dropdown ms-3">
-                        <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user"></i> {{ user.username }}
+                    <a
+                        class="sa-notification-link ms-xl-2"
+                        href="{% url 'notifications' %}"
+                        aria-label="{% trans 'Notifications' %}{% if unread_notification_count %}, {{ unread_notification_count }} unread{% endif %}"
+                        title="{% trans 'Notifications' %}"
+                    >
+                        <i class="fas fa-bell" aria-hidden="true"></i>
+                        {% if unread_notification_count %}
+                            <span class="sa-notification-count" aria-hidden="true">{{ unread_notification_count }}</span>
+                        {% endif %}
+                    </a>
+                        <div class="dropdown sa-navbar__account ms-xl-3">
+                            <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user" aria-hidden="true"></i> <span>{{ user.username }}</span>
                         </button>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{% url 'profile' %}">{% trans "Profile" %}</a></li>
+                            <li><a class="dropdown-item {% if request.resolver_match.url_name == 'profile' %}active{% endif %}" href="{% url 'profile' %}">{% trans "Profile" %}</a></li>
+                            <li><a class="dropdown-item {% if request.resolver_match.url_name == 'settings' %}active{% endif %}" href="{% url 'settings' %}">{% trans "Settings" %}</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{% url 'logout' %}">{% trans "Logout" %}</a></li>
                         </ul>
                     </div>
                 {% else %}
-                    <a href="{% url 'login' %}" class="btn btn-primary ms-3">{% trans "Login" %}</a>
-                    <a href="{% url 'register' %}" class="btn btn-outline-primary ms-2">{% trans "Register" %}</a>
+                    <a href="{% url 'login' %}" class="btn btn-primary sa-navbar__login ms-xl-3">{% trans "Login" %}</a>
+                    <a href="{% url 'register' %}" class="btn btn-outline-primary sa-navbar__register ms-2">{% trans "Register" %}</a>
                 {% endif %}
             </div>
         </div>
@@ -336,6 +343,21 @@
 
     <!-- Main Content -->
     <main>
+        {% if messages %}
+            <div class="container pt-3 sa-flash-messages" aria-live="polite">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show sa-flash-message" role="alert">
+                        {% if message.tags == 'success' %}
+                            <i class="fas fa-circle-check me-1" aria-hidden="true"></i>
+                        {% elif message.tags == 'error' %}
+                            <i class="fas fa-circle-exclamation me-1" aria-hidden="true"></i>
+                        {% endif %}
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{% trans 'Close' %}"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
         {% block content %}{% endblock %}
     </main>
 

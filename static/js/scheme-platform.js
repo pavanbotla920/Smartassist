@@ -10,18 +10,49 @@
      GLOBALS
   ------------------------------------------------------- */
   const IS_AUTHENTICATED = document.body.dataset.authenticated === 'true';
-  const LOGIN_URL        = document.body.dataset.loginUrl  || '/login/';
-  const APPLY_BASE_URL   = document.body.dataset.applyBase || '/apply/';
+  function sameOriginHttpUrl(value) {
+    if (typeof value !== 'string' || !value.trim()) return null;
+    try {
+      const url = new URL(value, window.location.origin);
+      if (!['http:', 'https:'].includes(url.protocol) || url.origin !== window.location.origin) {
+        return null;
+      }
+      return url.href;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function positiveSchemeId(value) {
+    const id = String(value ?? '');
+    return /^\d+$/.test(id) && Number(id) > 0 && Number.isSafeInteger(Number(id))
+      ? id
+      : null;
+  }
+
+  const LOGIN_URL        = sameOriginHttpUrl(document.body.dataset.loginUrl) || new URL('/login/', window.location.origin).href;
+  const APPLY_BASE_URL   = sameOriginHttpUrl(document.body.dataset.applyBase) || new URL('/apply/', window.location.origin).href;
+
+  function defaultApplicationUrl(schemeId) {
+    return sameOriginHttpUrl(APPLY_BASE_URL + schemeId + '/');
+  }
 
   /* -------------------------------------------------------
      1. APPLY-NOW LOGIN GUARD
      Called by every "Apply Now" button (schemes list & detail)
   ------------------------------------------------------- */
   window.handleApplyNow = function (schemeId, applyUrl) {
+    const validSchemeId = positiveSchemeId(schemeId);
+    const fallbackUrl = validSchemeId ? defaultApplicationUrl(validSchemeId) : null;
+    const target = sameOriginHttpUrl(applyUrl) || fallbackUrl;
+    if (!target) {
+      window.showToast('Unable to load scheme details right now.', 'Not found', 'warning');
+      return;
+    }
+
     if (IS_AUTHENTICATED) {
-      window.location.href = applyUrl || (APPLY_BASE_URL + schemeId + '/');
+      window.location.href = target;
     } else {
-      const target = applyUrl || (APPLY_BASE_URL + schemeId + '/');
       showLoginPrompt(target);
     }
   };
@@ -32,7 +63,11 @@
   let pendingRedirect = null;
 
   function showLoginPrompt(redirectUrl) {
-    pendingRedirect = redirectUrl;
+    pendingRedirect = sameOriginHttpUrl(redirectUrl);
+    if (!pendingRedirect) {
+      window.showToast('Unable to load scheme details right now.', 'Not found', 'warning');
+      return;
+    }
     const prompt = document.getElementById('sp-login-prompt');
     if (prompt) {
       prompt.classList.add('show');
@@ -91,17 +126,39 @@
      Server-side search still handles full-page loads.
   ------------------------------------------------------- */
   const liveSearch = document.getElementById('sp-live-search');
+  const mainSearch = document.getElementById('sp-search-input');
   const schemeCards = document.querySelectorAll('.sp-scheme-card[data-scheme-name]');
+  const resultsGrid = document.getElementById('sp-schemes-grid');
+  const hasServerStateFilter = Boolean(
+    resultsGrid && resultsGrid.dataset.stateFilter
+  );
+
+  // Browser autofill can restore the instant-search field after a reload.
+  // Never let that stale client-side value hide a fresh server-side state result.
+  if (hasServerStateFilter && liveSearch) {
+    liveSearch.value = '';
+  }
 
   function doLiveSearch(query) {
-    const q = query.trim().toLowerCase();
+    const q = query.trim().toLowerCase().replace(/[-_/]+/g, ' ').replace(/\s+/g, ' ');
+    const terms = q ? q.split(' ') : [];
     let visible = 0;
 
     schemeCards.forEach(function (card) {
-      const name = (card.dataset.schemeName || '').toLowerCase();
-      const desc = (card.dataset.schemeDesc || '').toLowerCase();
-      const cat  = (card.dataset.category   || '').toLowerCase();
-      const match = !q || name.includes(q) || desc.includes(q) || cat.includes(q);
+      const searchableText = [
+        card.dataset.schemeName,
+        card.dataset.schemeDesc,
+        card.dataset.schemeBenefits,
+        card.dataset.schemeEligibility,
+        card.dataset.department,
+        card.dataset.category,
+        card.dataset.state,
+        card.dataset.schemeType,
+        card.textContent
+      ].join(' ').toLowerCase().replace(/[-_/]+/g, ' ').replace(/\s+/g, ' ');
+      const match = !terms.length || terms.every(function (term) {
+        return searchableText.includes(term);
+      });
       card.style.display = match ? '' : 'none';
       if (match) visible++;
     });
@@ -113,6 +170,12 @@
   if (liveSearch) {
     liveSearch.addEventListener('input', function () {
       doLiveSearch(liveSearch.value);
+    });
+  }
+
+  if (mainSearch) {
+    mainSearch.addEventListener('input', function () {
+      doLiveSearch(mainSearch.value);
     });
   }
 
@@ -141,11 +204,15 @@
     chip.addEventListener('click', function (e) {
       e.preventDefault();
       const type = chip.dataset.typeFilter;
+      const typeSelect = document.getElementById('type-select');
+      if (typeSelect) typeSelect.value = type;
 
       typeChips.forEach(function (c) {
         c.classList.remove('active', 'active-green');
+        c.setAttribute('aria-pressed', 'false');
       });
       chip.classList.add(type === 'State' ? 'active-green' : 'active');
+      chip.setAttribute('aria-pressed', 'true');
 
       let visible = 0;
       schemeCards.forEach(function (card) {
@@ -156,6 +223,12 @@
       });
 
       updateResultCount(visible);
+      const resultCount = document.getElementById('sp-result-count');
+      if (resultCount) {
+        resultCount.dataset.activeType = type;
+        const typeLabel = type ? ` ${type} schemes` : ' schemes';
+        resultCount.querySelector('strong').nextSibling.textContent = typeLabel;
+      }
       toggleNoResults(visible === 0);
     });
   });
@@ -289,15 +362,6 @@
   /* -------------------------------------------------------
      13. FILTER FORM AUTO-SUBMIT ON SELECT CHANGE
   ------------------------------------------------------- */
-  const filterForm = document.getElementById('sp-filter-form');
-  if (filterForm) {
-    filterForm.querySelectorAll('select').forEach(function (sel) {
-      sel.addEventListener('change', function () {
-        filterForm.submit();
-      });
-    });
-  }
-
   /* -------------------------------------------------------
      14. SEARCH BAR: Submit on Enter
   ------------------------------------------------------- */
@@ -387,7 +451,11 @@
   }
 
   window.showSchemeDetails = function (schemeId) {
-    const card = document.querySelector('.sp-scheme-card[data-scheme-id="' + schemeId + '"]');
+    const validSchemeId = positiveSchemeId(schemeId);
+    const card = validSchemeId
+      ? Array.from(document.querySelectorAll('.sp-scheme-card[data-scheme-id]'))
+        .find((candidate) => candidate.dataset.schemeId === validSchemeId)
+      : null;
     if (!card) {
       window.showToast('Unable to load scheme details right now.', 'Not found', 'warning');
       return;
@@ -407,34 +475,93 @@
 
     modal.querySelector('#sp-details-title').textContent = title;
 
-    const badges = [
-      '<span class="sp-details-badge">' + type + '</span>',
-      '<span class="sp-details-badge">' + state + '</span>'
-    ];
-    if (category && category !== 'all') badges.push('<span class="sp-details-badge">' + category + '</span>');
-    modal.querySelector('#sp-details-badges').innerHTML = badges.join('');
+    const badgesContainer = modal.querySelector('#sp-details-badges');
+    badgesContainer.replaceChildren();
+    [type, state].concat(category && category !== 'all' ? [category] : []).forEach(function (value) {
+      const badge = document.createElement('span');
+      badge.className = 'sp-details-badge';
+      badge.textContent = value;
+      badgesContainer.appendChild(badge);
+    });
 
-    const eligibility = [];
+    const body = modal.querySelector('#sp-details-body');
+    body.replaceChildren();
+
+    const description = document.createElement('p');
+    description.textContent = desc;
+    body.appendChild(description);
+
+    const department = document.createElement('p');
+    const departmentLabel = document.createElement('strong');
+    departmentLabel.textContent = 'Department:';
+    department.appendChild(departmentLabel);
+    department.appendChild(document.createTextNode(' ' + dept));
+    body.appendChild(department);
+
     if (minAge || maxAge) {
-      eligibility.push('<li><strong>Age:</strong> ' + (minAge || '-') + ' - ' + (maxAge || '-') + ' years</li>');
+      const eligibility = document.createElement('div');
+      const eligibilityLabel = document.createElement('strong');
+      eligibilityLabel.textContent = 'Eligibility';
+      eligibility.appendChild(eligibilityLabel);
+
+      const eligibilityList = document.createElement('ul');
+      const age = document.createElement('li');
+      const ageLabel = document.createElement('strong');
+      ageLabel.textContent = 'Age:';
+      age.appendChild(ageLabel);
+      age.appendChild(document.createTextNode(' ' + (minAge || '-') + ' - ' + (maxAge || '-') + ' years'));
+      eligibilityList.appendChild(age);
+      eligibility.appendChild(eligibilityList);
+      body.appendChild(eligibility);
     }
+
     if (incomeLimit) {
-      eligibility.push('<li><strong>Income:</strong> <= Rs ' + incomeLimit + ' / year</li>');
+      let eligibility = body.querySelector('div');
+      if (!eligibility) {
+        eligibility = document.createElement('div');
+        const eligibilityLabel = document.createElement('strong');
+        eligibilityLabel.textContent = 'Eligibility';
+        eligibility.appendChild(eligibilityLabel);
+        eligibility.appendChild(document.createElement('ul'));
+        body.appendChild(eligibility);
+      }
+
+      const income = document.createElement('li');
+      const incomeLabel = document.createElement('strong');
+      incomeLabel.textContent = 'Income:';
+      income.appendChild(incomeLabel);
+      income.appendChild(document.createTextNode(' <= Rs ' + incomeLimit + ' / year'));
+      eligibility.querySelector('ul').appendChild(income);
     }
 
-    modal.querySelector('#sp-details-body').innerHTML = [
-      '<p>' + desc + '</p>',
-      '<p><strong>Department:</strong> ' + dept + '</p>',
-      eligibility.length ? '<div><strong>Eligibility</strong><ul>' + eligibility.join('') + '</ul></div>' : '',
-      officialWebsite ? '<p><a href="' + officialWebsite + '" target="_blank" rel="noopener noreferrer">Visit official website</a></p>' : ''
-    ].join('');
+    let officialUrl = null;
+    if (officialWebsite) {
+      try {
+        const parsedUrl = new URL(officialWebsite, window.location.origin);
+        if (parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:') {
+          officialUrl = parsedUrl.href;
+        }
+      } catch (error) {
+        officialUrl = null;
+      }
+    }
+    if (officialUrl) {
+      const website = document.createElement('p');
+      const websiteLink = document.createElement('a');
+      websiteLink.href = officialUrl;
+      websiteLink.target = '_blank';
+      websiteLink.rel = 'noopener noreferrer';
+      websiteLink.textContent = 'Visit official website';
+      website.appendChild(websiteLink);
+      body.appendChild(website);
+    }
 
-    const applyUrl = APPLY_BASE_URL + schemeId + '/';
+    const applyUrl = defaultApplicationUrl(validSchemeId);
     const applyLink = modal.querySelector('#sp-details-apply');
     applyLink.setAttribute('href', applyUrl);
     applyLink.onclick = function (e) {
       e.preventDefault();
-      window.handleApplyNow(schemeId, applyUrl);
+      window.handleApplyNow(validSchemeId, applyUrl);
     };
 
     modal.classList.add('show');

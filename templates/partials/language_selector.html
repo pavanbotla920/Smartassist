@@ -1,17 +1,22 @@
 {% load i18n %}
 {% get_current_language as LANGUAGE_CODE %}
 <div class="site-language-selector">
+    <i class="fas fa-globe" aria-hidden="true"></i>
     <label for="site-language" class="site-language-label">{% trans "Website language" %}</label>
-    <select
-        id="site-language"
-        class="site-language-select"
-        data-site-language
-        data-set-language-url="{% url 'set_language' %}"
-        aria-label="{% trans 'Select website language' %}"
-    >
-        <option value="en" {% if LANGUAGE_CODE == 'en' %}selected{% endif %}>English</option>
-        <option value="hi" {% if LANGUAGE_CODE == 'hi' %}selected{% endif %}>हिन्दी (Hindi)</option>
-        <option value="mr" {% if LANGUAGE_CODE == 'mr' %}selected{% endif %}>मराठी (Marathi)</option>
-        <option value="te" {% if LANGUAGE_CODE == 'te' %}selected{% endif %}>తెలుగు (Telugu)</option>
-    </select>
+    <form method="post" action="{% url 'set_language' %}" data-site-language-form>
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <select
+            id="site-language"
+            class="site-language-select"
+            name="language"
+            data-site-language
+            aria-label="{% trans 'Select website language' %}"
+        >
+            <option value="en" {% if LANGUAGE_CODE == 'en' %}selected{% endif %}>English</option>
+            <option value="hi" {% if LANGUAGE_CODE == 'hi' %}selected{% endif %}>हिन्दी (Hindi)</option>
+            <option value="mr" {% if LANGUAGE_CODE == 'mr' %}selected{% endif %}>मराठी (Marathi)</option>
+            <option value="te" {% if LANGUAGE_CODE == 'te' %}selected{% endif %}>తెలుగు (Telugu)</option>
+        </select>
+    </form>
 </div>

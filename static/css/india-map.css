@@ -1,0 +1,35 @@
+:root { --map-ink:#12362b; --map-forest:#174c3b; --map-gold:#d9a84e; --map-mint:#cfe8d9; --map-line:#d9e5de; --map-muted:#5d7469; }
+.india-map-page { margin:0; background:#f5f8f3; color:var(--map-ink); font-family:"Segoe UI",system-ui,sans-serif; }
+.india-map-shell { max-width:1280px; margin:0 auto; padding:42px 24px 24px; }
+.map-hero { display:flex; justify-content:space-between; align-items:end; gap:32px; padding:10px 0 32px; }
+.map-eyebrow,.section-label { margin:0 0 10px; color:#758d80; font-size:.73rem; font-weight:800; letter-spacing:.17em; text-transform:uppercase; }
+.map-hero h1 { max-width:760px; margin:0; color:var(--map-ink); font-size:clamp(2.1rem,4vw,3.55rem); line-height:1.04; letter-spacing:-.045em; }
+.map-lede { max-width:650px; margin:18px 0 0; color:var(--map-muted); font-size:1.08rem; line-height:1.65; }
+.map-instruction { display:flex; align-items:center; gap:10px; flex:none; padding:12px 16px; color:var(--map-forest); background:#fff9eb; border:1px solid #ead5a8; border-radius:12px; font-size:.86rem; font-weight:700; }
+.map-instruction span:first-child { color:var(--map-gold); font-size:1.35rem; }
+.map-kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:18px; }
+.map-kpi { display:flex; align-items:center; gap:14px; min-height:88px; padding:18px; background:#fff; border:1px solid var(--map-line); border-radius:14px; box-shadow:0 8px 22px rgba(18,54,43,.055); }
+.kpi-icon { display:grid; place-items:center; width:38px; height:38px; color:#fff; background:var(--map-forest); border-radius:10px; font-size:1.25rem; }
+.map-kpi p { margin:0 0 5px; color:var(--map-muted); font-size:.77rem; font-weight:700; }
+.map-kpi strong { color:var(--map-ink); font-size:1.55rem; }
+.map-dashboard { display:grid; grid-template-columns:minmax(0,1.55fr) minmax(300px,.65fr); gap:18px; align-items:stretch; }
+.map-card,.insight-card { background:#fff; border:1px solid var(--map-line); border-radius:16px; box-shadow:0 12px 28px rgba(18,54,43,.07); }
+.map-card { padding:22px; }
+.map-card-head,.insight-top { display:flex; justify-content:space-between; align-items:start; gap:16px; }
+.map-card h2,.insight-card h2 { margin:0; color:var(--map-ink); font-size:1.35rem; letter-spacing:-.02em; }
+.map-legend { display:flex; flex-wrap:wrap; justify-content:end; gap:12px; color:var(--map-muted); font-size:.76rem; }
+.map-legend span { display:flex; align-items:center; gap:5px; }
+.legend-swatch { width:12px; height:12px; border:1px solid #fff; border-radius:3px; box-shadow:0 0 0 1px #c7d7cd; }
+.legend-default { background:var(--map-mint); } .legend-hover { background:#e1b554; } .legend-selected { background:var(--map-forest); }
+.map-frame { position:relative; margin-top:18px; height:570px; overflow:hidden; background:#edf5ef; border:1px solid #d6e6db; border-radius:12px; }
+#india-map { width:100%; height:100%; background:#edf5ef; }
+.leaflet-container { font-family:inherit; background:#edf5ef; }
+.leaflet-control-zoom a { color:var(--map-forest)!important; }
+.state-tooltip { position:absolute; z-index:500; display:none; min-width:190px; max-width:230px; padding:13px 15px; color:var(--map-ink); background:#fff; border:1px solid #b8cfc1; border-radius:10px; box-shadow:0 10px 24px rgba(18,54,43,.2); pointer-events:none; }
+.state-tooltip.visible { display:block; }.state-tooltip strong { display:block; margin-bottom:7px; font-size:1rem; }.state-tooltip span { display:block; color:var(--map-muted); font-size:.78rem; line-height:1.55; }
+.map-overlay { position:absolute; inset:0; z-index:450; display:grid; place-items:center; color:var(--map-forest); background:rgba(237,245,239,.92); font-weight:700; }
+.map-overlay[hidden] { display:none; }.map-error { padding:24px; text-align:center; color:#7c3326; background:#fff8f5; }.loading-dot { width:10px; height:10px; margin-right:9px; display:inline-block; background:var(--map-gold); border-radius:50%; animation:mapPulse 1.1s infinite; }
+@keyframes mapPulse { 50% { opacity:.35; transform:scale(.72); } }
+.insight-card { display:flex; flex-direction:column; padding:24px; }.status-pill { padding:6px 9px; color:#3b6d58; background:#edf7f0; border-radius:6px; font-size:.7rem; font-weight:800; }.insight-card h2 { margin-top:34px; font-size:2rem; }.insight-copy { min-height:52px; margin:10px 0 22px; color:var(--map-muted); line-height:1.55; }.insight-stats { display:grid; grid-template-columns:repeat(3,1fr); border-top:1px solid var(--map-line); border-bottom:1px solid var(--map-line); }.insight-stats div { padding:17px 8px; border-right:1px solid var(--map-line); }.insight-stats div:last-child { border:0; }.insight-stats span { display:block; color:var(--map-muted); font-size:.69rem; }.insight-stats strong { display:block; margin-top:5px; font-size:1.35rem; }.insight-action { display:flex; justify-content:space-between; align-items:center; margin-top:22px; padding:13px 15px; color:#fff; background:var(--map-forest); border-radius:9px; font-weight:800; text-decoration:none; transition:background .18s,transform .18s; }.insight-action:hover,.insight-action:focus-visible { color:#fff; background:#0d382a; transform:translateY(-1px); }.insight-action.is-disabled { opacity:.5; pointer-events:none; }.voice-note { display:flex; gap:11px; margin-top:auto; padding-top:24px; color:var(--map-forest); }.voice-note>span { font-size:1.5rem; color:var(--map-gold); }.voice-note strong { font-size:.83rem; }.voice-note p { margin:5px 0 0; color:var(--map-muted); font-size:.76rem; line-height:1.5; }.map-status { margin-top:14px; padding:12px; color:#7c3326; background:#fff8f5; border:1px solid #f0c8bd; border-radius:8px; }.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+@media (max-width:900px) { .india-map-shell{padding:30px 16px}.map-hero{display:block}.map-instruction{width:max-content;margin-top:20px}.map-kpis{grid-template-columns:repeat(2,1fr)}.map-dashboard{grid-template-columns:1fr}.map-frame{height:500px}.insight-card{min-height:350px} }
+@media (max-width:520px) { .map-hero h1{font-size:2.25rem}.map-lede{font-size:.98rem}.map-kpis{gap:8px}.map-kpi{min-height:76px;padding:12px;gap:9px}.kpi-icon{width:30px;height:30px;font-size:1rem}.map-kpi p{font-size:.65rem}.map-kpi strong{font-size:1.2rem}.map-card{padding:14px}.map-card-head{display:block}.map-legend{justify-content:start;margin-top:14px}.map-frame{height:430px}.insight-card h2{margin-top:25px;font-size:1.7rem} }

@@ -1,13 +1,41 @@
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.core import mail
+from django.core.exceptions import ImproperlyConfigured
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import Client, RequestFactory, TestCase, override_settings
 from django.urls import reverse, translate_url
+from django.utils import timezone
 from django.utils.translation import deactivate_all
 from unittest.mock import patch
+from importlib import import_module
+import os
+import json
+import sys
+from types import SimpleNamespace
 
 from aiohttp import ClientResponseError
 from farmers.models import ApplicationRequest, Notification, Scheme, UserProfile
-from farmers.forms import UserProfileForm
-from farmers.views import VoiceServiceError, _scheme_voice_text, _synthesize_scheme_voice
+from farmers.forms import CitizenApplicationForm, SchemeForm, UserProfileForm
+from farmers.views import (
+    VoiceServiceError,
+    _scheme_voice_text,
+    _synthesize_scheme_voice,
+    _transcribe_audio_without_openai,
+    _validate_audio_content,
+)
+from smartassist.settings import (
+    _get_allowed_hosts,
+    _get_bool_setting,
+    _get_csrf_trusted_origins,
+    _get_cache_config,
+    _get_debug_setting,
+    _get_nonnegative_int_setting,
+    _get_secret_key,
+)
+
+normalize_legacy_pending_status = import_module(
+    'farmers.migrations.0009_normalize_legacy_pending_status'
+).normalize_legacy_pending_status
 
 
 class SmartAssistVerificationTests(TestCase):
@@ -42,6 +70,7 @@ class SmartAssistVerificationTests(TestCase):
         deactivate_all()
         super().tearDown()
 
+
     def test_central_scheme_filter_uses_scheme_type_not_state(self):
         response = self.client.get(reverse('scheme_awareness'), {'type': 'Central'})
 
@@ -49,6 +78,29 @@ class SmartAssistVerificationTests(TestCase):
         self.assertContains(response, 'Central Test Scheme')
         self.assertNotContains(response, 'State Test Scheme')
         self.assertEqual(len(response.context['schemes']), 1)
+
+    def test_central_schemes_remain_available_when_state_is_selected(self):
+        response = self.client.get(
+            reverse('scheme_awareness'),
+            {'type': 'Central', 'state': 'Assam'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Central Test Scheme')
+        self.assertNotContains(response, 'State Test Scheme')
+        self.assertEqual(list(response.context['schemes']), [self.central_scheme])
+        self.assertContains(response, 'option value="Central" selected', html=False)
+        self.assertEqual(response.context['state_filter'], 'Assam')
+
+    def test_state_filter_includes_central_and_matching_state_schemes(self):
+        response = self.client.get(
+            reverse('scheme_awareness'),
+            {'state': 'Test State'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Central Test Scheme')
+        self.assertContains(response, 'State Test Scheme')
 
     def test_recommendation_page_renders_for_authenticated_user(self):
         self.client.force_login(self.user)
@@ -61,8 +113,64 @@ class SmartAssistVerificationTests(TestCase):
         self.assertContains(response, 'Transgender')
         self.assertContains(response, 'rural_urban')
         self.assertContains(response, 'Skip to Results')
+        self.assertContains(
+            response,
+            '>Eligibility</a>',
+            html=False,
+        )
         for category in ('General', 'Other Backward Class (OBC)', 'Scheduled Caste (SC)', 'Scheduled Tribe (ST)', 'Economically Weaker Section (EWS)'):
             self.assertContains(response, category)
+
+    def test_shared_dev_stylesheet_is_loaded_except_on_recommendation(self):
+        home_response = self.client.get(reverse('home'))
+        self.assertContains(home_response, '/static/css/smartassist-dev.css')
+
+        self.client.force_login(self.user)
+        recommendation_response = self.client.get(reverse('recommend'))
+        self.assertNotContains(recommendation_response, '/static/css/smartassist-dev.css')
+        ai_response = self.client.get(reverse('ai_recommendation'))
+        self.assertNotContains(ai_response, '/static/css/smartassist-dev.css')
+
+    def test_ai_recommendation_is_separate_from_eligibility(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('ai_recommendation'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'AI-Driven Scheme Discovery')
+        self.assertContains(response, 'recommendForm')
+        self.assertContains(response, 'Top Recommendation Results')
+        self.assertContains(response, 'href="/recommend/"', html=False)
+        self.assertNotContains(response, 'eligibilityForm')
+
+    def test_navigation_exposes_separate_eligibility_and_ai_links(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('home'))
+
+        self.assertContains(response, 'href="/recommend/"', html=False)
+        self.assertContains(response, 'Eligibility')
+        self.assertNotContains(response, 'href="/ai-recommendation/"', html=False)
+
+        dashboard_response = self.client.get(reverse('dashboard'))
+        self.assertContains(dashboard_response, 'href="/ai-recommendation/"', html=False)
+
+    def test_ai_recommendation_uses_real_scheme_records(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('ai_recommendation'),
+            {
+                'age': '30',
+                'income': '100000',
+                'category': 'General',
+                'state': 'Test State',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'State Test Scheme')
+        self.assertEqual(response.context['schemes'][0]['scheme'], self.state_scheme)
 
     def test_recommendation_handles_optional_fields_and_returns_matches(self):
         self.client.force_login(self.user)
@@ -73,13 +181,405 @@ class SmartAssistVerificationTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Central Test Scheme')
-        self.assertEqual(response.context['form_data'], {
-            'age': 0,
-            'income': 0,
-            'category': '',
-            'state': '',
-        })
+        self.assertContains(response, 'valid non-negative age')
+        self.assertEqual(response.context['schemes'], [])
+
+    def test_recommendation_does_not_score_missing_or_invalid_income(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('ai_recommendation'),
+            {'age': '30', 'income': 'not-a-number', 'category': 'General'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['schemes'], [])
+        self.assertContains(response, 'valid non-negative annual income')
+
+    def test_recommendation_rejects_missing_age(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('recommend'),
+            {'age': '', 'income': '100000', 'category': 'General', 'state': 'Test State'},
+        )
+
+        self.assertEqual(response.context['schemes'], [])
+        self.assertContains(response, 'valid non-negative age')
+
+    def test_recommendation_enforces_age_income_state_and_category(self):
+        eligible = Scheme.objects.create(
+            scheme_name='Eligible State Scheme',
+            scheme_type='State',
+            state='Test State',
+            department='Test Department',
+            min_age=25,
+            max_age=40,
+            income_limit=200000,
+            category='General',
+        )
+        too_young = Scheme.objects.create(
+            scheme_name='Too Young Scheme',
+            scheme_type='State',
+            state='Test State',
+            department='Test Department',
+            min_age=35,
+            max_age=60,
+            income_limit=200000,
+            category='General',
+        )
+        too_old = Scheme.objects.create(
+            scheme_name='Too Old Scheme',
+            scheme_type='State',
+            state='Test State',
+            department='Test Department',
+            min_age=10,
+            max_age=20,
+            income_limit=200000,
+            category='General',
+        )
+        too_rich = Scheme.objects.create(
+            scheme_name='Too Rich Scheme',
+            scheme_type='State',
+            state='Test State',
+            department='Test Department',
+            min_age=25,
+            max_age=40,
+            income_limit=50000,
+            category='General',
+        )
+        wrong_state = Scheme.objects.create(
+            scheme_name='Other State Scheme',
+            scheme_type='State',
+            state='Other State',
+            department='Test Department',
+            min_age=25,
+            max_age=40,
+            income_limit=200000,
+            category='General',
+        )
+        wrong_category = Scheme.objects.create(
+            scheme_name='Category Restricted Scheme',
+            scheme_type='State',
+            state='Test State',
+            department='Test Department',
+            min_age=25,
+            max_age=40,
+            income_limit=200000,
+            category='SC',
+        )
+
+        self.client.force_login(self.user)
+        response = self.client.post(
+            reverse('recommend'),
+            {'age': '30', 'income': '100000', 'category': 'General', 'state': 'Test State'},
+        )
+
+        recommended = [item['scheme'] for item in response.context['schemes']]
+        self.assertIn(eligible, recommended)
+        self.assertNotIn(too_young, recommended)
+        self.assertNotIn(too_old, recommended)
+        self.assertNotIn(too_rich, recommended)
+        self.assertNotIn(wrong_state, recommended)
+        self.assertNotIn(wrong_category, recommended)
+
+    def test_recommendation_allows_missing_optional_state_and_category(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('recommend'),
+            {'age': '30', 'income': '100000', 'category': '', 'state': ''},
+        )
+
+        self.assertTrue(response.context['schemes'])
+        self.assertIsNone(response.context['validation_error'])
+
+    def test_recommendation_excludes_scheme_with_missing_state(self):
+        malformed_scheme = Scheme.objects.create(
+            scheme_name='Malformed State Scheme',
+            scheme_type='State',
+            state='',
+            department='Test Department',
+            min_age=25,
+            max_age=40,
+            income_limit=200000,
+            category='General',
+        )
+
+        self.client.force_login(self.user)
+        response = self.client.post(
+            reverse('recommend'),
+            {'age': '30', 'income': '100000', 'category': 'General', 'state': 'Gujarat'},
+        )
+
+        self.assertNotIn(
+            malformed_scheme,
+            [item['scheme'] for item in response.context['schemes']],
+        )
+
+    def test_ai_and_regular_recommendations_apply_same_state_and_category_filters(self):
+        self.client.force_login(self.user)
+        response = self.client.post(
+            reverse('ai_recommendation'),
+            {
+                'age': '30',
+                'income': '100000',
+                'category': 'General',
+                'state': 'Test State',
+            },
+        )
+        ai_names = {item['scheme'].scheme_name for item in response.context['schemes']}
+
+        response = self.client.post(
+            reverse('recommend'),
+            {
+                'age': '30',
+                'income': '100000',
+                'category': 'General',
+                'state': 'Test State',
+            },
+        )
+        regular_names = {item['scheme'].scheme_name for item in response.context['schemes']}
+
+        self.assertEqual(ai_names, regular_names)
+
+    def test_recommendations_accept_age_minimum_and_maximum_boundaries(self):
+        minimum_scheme = Scheme.objects.create(
+            scheme_name='Minimum Age Boundary Scheme',
+            scheme_type='State',
+            state='Test State',
+            department='Test Department',
+            min_age=25,
+            max_age=40,
+            income_limit=200000,
+            category='General',
+        )
+        maximum_scheme = Scheme.objects.create(
+            scheme_name='Maximum Age Boundary Scheme',
+            scheme_type='State',
+            state='Test State',
+            department='Test Department',
+            min_age=20,
+            max_age=30,
+            income_limit=200000,
+            category='General',
+        )
+        self.client.force_login(self.user)
+
+        for endpoint in ('recommend', 'ai_recommendation'):
+            with self.subTest(endpoint=endpoint, boundary='minimum'):
+                response = self.client.post(
+                    reverse(endpoint),
+                    {
+                        'age': '25',
+                        'income': '100000',
+                        'category': 'General',
+                        'state': 'Test State',
+                    },
+                )
+                recommended = [item['scheme'] for item in response.context['schemes']]
+                self.assertIn(minimum_scheme, recommended)
+
+            with self.subTest(endpoint=endpoint, boundary='maximum'):
+                response = self.client.post(
+                    reverse(endpoint),
+                    {
+                        'age': '30',
+                        'income': '100000',
+                        'category': 'General',
+                        'state': 'Test State',
+                    },
+                )
+                recommended = [item['scheme'] for item in response.context['schemes']]
+                self.assertIn(maximum_scheme, recommended)
+
+    def test_recommendations_accept_income_limit_boundary(self):
+        boundary_scheme = Scheme.objects.create(
+            scheme_name='Income Boundary Scheme',
+            scheme_type='State',
+            state='Test State',
+            department='Test Department',
+            min_age=25,
+            max_age=40,
+            income_limit=150000,
+            category='General',
+        )
+        self.client.force_login(self.user)
+
+        for endpoint in ('recommend', 'ai_recommendation'):
+            response = self.client.post(
+                reverse(endpoint),
+                {
+                    'age': '30',
+                    'income': '150000',
+                    'category': 'General',
+                    'state': 'Test State',
+                },
+            )
+            with self.subTest(endpoint=endpoint):
+                recommended = [item['scheme'] for item in response.context['schemes']]
+                self.assertIn(boundary_scheme, recommended)
+
+    def test_recommendations_isolate_state_specific_schemes_by_state(self):
+        maharashtra_scheme = Scheme.objects.create(
+            scheme_name='Maharashtra Boundary Scheme',
+            scheme_type='State',
+            state='Maharashtra',
+            department='Test Department',
+            min_age=25,
+            max_age=40,
+            income_limit=200000,
+            category='General',
+        )
+        gujarat_scheme = Scheme.objects.create(
+            scheme_name='Gujarat Boundary Scheme',
+            scheme_type='State',
+            state='Gujarat',
+            department='Test Department',
+            min_age=25,
+            max_age=40,
+            income_limit=200000,
+            category='General',
+        )
+        self.client.force_login(self.user)
+
+        cases = (
+            ('Maharashtra', maharashtra_scheme, gujarat_scheme),
+            ('Gujarat', gujarat_scheme, maharashtra_scheme),
+        )
+        for endpoint in ('recommend', 'ai_recommendation'):
+            for state, expected, excluded in cases:
+                response = self.client.post(
+                    reverse(endpoint),
+                    {
+                        'age': '30',
+                        'income': '100000',
+                        'category': 'General',
+                        'state': state,
+                    },
+                )
+                with self.subTest(endpoint=endpoint, state=state):
+                    recommended = [item['scheme'] for item in response.context['schemes']]
+                    self.assertIn(expected, recommended)
+                    self.assertNotIn(excluded, recommended)
+
+    def test_recommendations_normalize_state_case_and_whitespace(self):
+        scheme = Scheme.objects.create(
+            scheme_name='Maharashtra Normalization Scheme',
+            scheme_type='State',
+            state='Maharashtra',
+            department='Test Department',
+            min_age=25,
+            max_age=40,
+            income_limit=200000,
+            category='General',
+        )
+        self.client.force_login(self.user)
+
+        for endpoint in ('recommend', 'ai_recommendation'):
+            response = self.client.post(
+                reverse(endpoint),
+                {
+                    'age': '30',
+                    'income': '100000',
+                    'category': ' General ',
+                    'state': '  maHARashtra  ',
+                },
+            )
+            with self.subTest(endpoint=endpoint):
+                recommended = [item['scheme'] for item in response.context['schemes']]
+                self.assertIn(scheme, recommended)
+
+    def test_recommendations_support_all_category_and_missing_inputs(self):
+        all_category_scheme = Scheme.objects.create(
+            scheme_name='All Category Boundary Scheme',
+            scheme_type='State',
+            state='Test State',
+            department='Test Department',
+            min_age=25,
+            max_age=40,
+            income_limit=200000,
+            category='All',
+        )
+        self.client.force_login(self.user)
+
+        for endpoint in ('recommend', 'ai_recommendation'):
+            response = self.client.post(
+                reverse(endpoint),
+                {
+                    'age': '30',
+                    'income': '100000',
+                    'category': 'SC',
+                    'state': 'Test State',
+                },
+            )
+            with self.subTest(endpoint=endpoint, case='all-category'):
+                recommended = [item['scheme'] for item in response.context['schemes']]
+                self.assertIn(all_category_scheme, recommended)
+
+            response = self.client.post(
+                reverse(endpoint),
+                {
+                    'age': '30',
+                    'income': '100000',
+                    'category': '',
+                    'state': '',
+                },
+            )
+            with self.subTest(endpoint=endpoint, case='missing-state-category'):
+                recommended = [item['scheme'] for item in response.context['schemes']]
+                self.assertIn(all_category_scheme, recommended)
+
+    def test_underage_application_uses_scheme_age_criteria(self):
+        youth_scheme = Scheme.objects.create(
+            scheme_name='Youth Test Scheme',
+            scheme_type='State',
+            state='Test State',
+            department='Youth Department',
+            min_age=16,
+            max_age=25,
+            category='General',
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            f"{reverse('apply_assistance')}?scheme_id={youth_scheme.id}",
+            {
+                'scheme_id': str(youth_scheme.id),
+                'name': 'Young Farmer',
+                'age': '16',
+                'gender': 'Female',
+                'mobile': '9876543210',
+                'email': 'young@example.com',
+                'education': 'Student',
+                'income': '10000',
+                'category': 'General',
+                'state': 'Test State',
+                'district': 'Test District',
+            },
+        )
+
+        self.assertRedirects(response, reverse('application_status'))
+        self.assertTrue(ApplicationRequest.objects.filter(
+            user=self.user, scheme=youth_scheme, age=16,
+        ).exists())
+
+    def test_export_is_csv_and_requires_staff_role(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('export_applications'))
+        self.assertRedirects(response, reverse('dashboard'))
+
+        profile, _ = UserProfile.objects.get_or_create(user=self.user)
+        profile.role = 'admin'
+        profile.save(update_fields=['role'])
+        response = self.client.get(reverse('export_applications'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'text/csv')
+        self.assertIn('applications.csv', response['Content-Disposition'])
+        self.assertIn(
+            b'Application ID,Applicant,Scheme,Status,State,District,Application Date',
+            response.content,
+        )
 
     def test_recommendation_requires_authentication(self):
         response = self.client.get(reverse('recommend'))
@@ -90,10 +590,45 @@ class SmartAssistVerificationTests(TestCase):
             fetch_redirect_response=False,
         )
 
+
     def test_profile_form_allows_incomplete_profile(self):
         form = UserProfileForm(data={})
 
         self.assertTrue(form.is_valid())
+
+    def test_profile_requires_authentication(self):
+        response = self.client.get(reverse('profile'))
+
+        self.assertRedirects(
+            response,
+            f"{reverse('login')}?next={reverse('profile')}",
+            fetch_redirect_response=False,
+        )
+
+    def test_profile_view_saves_incomplete_profile(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('profile'),
+            {'username': 'citizen', 'email': ''},
+        )
+
+        self.assertRedirects(response, reverse('profile'))
+        self.assertTrue(UserProfile.objects.filter(user=self.user).exists())
+
+    def test_profile_completion_uses_exact_22_field_denominator(self):
+        self.client.force_login(self.user)
+        self.user.email = 'citizen@example.com'
+        self.user.save(update_fields=['email'])
+        profile, _ = UserProfile.objects.get_or_create(user=self.user)
+        profile.phone = '9876543210'
+        profile.age = 30
+        profile.gender = 'male'
+        profile.save(update_fields=['phone', 'age', 'gender'])
+
+        response = self.client.get(reverse('profile'))
+
+        self.assertEqual(response.context['profile_completion'], round(5 / 22 * 100))
 
     def test_profile_page_exposes_location_data_and_dropdowns(self):
         self.client.force_login(self.user)
@@ -104,6 +639,414 @@ class SmartAssistVerificationTests(TestCase):
         self.assertContains(response, 'id="id_state"', html=False)
         self.assertContains(response, 'id="id_district"', html=False)
         self.assertContains(response, 'id="location-data"', html=False)
+        self.assertContains(response, 'Profile completeness')
+
+    def test_profile_post_persists_user_and_location_details(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('profile'),
+            {
+                'username': 'updated-citizen',
+                'email': 'updated@example.com',
+                'phone': '9876543210',
+                'age': ' thirty',
+                'gender': 'male',
+                'education': 'graduate',
+                'income_range': '1l_3l',
+                'category': 'General',
+                'state': 'Andhra Pradesh',
+                'district': 'Alluri Sitharama Raju',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Please check the highlighted fields')
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.username, 'citizen')
+
+        response = self.client.post(
+            reverse('profile'),
+            {
+                'username': 'updated-citizen',
+                'email': 'updated@example.com',
+                'phone': '9876543210',
+                'age': '30',
+                'gender': 'male',
+                'education': 'graduate',
+                'income_range': '1l_3l',
+                'category': 'General',
+                'state': 'Andhra Pradesh',
+                'district': 'Alluri Sitharama Raju',
+            },
+        )
+
+        self.assertRedirects(response, reverse('profile'))
+        self.user.refresh_from_db()
+        profile = UserProfile.objects.get(user=self.user)
+        self.assertEqual(self.user.username, 'updated-citizen')
+        self.assertEqual(profile.state, 'Andhra Pradesh')
+        self.assertEqual(profile.district, 'Alluri Sitharama Raju')
+
+    def test_profile_post_persists_optional_farmer_details(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('profile'),
+            {
+                'username': 'citizen',
+                'email': 'citizen@example.com',
+                'phone': '9876543210',
+                'age': '30',
+                'gender': 'male',
+                'education': 'graduate',
+                'income_range': '1l_3l',
+                'category': 'General',
+                'state': 'Andhra Pradesh',
+                'district': 'Alluri Sitharama Raju',
+                'taluka': 'Araku',
+                'village_panchayat': 'Paderu',
+                'rural_urban': 'rural',
+                'pin_code': '531001',
+                'full_name': 'Citizen Farmer',
+                'family_size': '4',
+                'occupation': 'Farmer',
+                'landholding_size': '2.50',
+                'ownership_type': 'owner',
+                'crops_grown': 'Rice',
+                'livestock_assets': 'Two cows',
+                'farmer_type': 'small',
+                'ration_card_type': 'Priority',
+            },
+        )
+
+        self.assertRedirects(response, reverse('profile'))
+        profile = UserProfile.objects.get(user=self.user)
+        self.assertEqual(profile.taluka, 'Araku')
+        self.assertEqual(profile.village_panchayat, 'Paderu')
+        self.assertEqual(profile.rural_urban, 'rural')
+        self.assertEqual(profile.pin_code, '531001')
+        self.assertEqual(profile.family_size, 4)
+        self.assertEqual(profile.occupation, 'Farmer')
+        self.assertEqual(str(profile.landholding_size), '2.50')
+        self.assertEqual(profile.ownership_type, 'owner')
+        self.assertEqual(profile.crops_grown, 'Rice')
+        self.assertEqual(profile.livestock_assets, 'Two cows')
+        self.assertEqual(profile.farmer_type, 'small')
+        self.assertEqual(profile.ration_card_type, 'Priority')
+
+    def test_profile_form_contains_approved_fields_only(self):
+        approved_fields = {
+            'phone', 'state', 'district', 'age', 'gender', 'education',
+            'income_range', 'category', 'taluka', 'village_panchayat',
+            'rural_urban', 'pin_code', 'family_size', 'occupation',
+            'landholding_size', 'ownership_type', 'crops_grown',
+            'livestock_assets', 'farmer_type', 'ration_card_type',
+        }
+        excluded_fields = {
+            'full_name', 'survey_no', 'hissa_no', 'marital_status',
+            'disability_status', 'email_notifications',
+        }
+
+        self.assertEqual(set(UserProfileForm.base_fields), approved_fields)
+        self.assertTrue(excluded_fields.isdisjoint(UserProfileForm.base_fields))
+
+    def test_profile_form_accepts_all_approved_optional_fields(self):
+        form = UserProfileForm(data={
+            'taluka': 'Araku',
+            'village_panchayat': 'Paderu',
+            'rural_urban': 'rural',
+            'pin_code': '012345',
+            'family_size': '4',
+            'occupation': 'Farmer',
+            'landholding_size': '2.50',
+            'ownership_type': 'owner',
+            'crops_grown': 'Rice',
+            'livestock_assets': 'Two cows',
+            'farmer_type': 'small',
+            'ration_card_type': 'Priority',
+        })
+
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['pin_code'], '012345')
+
+    def test_profile_form_validates_age_boundaries(self):
+        for value in ('18', '120'):
+            with self.subTest(value=value):
+                form = UserProfileForm(data={'age': value})
+                self.assertTrue(form.is_valid(), form.errors)
+
+        for value in ('17', '121'):
+            with self.subTest(value=value):
+                form = UserProfileForm(data={'age': value})
+                self.assertFalse(form.is_valid())
+                self.assertIn('age', form.errors)
+
+        blank_form = UserProfileForm(data={'age': ''})
+        self.assertTrue(blank_form.is_valid(), blank_form.errors)
+
+    def test_profile_form_validates_pin_code(self):
+        for value in ('', '531001', '012345'):
+            with self.subTest(value=value):
+                form = UserProfileForm(data={'pin_code': value})
+                self.assertTrue(form.is_valid(), form.errors)
+
+        for value in ('12345', '1234567', '12A456'):
+            with self.subTest(value=value):
+                form = UserProfileForm(data={'pin_code': value})
+                self.assertFalse(form.is_valid())
+                self.assertIn('pin_code', form.errors)
+
+    def test_profile_form_validates_family_size(self):
+        for value in ('', '1', '4'):
+            with self.subTest(value=value):
+                form = UserProfileForm(data={'family_size': value})
+                self.assertTrue(form.is_valid(), form.errors)
+
+        for value in ('0', '-1'):
+            with self.subTest(value=value):
+                form = UserProfileForm(data={'family_size': value})
+                self.assertFalse(form.is_valid())
+                self.assertIn('family_size', form.errors)
+
+    def test_profile_form_validates_landholding_size(self):
+        for value in ('', '0', '2.50'):
+            with self.subTest(value=value):
+                form = UserProfileForm(data={'landholding_size': value})
+                self.assertTrue(form.is_valid(), form.errors)
+
+        for value in ('-1', 'not-a-decimal'):
+            with self.subTest(value=value):
+                form = UserProfileForm(data={'landholding_size': value})
+                self.assertFalse(form.is_valid())
+                self.assertIn('landholding_size', form.errors)
+
+    def test_profile_form_validates_controlled_choices(self):
+        choice_fields = {
+            'rural_urban': ('rural', 'urban'),
+            'ownership_type': ('owner', 'tenant', 'sharecropper', 'oral_lessee'),
+            'farmer_type': ('small', 'medium', 'large', 'landless'),
+        }
+
+        for field_name, choices in choice_fields.items():
+            for value in choices:
+                with self.subTest(field=field_name, value=value):
+                    form = UserProfileForm(data={field_name: value})
+                    self.assertTrue(form.is_valid(), form.errors)
+            with self.subTest(field=field_name, value=''):
+                form = UserProfileForm(data={field_name: ''})
+                self.assertTrue(form.is_valid(), form.errors)
+            with self.subTest(field=field_name, value='invalid'):
+                form = UserProfileForm(data={field_name: 'invalid'})
+                self.assertFalse(form.is_valid())
+                self.assertIn(field_name, form.errors)
+
+    def test_profile_form_enforces_landless_consistency(self):
+        for landholding_size in ('', '0'):
+            with self.subTest(landholding_size=landholding_size):
+                form = UserProfileForm(data={
+                    'farmer_type': 'landless',
+                    'landholding_size': landholding_size,
+                })
+                self.assertTrue(form.is_valid(), form.errors)
+
+        landless_with_land = UserProfileForm(data={
+            'farmer_type': 'landless',
+            'landholding_size': '0.01',
+        })
+        self.assertFalse(landless_with_land.is_valid())
+        self.assertIn('landholding_size', landless_with_land.errors)
+
+        non_landless_with_zero = UserProfileForm(data={
+            'farmer_type': 'small',
+            'landholding_size': '0',
+        })
+        self.assertTrue(
+            non_landless_with_zero.is_valid(),
+            non_landless_with_zero.errors,
+        )
+
+    def test_profile_completion_counts_zero_and_ignores_excluded_fields(self):
+        self.client.force_login(self.user)
+        self.user.email = 'citizen@example.com'
+        self.user.save(update_fields=['email'])
+        profile, _ = UserProfile.objects.get_or_create(user=self.user)
+        profile.phone = '9876543210'
+        profile.age = 30
+        profile.gender = 'male'
+        profile.education = 'graduate'
+        profile.income_range = '1l_3l'
+        profile.category = 'General'
+        profile.state = 'Andhra Pradesh'
+        profile.district = 'Alluri Sitharama Raju'
+        profile.taluka = 'Araku'
+        profile.village_panchayat = 'Paderu'
+        profile.rural_urban = 'rural'
+        profile.pin_code = '012345'
+        profile.family_size = 1
+        profile.occupation = 'Farmer'
+        profile.landholding_size = 0
+        profile.ownership_type = 'owner'
+        profile.crops_grown = 'Rice'
+        profile.livestock_assets = 'Two cows'
+        profile.farmer_type = 'landless'
+        profile.ration_card_type = 'Priority'
+        profile.email_notifications = False
+        profile.full_name = 'Excluded Name'
+        profile.survey_no = '12A'
+        profile.hissa_no = '3'
+        profile.marital_status = 'Married'
+        profile.disability_status = 'None'
+        profile.save()
+
+        response = self.client.get(reverse('profile'))
+
+        self.assertEqual(response.context['profile_completion'], 100)
+
+    def test_profile_page_renders_approved_fields_once_and_excludes_legacy_fields(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('profile'))
+
+        approved_fields = (
+            'taluka',
+            'village_panchayat',
+            'rural_urban',
+            'pin_code',
+            'family_size',
+            'occupation',
+            'landholding_size',
+            'ownership_type',
+            'crops_grown',
+            'livestock_assets',
+            'farmer_type',
+            'ration_card_type',
+        )
+        for field_name in approved_fields:
+            with self.subTest(field=field_name):
+                self.assertContains(
+                    response,
+                    f'name="{field_name}"',
+                    count=1,
+                    html=False,
+                )
+
+        excluded_fields = (
+            'full_name',
+            'survey_no',
+            'hissa_no',
+            'marital_status',
+            'disability_status',
+            'email_notifications',
+        )
+        for field_name in excluded_fields:
+            with self.subTest(field=field_name):
+                self.assertNotContains(
+                    response,
+                    f'name="{field_name}"',
+                    html=False,
+                )
+
+        self.assertContains(response, 'id="id_state"', html=False)
+        self.assertContains(response, 'id="id_district"', html=False)
+        self.assertContains(response, 'location-data', html=False)
+        self.assertContains(response, 'profile-error', html=False)
+
+    def test_application_form_validates_mobile_and_age(self):
+        form = CitizenApplicationForm(data={
+            'name': 'Test Farmer',
+            'age': '-1',
+            'gender': 'Other',
+            'mobile': '123',
+            'email': 'farmer@example.com',
+            'education': 'Graduate',
+            'income': '100000',
+            'category': 'General',
+            'state': 'Test State',
+            'district': 'Test District',
+        })
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('mobile', form.errors)
+        self.assertIn('age', form.errors)
+
+    def test_scheme_form_rejects_duplicate_and_invalid_age_range(self):
+        form = SchemeForm(data={
+            'scheme_name': self.central_scheme.scheme_name,
+            'scheme_type': self.central_scheme.scheme_type,
+            'state': self.central_scheme.state,
+            'department': self.central_scheme.department,
+            'description': 'Duplicate',
+            'benefits': '',
+            'eligibility': '',
+            'documents_required': '',
+            'min_age': '50',
+            'max_age': '20',
+            'income_limit': '100000',
+            'category': 'General',
+            'education_required': '',
+            'official_website': '',
+            'apply_link': '',
+        })
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('scheme_name', form.errors)
+        self.assertIn('max_age', form.errors)
+
+    def test_settings_requires_authentication(self):
+        response = self.client.get(reverse('settings'))
+
+        self.assertRedirects(
+            response,
+            f"{reverse('login')}?next={reverse('settings')}",
+            fetch_redirect_response=False,
+        )
+
+    def test_settings_save_and_reload_isolated_per_session(self):
+        self.client.force_login(self.user)
+        response = self.client.post(
+            reverse('settings'),
+            {
+                'language': 'mr',
+                'appearance': 'dark',
+                'font_size': 'large',
+                'sms_alerts': 'on',
+                'voice_language': 'hi',
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        response = self.client.get(reverse('settings'))
+        self.assertContains(response, 'value="dark" selected')
+        self.assertContains(response, 'value="large" selected')
+        self.assertContains(response, 'value="hi" selected')
+        self.assertContains(response, 'name="sms_alerts" checked')
+        self.assertNotContains(response, 'name="email_notifications" checked')
+
+        other_client = self.client.__class__()
+        other_user = User.objects.create_user(username='settings-other', password='secret123')
+        other_client.force_login(other_user)
+        response = other_client.get(reverse('settings'))
+        self.assertContains(response, 'value="light" selected')
+        self.assertContains(response, 'value="normal" selected')
+        self.assertContains(response, 'value="auto" selected')
+
+    def test_settings_supports_telugu_voice_language(self):
+        self.client.force_login(self.user)
+        response = self.client.post(
+            reverse('settings'),
+            {
+                'language': 'en',
+                'appearance': 'light',
+                'font_size': 'normal',
+                'voice_language': 'te',
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        response = self.client.get(reverse('settings'))
+        self.assertContains(response, 'option value="te" selected')
+
 
     def test_registration_rejects_weak_password_server_side(self):
         response = self.client.post(
@@ -145,7 +1088,7 @@ class SmartAssistVerificationTests(TestCase):
 
         manage_response = self.client.get(reverse('manage_schemes'))
         self.assertEqual(manage_response.status_code, 200)
-        self.assertContains(manage_response, 'Add scheme')
+        self.assertContains(manage_response, 'Add New Scheme')
 
         form_response = self.client.get(reverse('add_scheme'))
         self.assertEqual(form_response.status_code, 200)
@@ -167,6 +1110,399 @@ class SmartAssistVerificationTests(TestCase):
         status_response = self.client.get(reverse('update_status', args=[application.id]))
         self.assertEqual(status_response.status_code, 200)
         self.assertContains(status_response, 'New status')
+
+    def test_admin_dashboard_authorizes_staff_roles_and_rejects_citizens(self):
+        self.client.force_login(self.user)
+        citizen_response = self.client.get(reverse('admin_dashboard'))
+        self.assertRedirects(
+            citizen_response,
+            reverse('dashboard'),
+            fetch_redirect_response=False,
+        )
+
+        profile = UserProfile.objects.get(user=self.user)
+        for role in ('admin', 'volunteer'):
+            with self.subTest(role=role):
+                profile.role = role
+                profile.save(update_fields=['role'])
+                self.user.refresh_from_db()
+                self.client.force_login(self.user)
+                response = self.client.get(reverse('admin_dashboard'))
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, 'Admin Dashboard')
+
+    def test_admin_dashboard_uses_database_counts_and_analytics(self):
+        profile = UserProfile.objects.get(user=self.user)
+        profile.role = 'admin'
+        profile.save(update_fields=['role'])
+        self.user.refresh_from_db()
+        self.client.force_login(self.user)
+
+        ApplicationRequest.objects.create(
+            user=self.user,
+            scheme=self.central_scheme,
+            name='Approved Applicant',
+            age=30,
+            gender='Other',
+            mobile='9876543210',
+            email='approved@example.com',
+            education='Graduate',
+            income=100000,
+            category='General',
+            state='India',
+            district='Pune',
+            status='Approved',
+        )
+        ApplicationRequest.objects.create(
+            user=self.user,
+            scheme=self.state_scheme,
+            name='Submitted Applicant',
+            age=31,
+            gender='Other',
+            mobile='9123456780',
+            email='submitted@example.com',
+            education='Graduate',
+            income=100000,
+            category='General',
+            state='Test State',
+            district='',
+            status='Submitted',
+        )
+
+        response = self.client.get(reverse('admin_dashboard'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['total_applications'], 2)
+        self.assertEqual(response.context['pending'], 1)
+        self.assertEqual(response.context['under_review'], 0)
+        self.assertEqual(response.context['applied'], 0)
+        self.assertEqual(response.context['approved'], 1)
+        self.assertEqual(response.context['rejected'], 0)
+        self.assertEqual(response.context['total_schemes'], 2)
+        self.assertEqual(response.context['central_schemes'], 1)
+        self.assertEqual(response.context['state_schemes'], 1)
+        self.assertEqual(response.context['district_data'][0]['district'], 'Pune')
+        self.assertContains(response, 'Admin Analytics')
+        self.assertContains(response, 'Approved Applicant')
+        self.assertContains(response, 'Central Test Scheme')
+        self.assertContains(response, 'Submitted')
+
+    def test_admin_dashboard_status_counts_include_zero_statuses(self):
+        profile = UserProfile.objects.get(user=self.user)
+        profile.role = 'admin'
+        profile.save(update_fields=['role'])
+        self.user.refresh_from_db()
+        self.client.force_login(self.user)
+
+        ApplicationRequest.objects.create(
+            user=self.user,
+            scheme=self.central_scheme,
+            name='Submitted Applicant',
+            age=30,
+            gender='Other',
+            mobile='9876543210',
+            email='submitted@example.com',
+            education='Graduate',
+            income=100000,
+            category='General',
+            state='India',
+            district='Pune',
+            status='Submitted',
+        )
+
+        response = self.client.get(reverse('admin_dashboard'))
+
+        self.assertEqual(response.context['status_counts'], {
+            'Submitted': 1,
+            'Under Review': 0,
+            'Applied': 0,
+            'Approved': 0,
+            'Rejected': 0,
+        })
+        self.assertContains(response, '<p>Applied</p>', html=False)
+
+    def test_admin_dashboard_groups_applications_by_month(self):
+        profile = UserProfile.objects.get(user=self.user)
+        profile.role = 'admin'
+        profile.save(update_fields=['role'])
+        self.user.refresh_from_db()
+        self.client.force_login(self.user)
+
+        current_application = ApplicationRequest.objects.create(
+            user=self.user,
+            scheme=self.central_scheme,
+            name='Current Applicant',
+            age=30,
+            gender='Other',
+            mobile='9876543210',
+            email='current@example.com',
+            education='Graduate',
+            income=100000,
+            category='General',
+            state='India',
+            district='Pune',
+            status='Submitted',
+        )
+        previous_application = ApplicationRequest.objects.create(
+            user=self.user,
+            scheme=self.state_scheme,
+            name='Previous Applicant',
+            age=31,
+            gender='Other',
+            mobile='9123456780',
+            email='previous@example.com',
+            education='Graduate',
+            income=100000,
+            category='General',
+            state='Test State',
+            district='Nashik',
+            status='Submitted',
+        )
+        current_month = timezone.now().replace(day=15, hour=12, minute=0, second=0, microsecond=0)
+        previous_month = current_month.replace(day=1)
+        previous_month = previous_month.replace(
+            year=previous_month.year - (previous_month.month == 1),
+            month=12 if previous_month.month == 1 else previous_month.month - 1,
+        )
+        ApplicationRequest.objects.filter(pk=current_application.pk).update(
+            created_at=current_month,
+        )
+        ApplicationRequest.objects.filter(pk=previous_application.pk).update(
+            created_at=previous_month,
+        )
+
+        response = self.client.get(reverse('admin_dashboard'))
+
+        trend_months = json.loads(response.context['application_trend_months'])
+        trend_counts = json.loads(response.context['application_trend_counts'])
+        self.assertEqual(trend_months[-1:], [current_month.strftime('%b %Y')])
+        self.assertEqual(
+            trend_counts[-2:],
+            [1, 1],
+        )
+        self.assertContains(response, 'Application Trends (Last 6 Months)')
+
+    def test_admin_dashboard_ranks_most_applied_schemes_and_excludes_unlinked(self):
+        profile = UserProfile.objects.get(user=self.user)
+        profile.role = 'admin'
+        profile.save(update_fields=['role'])
+        self.user.refresh_from_db()
+        self.client.force_login(self.user)
+
+        for index in range(2):
+            ApplicationRequest.objects.create(
+                user=self.user,
+                scheme=self.central_scheme,
+                name=f'Central Applicant {index}',
+                age=30,
+                gender='Other',
+                mobile=f'987654321{index}',
+                email=f'central{index}@example.com',
+                education='Graduate',
+                income=100000,
+                category='General',
+                state='India',
+                district='Pune',
+                status='Submitted',
+            )
+        ApplicationRequest.objects.create(
+            user=self.user,
+            scheme=self.state_scheme,
+            name='State Applicant',
+            age=31,
+            gender='Other',
+            mobile='9123456780',
+            email='state@example.com',
+            education='Graduate',
+            income=100000,
+            category='General',
+            state='Test State',
+            district='Nashik',
+            status='Submitted',
+        )
+        ApplicationRequest.objects.create(
+            user=self.user,
+            name='General Assistance Applicant',
+            age=32,
+            gender='Other',
+            mobile='9000000000',
+            email='general@example.com',
+            education='Graduate',
+            income=100000,
+            category='General',
+            state='India',
+            district='Pune',
+            status='Submitted',
+        )
+
+        response = self.client.get(reverse('admin_dashboard'))
+
+        ranked = list(response.context['most_applied_schemes'])
+        self.assertEqual(
+            [(item['scheme__scheme_name'], item['total']) for item in ranked],
+            [
+                ('Central Test Scheme', 2),
+                ('State Test Scheme', 1),
+            ],
+        )
+        self.assertContains(response, 'Most Applied Schemes')
+        self.assertContains(response, '2 applications')
+        self.assertContains(response, '1 application')
+
+    def test_admin_dashboard_handles_empty_application_data(self):
+        profile = UserProfile.objects.get(user=self.user)
+        profile.role = 'admin'
+        profile.save(update_fields=['role'])
+        self.user.refresh_from_db()
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('admin_dashboard'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['total_applications'], 0)
+        self.assertContains(response, 'No applications yet.')
+        self.assertContains(response, 'No district data available.')
+
+    def test_farmer_dashboard_uses_current_user_data_and_existing_routes(self):
+        application = ApplicationRequest.objects.create(
+            user=self.user,
+            scheme=self.central_scheme,
+            name='Dashboard Applicant',
+            age=30,
+            gender='Other',
+            mobile='9876543210',
+            email='dashboard@example.com',
+            education='Graduate',
+            income=100000,
+            category='General',
+            state='India',
+            district='Pune',
+            status='Approved',
+        )
+        other_user = User.objects.create_user(username='dashboard-other', password='secret123')
+        ApplicationRequest.objects.create(
+            user=other_user,
+            scheme=self.state_scheme,
+            name='Other Dashboard Applicant',
+            age=31,
+            gender='Other',
+            mobile='9123456780',
+            email='other-dashboard@example.com',
+            education='Graduate',
+            income=100000,
+            category='General',
+            state='Test State',
+            district='Nashik',
+            status='Submitted',
+        )
+
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('farmer_dashboard'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['total_applications'], 1)
+        self.assertEqual(response.context['approved_applications'], 1)
+        self.assertEqual(response.context['pending_review'], 0)
+        self.assertContains(response, 'Dashboard Applicant')
+        self.assertContains(response, self.central_scheme.scheme_name)
+        self.assertContains(response, 'Check Eligibility')
+        self.assertContains(response, 'Find Schemes')
+        self.assertContains(response, 'Update Profile')
+        self.assertNotContains(response, 'Other Dashboard Applicant')
+        self.assertEqual(application.user_id, self.user.id)
+
+    def test_farmer_dashboard_redirects_staff_to_admin_dashboard(self):
+        profile = UserProfile.objects.get(user=self.user)
+        profile.role = 'admin'
+        profile.save(update_fields=['role'])
+        self.user.refresh_from_db()
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('farmer_dashboard'))
+
+        self.assertRedirects(response, reverse('admin_dashboard'), fetch_redirect_response=False)
+
+    def test_manage_schemes_requires_authorized_role(self):
+        self.client.force_login(self.user)
+
+        for url_name, args in (
+            ('manage_schemes', ()),
+            ('add_scheme', ()),
+            ('edit_scheme', (self.central_scheme.id,)),
+        ):
+            with self.subTest(url_name=url_name):
+                response = self.client.get(reverse(url_name, args=args))
+                self.assertRedirects(response, reverse('dashboard'), fetch_redirect_response=False)
+
+        response = self.client.post(
+            reverse('delete_scheme', args=[self.central_scheme.id]),
+            follow=False,
+        )
+        self.assertRedirects(response, reverse('dashboard'), fetch_redirect_response=False)
+        self.assertTrue(Scheme.objects.filter(pk=self.central_scheme.pk).exists())
+
+    def test_admin_can_create_edit_and_delete_scheme(self):
+        profile = UserProfile.objects.get(user=self.user)
+        profile.role = 'admin'
+        profile.save(update_fields=['role'])
+        self.user.refresh_from_db()
+        self.client.force_login(self.user)
+        scheme_data = {
+            'scheme_name': 'Managed Test Scheme',
+            'scheme_type': 'State',
+            'state': 'Test State',
+            'department': 'Test Department',
+            'description': 'Scheme description.',
+            'benefits': 'Scheme benefits.',
+            'eligibility': 'Scheme eligibility.',
+            'documents_required': 'Identity proof.',
+            'official_website': 'https://example.gov.in/managed',
+            'apply_link': 'https://example.gov.in/managed/apply',
+            'min_age': 18,
+            'max_age': 65,
+            'income_limit': 500000,
+            'category': 'General',
+            'education_required': 'Graduate',
+        }
+
+        create_response = self.client.post(reverse('add_scheme'), scheme_data)
+
+        self.assertRedirects(create_response, reverse('manage_schemes'))
+        scheme = Scheme.objects.get(scheme_name='Managed Test Scheme')
+        self.assertContains(self.client.get(reverse('manage_schemes')), scheme.scheme_name)
+
+        updated_data = {**scheme_data, 'scheme_name': 'Updated Managed Scheme', 'department': 'Updated Department'}
+        edit_response = self.client.post(
+            reverse('edit_scheme', args=[scheme.id]),
+            updated_data,
+        )
+
+        self.assertRedirects(edit_response, reverse('manage_schemes'))
+        scheme.refresh_from_db()
+        self.assertEqual(scheme.scheme_name, 'Updated Managed Scheme')
+        self.assertEqual(scheme.department, 'Updated Department')
+
+        delete_response = self.client.post(reverse('delete_scheme', args=[scheme.id]))
+
+        self.assertRedirects(delete_response, reverse('manage_schemes'))
+        self.assertFalse(Scheme.objects.filter(pk=scheme.id).exists())
+
+    def test_scheme_detail_displays_existing_scheme_details_and_links(self):
+        self.central_scheme.benefits = 'Scheme benefits.'
+        self.central_scheme.save(update_fields=['benefits'])
+        response = self.client.get(reverse('scheme_detail', args=[self.central_scheme.id]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.central_scheme.scheme_name)
+        self.assertContains(response, self.central_scheme.scheme_type)
+        self.assertContains(response, self.central_scheme.state)
+        self.assertContains(response, self.central_scheme.department)
+        self.assertContains(response, self.central_scheme.eligibility)
+        self.assertContains(response, self.central_scheme.benefits)
+        self.assertContains(response, self.central_scheme.official_website)
+
+        awareness_response = self.client.get(reverse('scheme_awareness'))
+        self.assertContains(awareness_response, self.central_scheme.apply_link)
 
     @patch('farmers.emails.send_mail', side_effect=RuntimeError('SMTP unavailable'))
     def test_status_update_saves_and_creates_one_notification_when_email_fails(self, send_mail):
@@ -200,6 +1536,316 @@ class SmartAssistVerificationTests(TestCase):
         self.assertEqual(application.notes, 'Approved for testing.')
         self.assertEqual(Notification.objects.filter(user=self.user).count(), 1)
         send_mail.assert_called_once()
+
+    @patch('farmers.emails.send_mail')
+    def test_application_submission_uses_notification_helper(self, send_mail):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('apply_assistance'),
+            {
+                'name': 'Citizen User',
+                'age': '30',
+                'gender': 'Female',
+                'mobile': '9876543210',
+                'email': 'citizen@example.com',
+                'education': 'Graduate',
+                'income': '300000',
+                'category': 'General',
+                'state': 'Test State',
+                'district': 'Test District',
+            },
+        )
+
+        self.assertRedirects(response, reverse('application_status'))
+        application = ApplicationRequest.objects.get(user=self.user)
+        notification = Notification.objects.get(user=self.user)
+        self.assertEqual(notification.subject, 'Application Submitted')
+        self.assertEqual(notification.message, (
+            'Your application for government scheme assistance has been '
+            'submitted successfully.'
+        ))
+        send_mail.assert_called_once()
+        self.assertEqual(
+            send_mail.call_args.kwargs['recipient_list'],
+            ['citizen@example.com'],
+        )
+        self.assertEqual(application.status, 'Submitted')
+
+    @patch('farmers.emails.send_mail')
+    def test_admin_scheme_application_uses_notification_helper(self, send_mail):
+        profile = UserProfile.objects.get(user=self.user)
+        profile.role = 'admin'
+        profile.save(update_fields=['role'])
+        self.user.refresh_from_db()
+        self.client.force_login(self.user)
+        application = ApplicationRequest.objects.create(
+            user=self.user,
+            name='Test Applicant',
+            age=30,
+            gender='Other',
+            mobile='9876543210',
+            email='applicant@example.com',
+            education='Graduate',
+            income=100000,
+            category='General',
+            state='Test State',
+            district='Test District',
+        )
+
+        response = self.client.post(
+            reverse(
+                'apply_scheme_admin',
+                args=[application.id, self.central_scheme.id],
+            ),
+        )
+
+        self.assertRedirects(
+            response,
+            reverse('admin_dashboard'),
+            fetch_redirect_response=False,
+        )
+        application.refresh_from_db()
+        self.assertEqual(application.status, 'Applied')
+        notification = Notification.objects.get(user=self.user)
+        self.assertEqual(notification.subject, 'Scheme Applied')
+        self.assertEqual(
+            notification.message,
+            'We have applied for Central Test Scheme on your behalf.',
+        )
+        send_mail.assert_called_once()
+
+    def test_admin_scheme_application_rejects_get_without_side_effects(self):
+        profile = UserProfile.objects.get(user=self.user)
+        profile.role = 'admin'
+        profile.save(update_fields=['role'])
+        self.user.refresh_from_db()
+        self.client.force_login(self.user)
+        application = ApplicationRequest.objects.create(
+            user=self.user,
+            name='Test Applicant',
+            age=30,
+            gender='Other',
+            mobile='9876543210',
+            email='applicant@example.com',
+            education='Graduate',
+            income=100000,
+            category='General',
+            state='Test State',
+            district='Test District',
+        )
+
+        response = self.client.get(
+            reverse('apply_scheme_admin', args=[application.id, self.central_scheme.id]),
+        )
+
+        self.assertEqual(response.status_code, 405)
+        application.refresh_from_db()
+        self.assertIsNone(application.scheme_id)
+        self.assertEqual(application.status, 'Submitted')
+        self.assertFalse(Notification.objects.filter(user=self.user).exists())
+
+    @patch('farmers.emails.send_mail')
+    def test_admin_scheme_application_does_not_reset_processed_statuses(self, send_mail):
+        profile = UserProfile.objects.get(user=self.user)
+        profile.role = 'admin'
+        profile.save(update_fields=['role'])
+        self.user.refresh_from_db()
+        self.client.force_login(self.user)
+
+        for status in ('Applied', 'Under Review', 'Approved'):
+            with self.subTest(status=status):
+                application = ApplicationRequest.objects.create(
+                    user=self.user,
+                    scheme=self.central_scheme,
+                    name='Test Applicant',
+                    age=30,
+                    gender='Other',
+                    mobile='9876543210',
+                    email='applicant@example.com',
+                    education='Graduate',
+                    income=100000,
+                    category='General',
+                    state='Test State',
+                    district='Test District',
+                    status=status,
+                )
+
+                response = self.client.post(
+                    reverse(
+                        'apply_scheme_admin',
+                        args=[application.id, self.central_scheme.id],
+                    ),
+                )
+
+                self.assertRedirects(
+                    response,
+                    reverse('admin_dashboard'),
+                    fetch_redirect_response=False,
+                )
+                application.refresh_from_db()
+                self.assertEqual(application.status, status)
+                self.assertEqual(
+                    Notification.objects.filter(
+                        user=self.user,
+                        application=application,
+                    ).count(),
+                    0,
+                )
+
+        send_mail.assert_not_called()
+
+    @patch('farmers.emails.send_mail')
+    def test_rejected_application_can_be_reapplied_to_same_scheme(self, send_mail):
+        profile = UserProfile.objects.get(user=self.user)
+        profile.role = 'admin'
+        profile.save(update_fields=['role'])
+        self.user.refresh_from_db()
+        self.client.force_login(self.user)
+        application = ApplicationRequest.objects.create(
+            user=self.user,
+            scheme=self.central_scheme,
+            name='Test Applicant',
+            age=30,
+            gender='Other',
+            mobile='9876543210',
+            email='applicant@example.com',
+            education='Graduate',
+            income=100000,
+            category='General',
+            state='Test State',
+            district='Test District',
+            status='Rejected',
+        )
+
+        response = self.client.post(
+            reverse(
+                'apply_scheme_admin',
+                args=[application.id, self.central_scheme.id],
+            ),
+        )
+
+        self.assertRedirects(
+            response,
+            reverse('admin_dashboard'),
+            fetch_redirect_response=False,
+        )
+        application.refresh_from_db()
+        self.assertEqual(application.status, 'Applied')
+        self.assertEqual(Notification.objects.filter(user=self.user).count(), 1)
+        send_mail.assert_called_once()
+
+    def test_apply_scheme_admin_csrf_protection(self):
+        csrf_client = Client(enforce_csrf_checks=True)
+        profile = UserProfile.objects.get(user=self.user)
+        profile.role = 'admin'
+        profile.save(update_fields=['role'])
+        self.user.refresh_from_db()
+        csrf_client.force_login(self.user)
+        application = ApplicationRequest.objects.create(
+            user=self.user,
+            name='Test Applicant',
+            age=30,
+            gender='Other',
+            mobile='9876543210',
+            email='applicant@example.com',
+            education='Graduate',
+            income=100000,
+            category='General',
+            state='Test State',
+            district='Test District',
+        )
+        url = reverse(
+            'apply_scheme_admin',
+            args=[application.id, self.central_scheme.id],
+        )
+
+        response = csrf_client.post(url)
+        self.assertEqual(response.status_code, 403)
+        application.refresh_from_db()
+        self.assertEqual(application.status, 'Submitted')
+        self.assertFalse(Notification.objects.filter(user=self.user).exists())
+
+        csrf_client.get(reverse('login'))
+        csrf_token = csrf_client.cookies['csrftoken'].value
+        response = csrf_client.post(
+            url,
+            HTTP_X_CSRFTOKEN=csrf_token,
+        )
+        self.assertRedirects(
+            response,
+            reverse('admin_dashboard'),
+            fetch_redirect_response=False,
+        )
+        application.refresh_from_db()
+        self.assertEqual(application.status, 'Applied')
+
+    def test_admin_scheme_application_requires_authorized_post_user(self):
+        application = ApplicationRequest.objects.create(
+            user=self.user,
+            name='Test Applicant',
+            age=30,
+            gender='Other',
+            mobile='9876543210',
+            email='applicant@example.com',
+            education='Graduate',
+            income=100000,
+            category='General',
+            state='Test State',
+            district='Test District',
+        )
+
+        response = self.client.post(
+            reverse('apply_scheme_admin', args=[application.id, self.central_scheme.id]),
+        )
+        self.assertRedirects(
+            response,
+            f"{reverse('login')}?next={reverse('apply_scheme_admin', args=[application.id, self.central_scheme.id])}",
+            fetch_redirect_response=False,
+        )
+
+        profile = UserProfile.objects.get(user=self.user)
+        profile.role = 'citizen'
+        profile.save(update_fields=['role'])
+        self.client.force_login(self.user)
+        response = self.client.post(
+            reverse('apply_scheme_admin', args=[application.id, self.central_scheme.id]),
+        )
+        self.assertRedirects(response, reverse('dashboard'), fetch_redirect_response=False)
+        application.refresh_from_db()
+        self.assertEqual(application.status, 'Submitted')
+
+    @patch.dict(os.environ, {}, clear=True)
+    def test_security_settings_use_safe_development_defaults(self):
+        self.assertFalse(_get_debug_setting())
+        self.assertNotEqual(
+            _get_secret_key(),
+            "django-insecure-m2es_c4rc4tmq6tb-#ct#*_v8^xx_*kl+v+-8_*qmmx#qdiwpr",
+        )
+
+    @patch.dict(os.environ, {'DJANGO_DEBUG': 'true'})
+    def test_security_settings_allow_explicit_debug_development(self):
+        self.assertTrue(_get_debug_setting())
+
+    @patch.dict(
+        os.environ,
+        {'DJANGO_ENV': 'production', 'DJANGO_DEBUG': 'true'},
+        clear=True,
+    )
+    def test_security_settings_disable_debug_in_production(self):
+        self.assertFalse(_get_debug_setting())
+
+    @patch.dict(
+        os.environ,
+        {'DJANGO_ENV': 'production'},
+        clear=True,
+    )
+    def test_security_settings_require_production_secret(self):
+        with self.assertRaisesMessage(
+            ImproperlyConfigured,
+            'DJANGO_SECRET_KEY must be configured in production.',
+        ):
+            _get_secret_key()
 
     def test_official_website_link_has_security_attributes(self):
         response = self.client.get(reverse('scheme_awareness'), {'type': 'Central'})
@@ -300,9 +1946,9 @@ class SmartAssistVerificationTests(TestCase):
         self.assertContains(response, 'scheme-localization.js')
 
     def test_language_preference_persists_for_anonymous_user_and_preserves_page_query(self):
-        response = self.client.get(
+        response = self.client.post(
             reverse('set_language'),
-            {'lang': 'hi', 'next': '/schemes/?type=Central#categories'},
+            {'language': 'hi', 'next': '/schemes/?type=Central#categories'},
         )
 
         self.assertRedirects(
@@ -311,12 +1957,37 @@ class SmartAssistVerificationTests(TestCase):
             fetch_redirect_response=False,
         )
         self.assertEqual(response.cookies['django_language'].value, 'hi')
-        self.assertEqual(response.wsgi_request.session['_language'], 'hi')
 
         localized_page = self.client.get('/hi/schemes/?type=Central')
         self.assertEqual(localized_page.status_code, 200)
         self.assertContains(localized_page, '<html lang="hi">', html=False)
         self.assertContains(localized_page, '<option value="hi" selected>', html=False)
+
+    def test_language_switching_rejects_external_next_redirects(self):
+        response = self.client.post(
+            reverse('set_language'),
+            {'language': 'mr', 'next': 'https://evil.example/redirect'},
+        )
+
+        self.assertRedirects(response, '/mr/', fetch_redirect_response=False)
+        self.assertEqual(response.cookies['django_language'].value, 'mr')
+
+    def test_language_switching_rejects_invalid_language_codes(self):
+        response = self.client.post(
+            reverse('set_language'),
+            {'language': 'gu', 'next': '/'},
+        )
+
+        self.assertRedirects(response, '/', fetch_redirect_response=False)
+        self.assertNotIn('django_language', response.cookies)
+
+    def test_language_selector_uses_csrf_protected_post_form(self):
+        response = self.client.get(reverse('scheme_awareness'))
+
+        self.assertContains(response, '<form method="post"', html=False)
+        self.assertContains(response, 'name="language"', html=False)
+        self.assertContains(response, 'name="next"', html=False)
+        self.assertContains(response, 'name="csrfmiddlewaretoken"', html=False)
 
     def test_language_switcher_only_offers_the_four_supported_languages(self):
         response = self.client.get(reverse('scheme_awareness'))
@@ -464,7 +2135,7 @@ class SmartAssistVerificationTests(TestCase):
                     )
 
     def test_voice_language_selector_matches_persisted_website_language(self):
-        self.client.get(reverse('set_language'), {'lang': 'mr', 'next': '/'})
+        self.client.post(reverse('set_language'), {'language': 'mr', 'next': '/'})
 
         response = self.client.get(f'/mr/schemes/{self.central_scheme.id}/')
 
@@ -528,17 +2199,16 @@ class SmartAssistVerificationTests(TestCase):
         self.assertEqual(unsupported_language.status_code, 400)
         self.assertEqual(invalid_scheme_id.status_code, 400)
 
-    def test_authenticated_language_preference_is_saved_in_session_and_cookie(self):
+    def test_authenticated_language_preference_is_saved_in_cookie(self):
         self.client.login(username='citizen', password='secret123')
 
-        response = self.client.get(
+        response = self.client.post(
             reverse('set_language'),
-            {'lang': 'te', 'next': '/dashboard/'},
+            {'language': 'te', 'next': '/dashboard/'},
         )
 
         self.assertRedirects(response, '/te/dashboard/', fetch_redirect_response=False)
         self.assertEqual(response.cookies['django_language'].value, 'te')
-        self.assertEqual(response.wsgi_request.session['_language'], 'te')
 
     def test_apply_requires_login_and_redirects_to_login(self):
         response = self.client.get(reverse('apply', args=[self.central_scheme.id]))
@@ -676,6 +2346,161 @@ class SmartAssistVerificationTests(TestCase):
             _scheme_voice_text(self.central_scheme),
         )
 
+    def test_chatbot_rejects_oversized_messages(self):
+        response = self.client.get(
+            reverse('chatbot'),
+            {'message': 'x' * 4001},
+        )
+
+        self.assertEqual(response.status_code, 413)
+        self.assertEqual(
+            response.json()['error'],
+            'Messages must be 4000 characters or fewer.',
+        )
+
+    def test_chatbot_rate_limits_requests_per_client(self):
+        with patch('farmers.views.cache.add', return_value=False), patch(
+            'farmers.views.cache.incr',
+            return_value=21,
+        ):
+            response = self.client.get(
+                reverse('chatbot'),
+                {'message': 'hello'},
+            )
+
+        self.assertEqual(response.status_code, 429)
+        self.assertIn('Too many chatbot requests', response.json()['error'])
+
+    def test_chatbot_accepts_twenty_requests_and_rejects_twenty_first(self):
+        with patch(
+            'farmers.views._rate_limit_request',
+            side_effect=[True] * 20 + [False],
+        ):
+            responses = [
+                self.client.get(reverse('chatbot'), {'message': 'hello', 'mode': 'local'})
+                for _ in range(21)
+            ]
+
+        self.assertTrue(all(response.status_code == 200 for response in responses[:20]))
+        self.assertEqual(responses[20].status_code, 429)
+
+    def test_chatbot_fails_closed_when_cache_is_unavailable(self):
+        with patch('farmers.views.cache.add', side_effect=RuntimeError('cache down')):
+            response = self.client.get(reverse('chatbot'), {'message': 'hello'})
+
+        self.assertEqual(response.status_code, 503)
+        self.assertNotIn('cache down', response.json()['error'])
+
+    def test_chatbot_rejects_oversized_requests(self):
+        from farmers.views import _chatbot_request_error
+
+        request = RequestFactory().get(reverse('chatbot'), {'message': 'hello'})
+        request.META['CONTENT_LENGTH'] = '16385'
+
+        self.assertEqual(
+            _chatbot_request_error(request),
+            'Chatbot requests must be 16KB or smaller.',
+        )
+
+    def test_transcribe_voice_rejects_unsupported_audio_format(self):
+        self.client.force_login(self.user)
+        upload = SimpleUploadedFile(
+            'voice.exe',
+            b'not audio',
+            content_type='application/octet-stream',
+        )
+
+        response = self.client.post(
+            reverse('voice_transcribe'),
+            {'audio': upload, 'language': 'te'},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Unsupported audio format', response.json()['error'])
+
+    def test_transcribe_voice_rejects_oversized_audio(self):
+        self.client.force_login(self.user)
+        upload = SimpleUploadedFile(
+            'voice.wav',
+            b'x' * (10 * 1024 * 1024 + 1),
+            content_type='audio/wav',
+        )
+
+        response = self.client.post(reverse('voice_transcribe'), {'audio': upload})
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('too large', response.json()['error'])
+
+    def test_transcribe_voice_validates_content_before_openai(self):
+        self.client.force_login(self.user)
+        upload = SimpleUploadedFile(
+            'voice.wav',
+            b'not audio',
+            content_type='audio/wav',
+        )
+        with patch(
+            'farmers.views._validate_audio_content',
+            return_value='The uploaded file is not a valid audio recording.',
+        ), patch('farmers.views._transcribe_audio_with_openai') as openai_transcribe:
+            response = self.client.post(reverse('voice_transcribe'), {'audio': upload})
+
+        self.assertEqual(response.status_code, 400)
+        openai_transcribe.assert_not_called()
+
+    def test_audio_validation_cleans_up_after_duration_failure(self):
+        upload = SimpleUploadedFile('voice.wav', b'not audio', content_type='audio/wav')
+        with patch(
+            'farmers.views.subprocess.run',
+            return_value=type(
+                'CompletedProcess',
+                (),
+                {
+                    'returncode': 0,
+                    'stderr': b'Duration: 00:06:00.00, start: 0.000000',
+                },
+            )(),
+        ), patch('farmers.views.os.remove') as remove:
+            error = _validate_audio_content(upload)
+
+        self.assertIn('5 minutes', error)
+        remove.assert_called_once()
+
+    def test_telugu_fallback_uses_te_in_locale(self):
+        class AudioFile:
+            def __init__(self, path):
+                self.path = path
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return None
+
+        recognizer = SimpleNamespace(
+            record=lambda source: 'audio-data',
+            recognize_google=lambda audio, language: language,
+        )
+        fake_speech_recognition = SimpleNamespace(
+            Recognizer=lambda: recognizer,
+            AudioFile=AudioFile,
+            UnknownValueError=ValueError,
+            RequestError=RuntimeError,
+        )
+        ffmpeg_result = SimpleNamespace(
+            returncode=0,
+            stderr=b'Duration: 00:00:05.00, start: 0.000000',
+        )
+        with patch.dict(sys.modules, {'speech_recognition': fake_speech_recognition}), patch(
+            'farmers.views.subprocess.run',
+            return_value=ffmpeg_result,
+        ), patch('farmers.views._ffmpeg_binary', return_value='ffmpeg'):
+            text, error = _transcribe_audio_without_openai(
+                SimpleUploadedFile('voice.wav', b'audio', content_type='audio/wav'),
+                language='te',
+            )
+
+        self.assertEqual((text, error), ('te-IN', ''))
+
     def test_speech_languages_use_matching_edge_neural_voices(self):
         from farmers.views import VOICE_LANGUAGES
 
@@ -741,6 +2566,122 @@ class SmartAssistVerificationTests(TestCase):
         self.assertEqual(application.name, 'Citizen User')
         self.assertEqual(application.status, 'Submitted')
 
+    @patch('farmers.emails.send_mail')
+    def test_active_duplicate_scheme_applications_are_blocked_without_side_effects(
+        self,
+        send_mail,
+    ):
+        self.client.login(username='citizen', password='secret123')
+        payload = {
+            'scheme_id': str(self.central_scheme.id),
+            'name': 'Citizen User',
+            'age': '30',
+            'gender': 'Female',
+            'mobile': '9876543210',
+            'email': 'citizen@example.com',
+            'education': 'Graduate',
+            'income': '300000',
+            'category': 'General',
+            'state': 'India',
+            'district': 'Test District',
+        }
+
+        for status in ('Submitted', 'Applied', 'Under Review', 'Approved', 'Pending'):
+            with self.subTest(status=status):
+                existing = ApplicationRequest.objects.create(
+                    user=self.user,
+                    scheme=self.central_scheme,
+                    status=status,
+                    name='Existing Farmer',
+                    age=30,
+                    gender='Female',
+                    mobile='9876543210',
+                    email='existing@example.com',
+                    education='Graduate',
+                    income=300000,
+                    category='General',
+                    state='India',
+                    district='Test District',
+                )
+
+                response = self.client.post(
+                    reverse('apply_assistance'),
+                    payload,
+                )
+
+                self.assertEqual(response.status_code, 200)
+                self.assertIn(
+                    'You already have an active application for this scheme.',
+                    ' '.join(response.context['form'].non_field_errors()),
+                )
+                self.assertEqual(
+                    ApplicationRequest.objects.filter(
+                        user=self.user,
+                        scheme=self.central_scheme,
+                    ).count(),
+                    1,
+                )
+                self.assertFalse(
+                    Notification.objects.filter(user=self.user).exists()
+                )
+                send_mail.assert_not_called()
+                existing.delete()
+
+    @patch('farmers.emails.send_mail')
+    def test_rejected_scheme_application_allows_reapplication(self, send_mail):
+        self.client.login(username='citizen', password='secret123')
+        ApplicationRequest.objects.create(
+            user=self.user,
+            scheme=self.central_scheme,
+            status='Rejected',
+            name='Rejected Farmer',
+            age=30,
+            gender='Female',
+            mobile='9876543210',
+            email='rejected@example.com',
+            education='Graduate',
+            income=300000,
+            category='General',
+            state='India',
+            district='Test District',
+        )
+
+        response = self.client.post(
+            reverse('apply_assistance'),
+            {
+                'scheme_id': str(self.central_scheme.id),
+                'name': 'Citizen User',
+                'age': '30',
+                'gender': 'Female',
+                'mobile': '9876543210',
+                'email': 'citizen@example.com',
+                'education': 'Graduate',
+                'income': '300000',
+                'category': 'General',
+                'state': 'India',
+                'district': 'Test District',
+            },
+        )
+
+        self.assertRedirects(response, reverse('application_status'))
+        self.assertEqual(
+            ApplicationRequest.objects.filter(
+                user=self.user,
+                scheme=self.central_scheme,
+            ).count(),
+            2,
+        )
+        self.assertEqual(
+            ApplicationRequest.objects.filter(
+                user=self.user,
+                scheme=self.central_scheme,
+                status='Submitted',
+            ).count(),
+            1,
+        )
+        self.assertEqual(Notification.objects.filter(user=self.user).count(), 1)
+        send_mail.assert_called_once()
+
     def test_invalid_assistance_form_renders_errors_and_preserves_scheme(self):
         self.client.login(username='citizen', password='secret123')
 
@@ -779,3 +2720,664 @@ class SmartAssistVerificationTests(TestCase):
         self.assertEqual(application.scheme, None)
         self.assertEqual(application.status, 'Submitted')
         self.assertContains(self.client.get(reverse('application_status')), 'Citizen User')
+        self.assertEqual(Notification.objects.filter(user=self.user).count(), 1)
+
+    def test_application_status_requires_login(self):
+        response = self.client.get(reverse('application_status'))
+
+        self.assertRedirects(
+            response,
+            f"{reverse('login')}?next={reverse('application_status')}",
+            fetch_redirect_response=False,
+        )
+
+    def test_application_status_only_shows_current_users_applications(self):
+        other_user = User.objects.create_user(username='other-citizen', password='secret123')
+        own_application = ApplicationRequest.objects.create(
+            user=self.user,
+            scheme=self.central_scheme,
+            name='Own Applicant',
+            age=30,
+            gender='Female',
+            mobile='9876543210',
+            email='own@example.com',
+            education='Graduate',
+            income=300000,
+            category='General',
+            state='India',
+            district='Own District',
+            status='Approved',
+        )
+        ApplicationRequest.objects.create(
+            user=other_user,
+            scheme=self.state_scheme,
+            name='Other Applicant',
+            age=31,
+            gender='Male',
+            mobile='9123456780',
+            email='other@example.com',
+            education='Graduate',
+            income=250000,
+            category='General',
+            state='Test State',
+            district='Other District',
+            status='Rejected',
+        )
+
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('application_status'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertQuerySetEqual(
+            response.context['applications'],
+            [own_application],
+            transform=lambda application: application,
+        )
+        self.assertContains(response, 'Central Test Scheme')
+        self.assertContains(response, own_application.get_status_display())
+        self.assertContains(response, 'Submitted on')
+        self.assertContains(response, str(own_application.id))
+        self.assertContains(response, 'All Applications')
+        self.assertContains(response, 'Under Review')
+        for status in ('Submitted', 'Under Review', 'Applied', 'Approved', 'Rejected'):
+            self.assertContains(response, f'data-status="{status}"', html=False)
+        self.assertContains(response, 'data-application-status="Approved"', html=False)
+        self.assertNotContains(response, 'State Test Scheme')
+        self.assertNotContains(response, 'Other Applicant')
+
+    def test_application_status_shows_empty_state_without_applications(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('application_status'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'No Applications Yet')
+        self.assertContains(response, 'Apply Now')
+        self.assertContains(response, 'All Applications')
+        for status in ('Submitted', 'Under Review', 'Applied', 'Approved', 'Rejected'):
+            self.assertContains(response, status)
+
+    def test_legacy_pending_counts_as_submitted_and_renders_canonical_status(self):
+        application = ApplicationRequest.objects.create(
+            user=self.user,
+            scheme=self.central_scheme,
+            name='Legacy Applicant',
+            age=30,
+            gender='Other',
+            mobile='9876543210',
+            email='legacy@example.com',
+            education='Graduate',
+            income=100000,
+            category='General',
+            state='India',
+            district='Pune',
+            status='Pending',
+        )
+        self.client.force_login(self.user)
+
+        dashboard_response = self.client.get(reverse('farmer_dashboard'))
+        self.assertEqual(dashboard_response.context['pending_review'], 1)
+
+        status_response = self.client.get(reverse('application_status'))
+        self.assertContains(
+            status_response,
+            'data-application-status="Submitted"',
+            html=False,
+        )
+        self.assertContains(status_response, 'Submitted')
+        self.assertNotContains(status_response, '>Pending<', html=False)
+        self.assertEqual(application.get_compatibility_status(), 'Submitted')
+
+    def test_admin_counts_reconcile_legacy_pending_with_total(self):
+        profile = UserProfile.objects.get(user=self.user)
+        profile.role = 'admin'
+        profile.save(update_fields=['role'])
+        self.user.refresh_from_db()
+        for status in ('Pending', 'Submitted', 'Applied'):
+            ApplicationRequest.objects.create(
+                user=self.user,
+                name=f'{status} Applicant',
+                age=30,
+                gender='Other',
+                mobile='9876543210',
+                email=f'{status.lower().replace(" ", "-")}@example.com',
+                education='Graduate',
+                income=100000,
+                category='General',
+                state='India',
+                district='Pune',
+                status=status,
+            )
+
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('admin_dashboard'))
+
+        self.assertEqual(response.context['total_applications'], 3)
+        self.assertEqual(response.context['status_counts']['Submitted'], 2)
+        self.assertEqual(response.context['status_counts']['Applied'], 1)
+        self.assertEqual(sum(response.context['status_counts'].values()), 3)
+
+    def test_invalid_application_status_is_not_saved(self):
+        profile = UserProfile.objects.get(user=self.user)
+        profile.role = 'admin'
+        profile.save(update_fields=['role'])
+        self.user.refresh_from_db()
+        application = ApplicationRequest.objects.create(
+            user=self.user,
+            name='Status Applicant',
+            age=30,
+            gender='Other',
+            mobile='9876543210',
+            email='status@example.com',
+            education='Graduate',
+            income=100000,
+            category='General',
+            state='India',
+            district='Pune',
+            status='Submitted',
+        )
+
+        self.client.force_login(self.user)
+        response = self.client.post(
+            reverse('update_status', args=[application.id]),
+            {'status': 'Pending', 'notes': 'Invalid legacy update'},
+        )
+
+        self.assertRedirects(response, reverse('admin_dashboard'), fetch_redirect_response=False)
+        application.refresh_from_db()
+        self.assertEqual(application.status, 'Submitted')
+
+
+class LegacyApplicationStatusMigrationTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='migration-user', password='secret123')
+
+    def _application(self, status):
+        return ApplicationRequest.objects.create(
+            user=self.user,
+            name=f'{status} Applicant',
+            age=30,
+            gender='Other',
+            mobile='9876543210',
+            email='migration@example.com',
+            education='Graduate',
+            income=100000,
+            category='General',
+            state='India',
+            district='Pune',
+            status=status,
+        )
+
+    def test_migration_changes_only_exact_pending_values(self):
+        legacy = self._application('Pending')
+        submitted = self._application('Submitted')
+        approved = self._application('Approved')
+        original_values = {
+            legacy.id: (legacy.user_id, legacy.created_at, legacy.notes),
+            submitted.id: (submitted.user_id, submitted.created_at, submitted.notes),
+            approved.id: (approved.user_id, approved.created_at, approved.notes),
+        }
+
+        class Apps:
+            @staticmethod
+            def get_model(app_label, model_name):
+                self.assertEqual((app_label, model_name), ('farmers', 'ApplicationRequest'))
+                return ApplicationRequest
+
+        normalize_legacy_pending_status(Apps(), None)
+
+        legacy.refresh_from_db()
+        submitted.refresh_from_db()
+        approved.refresh_from_db()
+        self.assertEqual(legacy.status, 'Submitted')
+        self.assertEqual(submitted.status, 'Submitted')
+        self.assertEqual(approved.status, 'Approved')
+        for application in (legacy, submitted, approved):
+            self.assertEqual(
+                (application.user_id, application.created_at, application.notes),
+                original_values[application.id],
+            )
+
+
+@override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+class ApplicationStatusEmailTests(TestCase):
+    def setUp(self):
+        self.citizen = User.objects.create_user(
+            username='email-citizen',
+            password='secret123',
+            email='farmer@example.com',
+        )
+        self.admin = User.objects.create_user(
+            username='email-admin',
+            password='secret123',
+            email='admin@example.com',
+        )
+        self.admin.userprofile.role = 'admin'
+        self.admin.userprofile.save(update_fields=['role'])
+        self.application = ApplicationRequest.objects.create(
+            user=self.citizen,
+            name='Email Citizen',
+            age=35,
+            gender='Female',
+            mobile='9876543210',
+            email='farmer@example.com',
+            education='Graduate',
+            income=300000,
+            category='General',
+            state='India',
+            district='Test District',
+            status='Submitted',
+        )
+
+    def test_approval_sends_email_to_the_applicant(self):
+        self.citizen.email = 'registered-farmer@example.com'
+        self.citizen.save(update_fields=['email'])
+        self.application.email = 'old-application@example.com'
+        self.application.save(update_fields=['email'])
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse('update_status', args=[self.application.id]),
+            {
+                'status': 'Approved',
+                'notes': 'Documents need further verification. Internal only.',
+                'farmer_message': (
+                    'Your application has been approved. Please check your '
+                    'application dashboard for further details.'
+                ),
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            reverse('admin_dashboard'),
+            fetch_redirect_response=False,
+        )
+        self.application.refresh_from_db()
+        self.assertEqual(self.application.status, 'Approved')
+        self.assertEqual(
+            self.application.notes,
+            'Documents need further verification. Internal only.',
+        )
+        self.assertIn('Your application has been approved.', self.application.farmer_message)
+        self.assertEqual(len(mail.outbox), 1)
+        sent = mail.outbox[0]
+        self.assertEqual(sent.to, ['registered-farmer@example.com'])
+        self.assertNotIn(self.admin.email, sent.to)
+        self.assertIn('Approved', sent.subject)
+        self.assertIn('Message from SmartAssist Team:', sent.body)
+        self.assertIn('Your application has been approved.', sent.body)
+        self.assertNotIn('Documents need further verification', sent.body)
+
+        notification = Notification.objects.get(user=self.citizen)
+        self.assertEqual(notification.application_id, self.application.id)
+        self.assertIn('Your application has been approved.', notification.message)
+        self.assertNotIn('Documents need further verification', notification.message)
+
+        self.client.force_login(self.citizen)
+        status_response = self.client.get(reverse('application_status'))
+        self.assertContains(status_response, 'Your application has been approved.')
+        self.assertNotContains(status_response, 'Documents need further verification')
+
+        notification_response = self.client.get(reverse('notifications'))
+        self.assertContains(notification_response, 'Your application has been approved.')
+        self.assertNotContains(notification_response, 'Documents need further verification')
+        self.assertContains(notification_response, 'Status')
+        self.assertContains(notification_response, 'General Assistance')
+        self.assertContains(notification_response, str(self.application.id))
+
+    def test_application_email_is_fallback_when_account_email_is_missing(self):
+        self.citizen.email = ''
+        self.citizen.save(update_fields=['email'])
+        self.application.email = 'application-fallback@example.com'
+        self.application.save(update_fields=['email'])
+        self.client.force_login(self.admin)
+
+        self.client.post(
+            reverse('update_status', args=[self.application.id]),
+            {
+                'status': 'Approved',
+                'notes': 'Internal rejection review note.',
+            },
+        )
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ['application-fallback@example.com'])
+        self.assertNotIn('Internal rejection review note.', mail.outbox[0].body)
+        notification = Notification.objects.get(user=self.citizen)
+        self.assertNotIn('Internal rejection review note.', notification.message)
+
+    def test_status_notification_respects_disabled_email_preference(self):
+        self.application.email = 'old-application@example.com'
+        self.application.save(update_fields=['email'])
+        self.citizen.userprofile.email_notifications = False
+        self.citizen.userprofile.save(update_fields=['email_notifications'])
+        self.client.force_login(self.admin)
+
+        self.client.post(
+            reverse('update_status', args=[self.application.id]),
+            {'status': 'Approved'},
+        )
+
+        self.assertEqual(len(mail.outbox), 0)
+        notification = Notification.objects.get(user=self.citizen)
+        self.assertFalse(notification.is_sent)
+        self.assertIn('disabled', notification.email_error)
+
+    def test_rejection_sends_email_to_the_applicant(self):
+        self.client.force_login(self.admin)
+
+        self.client.post(
+            reverse('update_status', args=[self.application.id]),
+            {
+                'status': 'Rejected',
+                'notes': 'Income above limit is an internal note.',
+                'farmer_message': 'Please review the eligibility requirements and reapply.',
+            },
+        )
+
+        self.application.refresh_from_db()
+        self.assertEqual(self.application.status, 'Rejected')
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('Rejected', mail.outbox[0].subject)
+        self.assertIn('Please review the eligibility requirements and reapply.', mail.outbox[0].body)
+        self.assertNotIn('Income above limit is an internal note.', mail.outbox[0].body)
+
+    def test_citizen_cannot_update_application_status(self):
+        self.client.force_login(self.citizen)
+
+        response = self.client.post(
+            reverse('update_status', args=[self.application.id]),
+            {'status': 'Approved', 'notes': 'self-approved'},
+        )
+
+        self.application.refresh_from_db()
+        self.assertEqual(self.application.status, 'Submitted')
+        self.assertIsNone(self.application.applied_by)
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertRedirects(response, reverse('dashboard'), fetch_redirect_response=False)
+
+    def test_status_change_without_email_address_is_stored_without_sending_email(self):
+        self.citizen.email = ''
+        self.citizen.save(update_fields=['email'])
+        self.application.email = ''
+        self.application.save(update_fields=['email'])
+        self.client.force_login(self.admin)
+
+        self.client.post(
+            reverse('update_status', args=[self.application.id]),
+            {'status': 'Approved'},
+        )
+
+        self.application.refresh_from_db()
+        self.assertEqual(self.application.status, 'Approved')
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(Notification.objects.filter(user=self.citizen).count(), 1)
+
+
+class NotificationCenterTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='notification-user',
+            password='secret123',
+            email='user@example.com',
+        )
+        self.other_user = User.objects.create_user(
+            username='notification-other',
+            password='secret123',
+            email='other@example.com',
+        )
+        self.notification = Notification.objects.create(
+            user=self.user,
+            notification_type='email',
+            subject='Application update',
+            message='Your application was received.',
+        )
+        self.other_notification = Notification.objects.create(
+            user=self.other_user,
+            notification_type='email',
+            subject='Private update',
+            message='This belongs to another user.',
+        )
+
+    def test_notification_history_requires_authentication(self):
+        response = self.client.get(reverse('notifications'))
+
+        self.assertRedirects(
+            response,
+            f"{reverse('login')}?next={reverse('notifications')}",
+            fetch_redirect_response=False,
+        )
+
+    def test_notification_history_is_limited_to_current_user(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('notifications'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Application update')
+        self.assertNotContains(response, 'Private update')
+        self.assertEqual(response.context['page_obj'].paginator.count, 1)
+
+    def test_user_can_mark_own_notification_read(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('mark_notification_read', args=[self.notification.pk]),
+        )
+
+        self.assertRedirects(response, reverse('notifications'))
+        self.notification.refresh_from_db()
+        self.assertTrue(self.notification.is_read)
+        self.assertIsNotNone(self.notification.read_at)
+
+    def test_user_cannot_mark_another_users_notification_read(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse('mark_notification_read', args=[self.other_notification.pk]),
+        )
+
+        self.assertEqual(response.status_code, 404)
+        self.other_notification.refresh_from_db()
+        self.assertFalse(self.other_notification.is_read)
+
+    def test_get_cannot_modify_notification_status(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(
+            reverse('mark_notification_read', args=[self.notification.pk]),
+        )
+
+        self.assertEqual(response.status_code, 405)
+        self.notification.refresh_from_db()
+        self.assertFalse(self.notification.is_read)
+
+    def test_mark_all_read_affects_only_current_user(self):
+        self.client.force_login(self.user)
+        another_notification = Notification.objects.create(
+            user=self.user,
+            notification_type='email',
+            subject='Second update',
+            message='Another update.',
+        )
+
+        response = self.client.post(reverse('mark_all_notifications_read'))
+
+        self.assertRedirects(response, reverse('notifications'))
+        self.assertFalse(Notification.objects.filter(
+            user=self.user,
+            is_read=False,
+        ).exists())
+        self.other_notification.refresh_from_db()
+        self.assertFalse(self.other_notification.is_read)
+        another_notification.refresh_from_db()
+        self.assertIsNotNone(another_notification.read_at)
+
+    def test_unread_count_is_shown_in_navigation(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('notifications'))
+
+        self.assertEqual(response.context['unread_notification_count'], 1)
+        self.assertContains(response, 'class="sa-notification-count"')
+
+    @patch('farmers.emails.send_mail', return_value=1)
+    def test_email_delivery_success_is_recorded(self, send_mail):
+        from farmers.emails import notify
+
+        notification = notify(self.user, 'Delivered', 'Message')
+
+        notification.refresh_from_db()
+        self.assertTrue(notification.is_sent)
+        self.assertEqual(notification.email_error, '')
+        send_mail.assert_called_once()
+
+    @patch('farmers.emails.send_mail', side_effect=RuntimeError('SMTP unavailable'))
+    def test_email_delivery_failure_is_recorded_without_raising(self, send_mail):
+        from farmers.emails import notify
+
+        notification = notify(self.user, 'Failed', 'Message')
+
+        notification.refresh_from_db()
+        self.assertFalse(notification.is_sent)
+        self.assertEqual(notification.email_error, 'SMTP unavailable')
+        send_mail.assert_called_once()
+
+    @patch('farmers.emails.send_mail')
+    def test_disabled_email_preference_stores_without_sending(self, send_mail):
+        from farmers.emails import notify
+
+        UserProfile.objects.filter(user=self.user).update(email_notifications=False)
+        notification = notify(self.user, 'In-app only', 'Message')
+
+        notification.refresh_from_db()
+        self.assertFalse(notification.is_sent)
+        self.assertEqual(
+            notification.email_error,
+            'Email notifications are disabled in your settings.',
+        )
+        send_mail.assert_not_called()
+
+
+class DeploymentSettingsTests(TestCase):
+    def test_local_cache_is_used_without_redis_url(self):
+        with patch.dict(os.environ, {}, clear=True):
+            cache_config = _get_cache_config()
+
+        self.assertEqual(
+            cache_config["default"]["BACKEND"],
+            "django.core.cache.backends.locmem.LocMemCache",
+        )
+
+    def test_production_cache_requires_redis_url(self):
+        with patch.dict(os.environ, {"DJANGO_ENV": "production"}, clear=True):
+            with self.assertRaisesMessage(
+                ImproperlyConfigured,
+                "DJANGO_CACHE_URL must be configured in production.",
+            ):
+                _get_cache_config()
+
+    def test_production_cache_uses_redis_backend(self):
+        with patch.dict(
+            os.environ,
+            {
+                "DJANGO_ENV": "production",
+                "DJANGO_CACHE_URL": "redis://redis.internal:6379/1",
+            },
+            clear=True,
+        ):
+            cache_config = _get_cache_config()
+
+        self.assertEqual(
+            cache_config["default"]["BACKEND"],
+            "django.core.cache.backends.redis.RedisCache",
+        )
+        self.assertEqual(
+            cache_config["default"]["LOCATION"],
+            "redis://redis.internal:6379/1",
+        )
+
+    def test_production_cache_rejects_empty_or_whitespace_url(self):
+        for cache_url in ("", "   "):
+            with self.subTest(cache_url=repr(cache_url)), patch.dict(
+                os.environ,
+                {"DJANGO_ENV": "production", "DJANGO_CACHE_URL": cache_url},
+                clear=True,
+            ):
+                with self.assertRaises(ImproperlyConfigured):
+                    _get_cache_config()
+
+    def test_local_host_defaults_are_preserved(self):
+        with patch.dict(os.environ, {}, clear=True):
+            self.assertEqual(
+                _get_allowed_hosts(),
+                ["localhost", "127.0.0.1", "0.0.0.0", "[::1]", "testserver"],
+            )
+            self.assertEqual(_get_csrf_trusted_origins(), [])
+
+    def test_production_hosts_and_origins_are_parsed(self):
+        with patch.dict(
+            os.environ,
+            {
+                "DJANGO_ENV": "production",
+                "DJANGO_ALLOWED_HOSTS": "app.example.com, admin.example.com ",
+                "DJANGO_CSRF_TRUSTED_ORIGINS": (
+                    "https://app.example.com, https://admin.example.com"
+                ),
+            },
+            clear=True,
+        ):
+            self.assertEqual(
+                _get_allowed_hosts(),
+                ["app.example.com", "admin.example.com"],
+            )
+            self.assertEqual(
+                _get_csrf_trusted_origins(),
+                ["https://app.example.com", "https://admin.example.com"],
+            )
+
+    def test_production_host_configuration_is_required(self):
+        with patch.dict(os.environ, {"DJANGO_ENV": "production"}, clear=True):
+            with self.assertRaises(ImproperlyConfigured):
+                _get_allowed_hosts()
+            with self.assertRaises(ImproperlyConfigured):
+                _get_csrf_trusted_origins()
+
+    def test_invalid_host_configuration_is_rejected(self):
+        with patch.dict(os.environ, {"DJANGO_ALLOWED_HOSTS": "*"}, clear=True):
+            with self.assertRaises(ImproperlyConfigured):
+                _get_allowed_hosts()
+
+    def test_invalid_csrf_origin_configuration_is_rejected(self):
+        with patch.dict(
+            os.environ,
+            {"DJANGO_CSRF_TRUSTED_ORIGINS": "app.example.com"},
+            clear=True,
+        ):
+            with self.assertRaises(ImproperlyConfigured):
+                _get_csrf_trusted_origins()
+
+    def test_security_environment_values_are_validated(self):
+        with patch.dict(
+            os.environ,
+            {
+                "DJANGO_SECURE_SSL_REDIRECT": "yes",
+                "DJANGO_SECURE_HSTS_SECONDS": "31536000",
+                "DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS": "false",
+                "DJANGO_SECURE_HSTS_PRELOAD": "0",
+            },
+            clear=True,
+        ):
+            self.assertTrue(_get_bool_setting("DJANGO_SECURE_SSL_REDIRECT"))
+            self.assertEqual(_get_nonnegative_int_setting("DJANGO_SECURE_HSTS_SECONDS"), 31536000)
+            self.assertFalse(_get_bool_setting("DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS"))
+            self.assertFalse(_get_bool_setting("DJANGO_SECURE_HSTS_PRELOAD"))
+
+    def test_invalid_security_environment_values_are_rejected(self):
+        with patch.dict(os.environ, {"DJANGO_SECURE_SSL_REDIRECT": "sometimes"}, clear=True):
+            with self.assertRaises(ImproperlyConfigured):
+                _get_bool_setting("DJANGO_SECURE_SSL_REDIRECT")
+        with patch.dict(os.environ, {"DJANGO_SECURE_HSTS_SECONDS": "-1"}, clear=True):
+            with self.assertRaises(ImproperlyConfigured):
+                _get_nonnegative_int_setting("DJANGO_SECURE_HSTS_SECONDS")

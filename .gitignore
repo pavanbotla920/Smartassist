@@ -3,6 +3,7 @@ venv/
 env/
 ENV/
 .venv
+.venv/
 
 # Python
 __pycache__/
@@ -44,3 +45,10 @@ Thumbs.db
 # Environment variables
 .env
 .env.local
+.env.*
+!.env.example
+!.env.sample
+
+# Python tooling caches
+.pytest_cache/
+.mypy_cache/

@@ -161,12 +161,12 @@
         width: fit-content;
     }
 
-    .sa-title {
+    .sa-hero-panel .sa-title {
         font-family: var(--sa-font-display);
         font-size: clamp(2.1rem, 3.8vw, 3.2rem);
         line-height: 1.12;
         font-weight: 700;
-        color: #ffffff;
+        color: #FFF8E7;
         margin-bottom: 1.1rem;
         letter-spacing: -0.035em;
         max-width: 11ch;
@@ -336,6 +336,18 @@
     .sa-slide-toggle:hover {
         border-color: var(--sa-gold-deep);
         color: var(--sa-gold-deep);
+    }
+    .sa-btn-secondary {
+        color: var(--sa-ink);
+        background: var(--sa-card);
+        border: 1px solid var(--sa-line);
+        box-shadow: var(--sa-shadow);
+    }
+    .sa-btn-secondary:hover,
+    .sa-btn-secondary:focus-visible {
+        color: var(--sa-ink);
+        background: var(--sa-gold-soft);
+        border-color: var(--sa-gold-deep);
     }
     @media (max-width: 600px) {
         .sa-photo-controls {
@@ -1000,7 +1012,7 @@
                         <a href="{% url 'recommend' %}" class="sa-btn sa-btn-gold">
                             <i class="fas fa-clipboard-check"></i> {% trans "Check Eligibility" %}
                         </a>
-                        <a href="{% if user.is_authenticated and user.userprofile.role == 'admin' %}{% url 'admin_dashboard' %}{% elif user.is_authenticated and user.userprofile.role == 'volunteer' %}{% url 'admin_dashboard' %}{% else %}{% url 'dashboard' %}{% endif %}" class="sa-btn sa-btn-secondary">
+                        <a href="{{ dashboard_url }}" class="sa-btn sa-btn-secondary">
                             <i class="fas fa-gauge"></i> {% trans "Go to Dashboard" %}
                         </a>
                     </div>
@@ -1463,7 +1475,7 @@
                     <a href="{% url 'recommend' %}" class="sa-btn sa-btn-gold">
                         <i class="fas fa-clipboard-check"></i> {% trans "Check Eligibility" %}
                     </a>
-                    <a href="{% if user.userprofile.role == 'admin' or user.userprofile.role == 'volunteer' %}{% url 'admin_dashboard' %}{% else %}{% url 'dashboard' %}{% endif %}" class="sa-btn sa-btn-secondary">
+                    <a href="{{ dashboard_url }}" class="sa-btn sa-btn-secondary">
                         <i class="fas fa-gauge"></i> {% trans "Go to Dashboard" %}
                     </a>
                     {% endif %}
@@ -1494,7 +1506,10 @@
             toggle.setAttribute('aria-pressed', 'true');
             toggle.setAttribute('aria-label', 'Play slideshow');
             toggle.setAttribute('title', 'Play slideshow');
-            toggle.innerHTML = '<i class="fas fa-play" aria-hidden="true"></i>';
+            const icon = document.createElement('i');
+            icon.className = 'fas fa-play';
+            icon.setAttribute('aria-hidden', 'true');
+            toggle.replaceChildren(icon);
         }
     }
 
@@ -1564,7 +1579,10 @@
                 toggle.setAttribute('aria-pressed', String(userPaused));
                 toggle.setAttribute('aria-label', userPaused ? 'Play slideshow' : 'Pause slideshow');
                 toggle.setAttribute('title', userPaused ? 'Play slideshow' : 'Pause slideshow');
-                toggle.innerHTML = '<i class="fas fa-' + (userPaused ? 'play' : 'pause') + '" aria-hidden="true"></i>';
+                const icon = document.createElement('i');
+                icon.className = 'fas fa-' + (userPaused ? 'play' : 'pause');
+                icon.setAttribute('aria-hidden', 'true');
+                toggle.replaceChildren(icon);
             });
         }
 
@@ -1591,10 +1609,12 @@
         function fillList(id, value, icon) {
             const ul = document.getElementById(id);
             if (!ul) return;
-            ul.innerHTML = '';
+            ul.replaceChildren();
             (value || '').split('|').filter(Boolean).forEach(function(item) {
                 const li = document.createElement('li');
-                li.innerHTML = '<i class="fas ' + icon + '"></i> ' + item.trim();
+                const iconElement = document.createElement('i');
+                iconElement.className = 'fas ' + icon;
+                li.append(iconElement, document.createTextNode(' ' + item.trim()));
                 ul.appendChild(li);
             });
         }
@@ -1606,7 +1626,7 @@
 
             const chips = document.getElementById('schemeModalChips');
             if (chips) {
-                chips.innerHTML = '';
+                chips.replaceChildren();
                 if (d.schemeType) {
                     const typeClass = d.schemeType.includes('Central') ? 'sa-scheme-type--central' : 'sa-scheme-type--state';
                     const t = document.createElement('span');
@@ -1617,19 +1637,25 @@
                 if (d.schemeState) {
                     const s = document.createElement('span');
                     s.className = 'sa-chip';
-                    s.innerHTML = '<i class="fas fa-location-dot"></i> ' + d.schemeState;
+                    const icon = document.createElement('i');
+                    icon.className = 'fas fa-location-dot';
+                    s.append(icon, document.createTextNode(' ' + d.schemeState));
                     chips.appendChild(s);
                 }
                 if (d.schemeSupport) {
                     const sp = document.createElement('span');
                     sp.className = 'sa-chip';
-                    sp.innerHTML = '<i class="fas fa-hand-holding-heart"></i> ' + d.schemeSupport;
+                    const icon = document.createElement('i');
+                    icon.className = 'fas fa-hand-holding-heart';
+                    sp.append(icon, document.createTextNode(' ' + d.schemeSupport));
                     chips.appendChild(sp);
                 }
                 if (d.schemeAudience) {
                     const au = document.createElement('span');
                     au.className = 'sa-chip';
-                    au.innerHTML = '<i class="fas fa-user-group"></i> ' + d.schemeAudience;
+                    const icon = document.createElement('i');
+                    icon.className = 'fas fa-user-group';
+                    au.append(icon, document.createTextNode(' ' + d.schemeAudience));
                     chips.appendChild(au);
                 }
             }

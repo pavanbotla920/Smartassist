@@ -3,11 +3,27 @@
 
 {% block title %}{% trans "Login - SmartAssist" %}{% endblock %}
 
+{% block extra_head %}
+<style>
+    .sa-auth-shell { min-height: calc(100vh - 180px); display: grid; place-items: center; padding: 3rem 1rem; background: var(--sa-paper); }
+    .sa-auth-card { width: min(100%, 430px); border: 1px solid var(--sa-line); border-radius: var(--sa-radius-lg); box-shadow: var(--sa-shadow-lg); overflow: hidden; }
+    .sa-auth-card .card-header { background: var(--sa-ink) !important; border: 0; padding: 1.5rem; }
+    .sa-auth-card .card-header h4 { color: #fff; font-family: var(--sa-font-display); }
+    .sa-auth-card .card-body, .sa-auth-card .card-footer { background: var(--sa-card); }
+    .sa-auth-card .btn-primary { background: var(--sa-emerald); border-color: var(--sa-emerald); }
+    .sa-auth-card .btn-primary:hover { background: var(--sa-leaf); border-color: var(--sa-leaf); }
+    .sa-auth-card form p { margin-bottom: 1rem; }
+    .sa-auth-card form label { color: var(--sa-muted); font-weight: 700; }
+    .sa-auth-card form input { width: 100%; padding: .7rem .8rem; border: 1px solid var(--sa-line); border-radius: var(--sa-radius-sm); }
+    .sa-auth-card form input:focus { outline: 0; border-color: var(--sa-leaf); box-shadow: 0 0 0 3px rgba(31,169,113,.16); }
+    .sa-auth-card .field-error { color: #b42318; font-size: .875rem; margin-top: .35rem; }
+    .sa-auth-card .is-invalid { border-color: #dc3545; }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6 col-lg-4">
-            <div class="card shadow">
+<div class="sa-auth-shell">
+            <div class="card sa-auth-card">
                 <div class="card-header bg-primary text-white text-center">
                     <h4 class="mb-0">
                         <i class="fas fa-sign-in-alt"></i>
@@ -16,15 +32,38 @@
                 </div>
                 <div class="card-body">
                     {% if form.errors %}
-                        <div class="alert alert-danger py-2">
+                        <div class="alert alert-danger py-2" role="alert">
                             <i class="fas fa-exclamation-circle"></i>
                             {% trans "Invalid username or password. Please check your credentials." %}
                         </div>
                     {% endif %}
+                    <div id="login-validation-warning" class="alert alert-warning py-2 d-none" role="alert">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        <span></span>
+                    </div>
 
-                    <form method="POST">
+                    <form method="POST" id="login-form" novalidate>
                         {% csrf_token %}
-                        {{ form.as_p }}
+                        {% if form.non_field_errors %}
+                            <div class="field-error mb-3" role="alert">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+
+                        <p>
+                            {{ form.username.label_tag }}
+                            {{ form.username }}
+                            {% for error in form.username.errors %}
+                                <span class="field-error d-block" role="alert">{{ error }}</span>
+                            {% endfor %}
+                        </p>
+                        <p>
+                            {{ form.password.label_tag }}
+                            {{ form.password }}
+                            {% for error in form.password.errors %}
+                                <span class="field-error d-block" role="alert">{{ error }}</span>
+                            {% endfor %}
+                        </p>
 
                         <div class="text-end mb-3">
                             <a href="{% url 'password_reset' %}" class="small text-decoration-none">
@@ -47,26 +86,33 @@
                     </p>
                 </div>
             </div>
-        </div>
-    </div>
 </div>
+<script>
+    document.getElementById('login-form').addEventListener('submit', function (event) {
+        const username = document.getElementById('id_username');
+        const password = document.getElementById('id_password');
+        const warning = document.getElementById('login-validation-warning');
+        const message = warning.querySelector('span');
+        const missing = [];
 
-<style>
-form p {
-    margin-bottom: 1rem;
-}
+        username.classList.remove('is-invalid');
+        password.classList.remove('is-invalid');
 
-form label {
-    font-weight: 500;
-    color: #495057;
-}
+        if (!username.value.trim()) {
+            missing.push('{% trans "username" %}');
+            username.classList.add('is-invalid');
+        }
+        if (!password.value) {
+            missing.push('{% trans "password" %}');
+            password.classList.add('is-invalid');
+        }
 
-form input[type="text"],
-form input[type="password"] {
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid #ced4da;
-    border-radius: 0.375rem;
-}
-</style>
+        if (missing.length) {
+            event.preventDefault();
+            message.textContent = '{% trans "Please enter your" %} ' + missing.join(' {% trans "and" %} ') + '.';
+            warning.classList.remove('d-none');
+            (missing.includes('{% trans "username" %}') ? username : password).focus();
+        }
+    });
+</script>
 {% endblock %}

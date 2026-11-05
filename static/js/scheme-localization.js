@@ -48,6 +48,9 @@
       if (card.dataset.translationFields) {
         url.searchParams.set('fields', card.dataset.translationFields);
       }
+      if (navigator.onLine === false) {
+        url.searchParams.set('offline', '1');
+      }
 
       const response = await fetch(url.toString(), {
         headers: { Accept: 'application/json' },
@@ -64,6 +67,9 @@
           element.textContent = value;
         });
       });
+      if (result.translation_status !== 'complete') {
+        showFailure(card, result.message || failureMessage);
+      }
     } catch (error) {
       showFailure(card, error instanceof Error ? error.message : '');
     }

@@ -283,6 +283,13 @@
         try {
           const played = await window.SmartAssistVoice.speak(scheme.id, languageCode, {
             volume: audioState.volume,
+            text: [
+              scheme.name,
+              scheme.description,
+              scheme.eligibility,
+              scheme.documents_required
+            ].filter(Boolean).join('. '),
+            translationUrl: document.body.dataset.schemeTranslationUrl,
             onStatus: (message) => {
               audioState.isPlaying = true;
               audioState.isPaused = false;

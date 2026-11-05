@@ -26,6 +26,15 @@ from farmers.views import (
     _validate_audio_content,
 )
 from farmers.notification_queue import process_notification, process_pending_notifications
+from farmers.offline_translation import lookup_local_translation
+from farmers.transcription import (
+    InvalidAudioError,
+    ModelUnavailableError,
+    UnsupportedLanguageError,
+    _load_model,
+    get_model_path,
+    transcribe_audio,
+)
 from smartassist.settings import (
     _get_allowed_hosts,
     _get_bool_setting,
@@ -2211,6 +2220,39 @@ class SmartAssistVerificationTests(TestCase):
         self.assertEqual(translate.call_count, 4)
         cache_set.assert_called_once()
 
+    def test_local_translation_catalog_returns_supported_language_text(self):
+        expected = {
+            'hi': 'पात्रता',
+            'mr': 'पात्रता',
+            'te': 'అర్హత',
+        }
+        for language, translated_text in expected.items():
+            with self.subTest(language=language):
+                translation = lookup_local_translation('Eligibility', language)
+                self.assertTrue(translation.available)
+                self.assertEqual(translation.text, translated_text)
+
+    def test_local_translation_catalog_preserves_unknown_english_text(self):
+        translation = lookup_local_translation('Uncatalogued scheme detail', 'mr')
+
+        self.assertFalse(translation.available)
+        self.assertIsNone(translation.text)
+
+    def test_scheme_translation_api_reports_offline_unavailable_translation(self):
+        response = self.client.get(
+            reverse('scheme_translation_api'),
+            {
+                'scheme_id': self.central_scheme.id,
+                'lang': 'te',
+                'offline': '1',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['translation_status'], 'unavailable')
+        self.assertEqual(response.json()['source'], 'local')
+        self.assertIn('English text is preserved', response.json()['message'])
+
     def test_scheme_translation_api_reports_service_failure_without_returning_success(self):
         with (
             patch('farmers.views.cache.get', return_value=None),
@@ -2489,6 +2531,187 @@ class SmartAssistVerificationTests(TestCase):
         self.assertEqual(response.status_code, 400)
         openai_transcribe.assert_not_called()
 
+    def test_transcribe_voice_uses_local_hindi_provider(self):
+        self.client.force_login(self.user)
+        upload = SimpleUploadedFile(
+            'voice.wav', b'audio', content_type='audio/wav'
+        )
+        with patch.dict(os.environ, {'TRANSCRIPTION_PROVIDER': 'local'}), patch(
+            'farmers.views._validate_audio_content',
+            return_value='',
+        ), patch(
+            'farmers.views.transcribe_local_audio',
+            return_value='नमस्ते',
+        ) as local_transcribe, patch(
+            'farmers.views._transcribe_audio_with_openai'
+        ) as openai_transcribe, patch(
+            'farmers.views._transcribe_audio_without_openai'
+        ) as google_transcribe:
+            response = self.client.post(
+                reverse('voice_transcribe'),
+                {'audio': upload, 'language': 'hi'},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json(),
+            {
+                'transcript': 'नमस्ते',
+                'provider': 'vosk',
+                'offline': True,
+                'language': 'hi',
+            },
+        )
+        local_transcribe.assert_called_once()
+        openai_transcribe.assert_not_called()
+        google_transcribe.assert_not_called()
+
+    def test_transcribe_voice_uses_local_telugu_provider(self):
+        self.client.force_login(self.user)
+        upload = SimpleUploadedFile(
+            'voice.wav', b'audio', content_type='audio/wav'
+        )
+        with patch.dict(os.environ, {'TRANSCRIPTION_PROVIDER': 'local'}), patch(
+            'farmers.views._validate_audio_content',
+            return_value='',
+        ), patch(
+            'farmers.views.transcribe_local_audio',
+            return_value='నమస్కారం',
+        ) as local_transcribe:
+            response = self.client.post(
+                reverse('voice_transcribe'),
+                {'audio': upload, 'language': 'te'},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['provider'], 'vosk')
+        self.assertTrue(response.json()['offline'])
+        self.assertEqual(response.json()['language'], 'te')
+        local_transcribe.assert_called_once()
+
+    def test_transcribe_voice_local_mode_rejects_marathi(self):
+        self.client.force_login(self.user)
+        upload = SimpleUploadedFile(
+            'voice.wav', b'audio', content_type='audio/wav'
+        )
+        with patch.dict(os.environ, {'TRANSCRIPTION_PROVIDER': 'local'}), patch(
+            'farmers.views._validate_audio_content',
+            return_value='',
+        ), patch('farmers.views.transcribe_local_audio') as local_transcribe:
+            response = self.client.post(
+                reverse('voice_transcribe'),
+                {'audio': upload, 'language': 'mr'},
+            )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Hindi and Telugu', response.json()['error'])
+        self.assertIn('Marathi', response.json()['error'])
+        local_transcribe.assert_not_called()
+
+    def test_transcribe_voice_local_mode_hides_missing_model_details(self):
+        self.client.force_login(self.user)
+        upload = SimpleUploadedFile(
+            'voice.wav', b'audio', content_type='audio/wav'
+        )
+        with patch.dict(os.environ, {'TRANSCRIPTION_PROVIDER': 'local'}), patch(
+            'farmers.views._validate_audio_content',
+            return_value='',
+        ), patch(
+            'farmers.views.transcribe_local_audio',
+            side_effect=ModelUnavailableError(
+                'missing model at /sensitive/model/path'
+            ),
+        ):
+            response = self.client.post(
+                reverse('voice_transcribe'),
+                {'audio': upload, 'language': 'hi'},
+            )
+
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(
+            response.json()['error'],
+            'The requested offline transcription model is unavailable.',
+        )
+        self.assertNotIn('/sensitive/model/path', response.content.decode())
+
+    def test_transcribe_voice_auto_uses_online_fallback_after_local_failure(self):
+        self.client.force_login(self.user)
+        upload = SimpleUploadedFile(
+            'voice.wav', b'audio', content_type='audio/wav'
+        )
+        with patch.dict(os.environ, {'TRANSCRIPTION_PROVIDER': 'auto'}), patch(
+            'farmers.views._validate_audio_content',
+            return_value='',
+        ), patch(
+            'farmers.views.transcribe_local_audio',
+            side_effect=ModelUnavailableError('missing'),
+        ), patch(
+            'farmers.views._transcribe_audio_with_openai',
+            return_value='online text',
+        ) as openai_transcribe, patch(
+            'farmers.views._transcribe_audio_without_openai'
+        ) as google_transcribe:
+            response = self.client.post(
+                reverse('voice_transcribe'),
+                {'audio': upload, 'language': 'hi'},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['provider'], 'openai')
+        self.assertFalse(response.json()['offline'])
+        openai_transcribe.assert_called_once()
+        google_transcribe.assert_not_called()
+
+    def test_transcribe_voice_openai_mode_does_not_use_other_providers(self):
+        self.client.force_login(self.user)
+        upload = SimpleUploadedFile(
+            'voice.wav', b'audio', content_type='audio/wav'
+        )
+        with patch.dict(os.environ, {'TRANSCRIPTION_PROVIDER': 'openai'}), patch(
+            'farmers.views._validate_audio_content',
+            return_value='',
+        ), patch(
+            'farmers.views._transcribe_audio_with_openai',
+            return_value='openai text',
+        ), patch('farmers.views.transcribe_local_audio') as local_transcribe, patch(
+            'farmers.views._transcribe_audio_without_openai'
+        ) as google_transcribe:
+            response = self.client.post(
+                reverse('voice_transcribe'),
+                {'audio': upload, 'language': 'te'},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['provider'], 'openai')
+        local_transcribe.assert_not_called()
+        google_transcribe.assert_not_called()
+
+    def test_transcribe_voice_google_mode_uses_google_only(self):
+        self.client.force_login(self.user)
+        upload = SimpleUploadedFile(
+            'voice.wav', b'audio', content_type='audio/wav'
+        )
+        with patch.dict(os.environ, {'TRANSCRIPTION_PROVIDER': 'google'}), patch(
+            'farmers.views._validate_audio_content',
+            return_value='',
+        ), patch('farmers.views.transcribe_local_audio') as local_transcribe, patch(
+            'farmers.views._transcribe_audio_with_openai'
+        ) as openai_transcribe, patch(
+            'farmers.views._transcribe_audio_without_openai',
+            return_value=('google text', ''),
+        ) as google_transcribe:
+            response = self.client.post(
+                reverse('voice_transcribe'),
+                {'audio': upload, 'language': 'hi'},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['provider'], 'google')
+        self.assertFalse(response.json()['offline'])
+        local_transcribe.assert_not_called()
+        openai_transcribe.assert_not_called()
+        google_transcribe.assert_called_once()
+
     def test_audio_validation_cleans_up_after_duration_failure(self):
         upload = SimpleUploadedFile('voice.wav', b'not audio', content_type='audio/wav')
         with patch(
@@ -2506,6 +2729,56 @@ class SmartAssistVerificationTests(TestCase):
 
         self.assertIn('5 minutes', error)
         remove.assert_called_once()
+
+    def test_local_vosk_model_paths_support_hindi_and_telugu(self):
+        with patch.dict(
+            os.environ,
+            {
+                'SMARTASSIST_VOSK_MODEL_DIR': (
+                    '/tmp/smartassist-test-vosk-models'
+                )
+            },
+            clear=False,
+        ):
+            self.assertEqual(
+                get_model_path('hi').as_posix(),
+                '/tmp/smartassist-test-vosk-models/hindi/'
+                'vosk-model-small-hi-0.22',
+            )
+            self.assertEqual(
+                get_model_path('te').as_posix(),
+                '/tmp/smartassist-test-vosk-models/telugu/'
+                'vosk-model-small-te-0.42',
+            )
+
+    def test_local_vosk_rejects_unsupported_marathi(self):
+        with self.assertRaises(UnsupportedLanguageError):
+            get_model_path('mr')
+
+    def test_local_vosk_reports_missing_model(self):
+        with patch.dict(
+            os.environ,
+            {'SMARTASSIST_VOSK_MODEL_DIR': '/tmp/does-not-exist'},
+            clear=False,
+        ):
+            with self.assertRaises(ModelUnavailableError):
+                _load_model('hi')
+
+    def test_local_vosk_invalid_audio_cleans_up_input_file(self):
+        with patch(
+            'farmers.transcription.subprocess.run',
+            return_value=SimpleNamespace(returncode=1, stderr=b'invalid audio'),
+        ), patch(
+            'farmers.transcription._ffmpeg_binary',
+            return_value='ffmpeg',
+        ):
+            with self.assertRaises(InvalidAudioError):
+                transcribe_audio(
+                    SimpleUploadedFile(
+                        'voice.wav', b'audio', content_type='audio/wav'
+                    ),
+                    language='hi',
+                )
 
     def test_telugu_fallback_uses_te_in_locale(self):
         class AudioFile:

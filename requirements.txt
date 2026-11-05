@@ -10,3 +10,4 @@ selenium==4.51.0
 gunicorn==23.0.0
 redis==5.2.1
 whitenoise==6.9.0
+vosk==0.3.45

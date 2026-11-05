@@ -557,19 +557,71 @@ def scheme_translation_api(request):
     if language == 'en':
         return JsonResponse({'language': language, 'fields': fields})
 
+    local_fields = {}
+    unavailable_fields = []
+    for field, value in fields.items():
+        if not value.strip():
+            local_fields[field] = ''
+            continue
+        local_translation = lookup_local_translation(value, language)
+        if local_translation.available:
+            local_fields[field] = local_translation.text
+        else:
+            unavailable_fields.append(field)
+
     cache_fingerprint = hashlib.sha256(
         json.dumps(fields, ensure_ascii=False, sort_keys=True).encode('utf-8')
     ).hexdigest()
     cache_key = f'scheme_translation:{scheme.pk}:{language}:{cache_fingerprint}'
+    offline_only = request.GET.get('offline', '').strip().lower() in {
+        '1', 'true', 'yes', 'on'
+    }
+    if offline_only:
+        if unavailable_fields:
+            return JsonResponse({
+                'language': language,
+                'original_language': 'en',
+                'fields': local_fields,
+                'unavailable_fields': unavailable_fields,
+                'translation_status': 'partial' if local_fields else 'unavailable',
+                'source': 'local',
+                'message': (
+                    'Some scheme information is not available in the local '
+                    'offline translation catalog. English text is preserved.'
+                ),
+            })
+        return JsonResponse({
+            'language': language,
+            'original_language': 'en',
+            'fields': local_fields,
+            'unavailable_fields': [],
+            'translation_status': 'complete',
+            'source': 'local',
+        })
+
+    if not unavailable_fields:
+        response_data = {
+            'language': language,
+            'original_language': 'en',
+            'fields': local_fields,
+            'unavailable_fields': [],
+            'translation_status': 'complete',
+            'source': 'local',
+        }
+        cache.set(cache_key, response_data, timeout=24 * 60 * 60)
+        return JsonResponse(response_data)
+
     cached_translation = cache.get(cache_key)
     if cached_translation is not None:
         return JsonResponse(cached_translation)
 
     try:
-        translated_fields = {
-            field: _translate_text(value, language) if value.strip() else ''
-            for field, value in fields.items()
-        }
+        translated_fields = dict(local_fields)
+        translated_fields.update({
+            field: _translate_text(fields[field], language)
+            for field in unavailable_fields
+            if fields[field].strip()
+        })
     except VoiceServiceError as exc:
         logger.warning(
             'Scheme translation failed for scheme_id=%s language=%s: %s',
@@ -590,6 +642,9 @@ def scheme_translation_api(request):
         'language': language,
         'original_language': 'en',
         'fields': translated_fields,
+        'unavailable_fields': [],
+        'translation_status': 'complete',
+        'source': 'online',
     }
     cache.set(cache_key, response_data, timeout=24 * 60 * 60)
     return JsonResponse(response_data)
@@ -2126,6 +2181,109 @@ def _transcribe_audio_without_openai(audio_file, language='auto'):
                 pass
 
 
+def _transcription_provider():
+    provider = os.getenv('TRANSCRIPTION_PROVIDER', 'auto').strip().lower()
+    if provider in {'auto', 'local', 'openai', 'google'}:
+        return provider
+    return ''
+
+
+def _reset_audio_file(audio_file):
+    try:
+        audio_file.seek(0)
+    except Exception:
+        pass
+
+
+def _local_transcription_error(exc):
+    if isinstance(exc, UnsupportedLanguageError):
+        return str(exc), 400
+    if isinstance(exc, InvalidAudioError):
+        return str(exc), 400
+    if isinstance(exc, ModelUnavailableError):
+        return 'The requested offline transcription model is unavailable.', 503
+    if isinstance(exc, RecognitionError):
+        return 'Offline transcription could not recognize the audio.', 502
+    return 'Offline transcription failed.', 502
+
+
+def _transcribe_with_selected_provider(audio_file, language):
+    provider = _transcription_provider()
+    if not provider:
+        return None, {
+            'error': 'TRANSCRIPTION_PROVIDER must be auto, local, openai, or google.'
+        }, 500
+
+    normalized_language = _normalize_lang_code(language)
+    local_language = normalized_language in {'hi', 'te'}
+    local_error = None
+
+    if provider == 'local' and not local_language:
+        return None, {
+            'error': (
+                'Offline transcription is supported only for Hindi and Telugu. '
+                'No local Marathi model is configured.'
+            )
+        }, 400
+
+    if provider in {'local', 'auto'} and (provider == 'local' or local_language):
+        _reset_audio_file(audio_file)
+        try:
+            transcript = transcribe_local_audio(
+                audio_file,
+                language=normalized_language,
+            )
+            if transcript:
+                return transcript, {
+                    'provider': 'vosk',
+                    'offline': True,
+                    'language': normalized_language,
+                }, 200
+        except (
+            InvalidAudioError,
+            ModelUnavailableError,
+            RecognitionError,
+            UnsupportedLanguageError,
+        ) as exc:
+            local_error = exc
+            if provider == 'local':
+                error, status = _local_transcription_error(exc)
+                return None, {'error': error}, status
+
+    if provider in {'auto', 'openai'}:
+        _reset_audio_file(audio_file)
+        transcript = _transcribe_audio_with_openai(audio_file, language=language)
+        if transcript:
+            return transcript, {
+                'provider': 'openai',
+                'offline': False,
+                'language': normalized_language,
+            }, 200
+        if provider == 'openai':
+            return None, {
+                'error': 'OpenAI transcription is unavailable.'
+            }, 502
+
+    _reset_audio_file(audio_file)
+    transcript, fallback_error = _transcribe_audio_without_openai(
+        audio_file,
+        language=language,
+    )
+    if transcript:
+        return transcript, {
+            'provider': 'google',
+            'offline': False,
+            'language': normalized_language,
+        }, 200
+
+    if local_error and normalized_language in {'hi', 'te'}:
+        error, _ = _local_transcription_error(local_error)
+        fallback_error = fallback_error or error
+    return None, {
+        'error': fallback_error or 'Unable to transcribe audio.'
+    }, 502
+
+
 def _extract_profile_from_message(message):
     message_low = (message or '').lower()
     age = None
@@ -2251,20 +2409,14 @@ def transcribe_voice(request):
     if validation_error:
         return JsonResponse({'error': validation_error}, status=400)
 
-    transcript = _transcribe_audio_with_openai(audio_file, language=language)
+    transcript, response_data, status = _transcribe_with_selected_provider(
+        audio_file,
+        language,
+    )
     if not transcript:
-        try:
-            audio_file.seek(0)
-        except Exception:
-            pass
-        transcript, fallback_error = _transcribe_audio_without_openai(audio_file, language=language)
+        return JsonResponse(response_data, status=status)
 
-    if not transcript:
-        return JsonResponse({
-            'error': fallback_error or 'Unable to transcribe audio. Configure OPENAI_API_KEY or install fallback STT dependencies.'
-        }, status=502)
-
-    return JsonResponse({'transcript': transcript})
+    return JsonResponse({'transcript': transcript, **response_data})
 
 
 def _stream_text_chunks(text):

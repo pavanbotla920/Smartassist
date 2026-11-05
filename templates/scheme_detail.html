@@ -338,7 +338,16 @@
       const played = await window.SmartAssistVoice.speak(
         listenButton.dataset.schemeId,
         listenLanguage.value,
-        { onStatus: (message) => { listenStatus.textContent = message; } }
+        {
+          text: [
+            listenButton.dataset.schemeName,
+            listenButton.dataset.schemeDescription,
+            listenButton.dataset.schemeEligibility,
+            listenButton.dataset.schemeDocuments
+          ].filter(Boolean).join('. '),
+          translationUrl: document.body.dataset.schemeTranslationUrl,
+          onStatus: (message) => { listenStatus.textContent = message; }
+        }
       );
       if (played) listenStatus.textContent = 'Playback finished.';
     } catch (error) {

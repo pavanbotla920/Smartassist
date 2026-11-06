@@ -22,6 +22,14 @@ from .models import ApplicationRequest, Scheme, Notification, UserProfile
 from .emails import get_farmer_status_message, notify, notify_application_status
 from .location_data import get_location_json, get_state_choices
 from .forms import UserRegisterForm, UserUpdateForm, UserProfileForm, CitizenApplicationForm, SchemeForm
+from .offline_translation import lookup_local_translation
+from .transcription import (
+    InvalidAudioError,
+    ModelUnavailableError,
+    RecognitionError,
+    UnsupportedLanguageError,
+    transcribe_audio as transcribe_local_audio,
+)
 import csv
 import asyncio
 import json

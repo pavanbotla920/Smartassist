@@ -26,8 +26,8 @@ from farmers.views import (
     _transcribe_audio_without_openai,
     _validate_audio_content,
 )
-from farmers.notification_queue import process_notification, process_pending_notifications
 from farmers.offline_translation import lookup_local_translation
+from farmers.notification_queue import process_notification, process_pending_notifications
 from farmers.transcription import (
     InvalidAudioError,
     ModelUnavailableError,
@@ -1542,10 +1542,10 @@ class SmartAssistVerificationTests(TestCase):
         response = self.client.get(reverse('scheme_detail', args=[self.central_scheme.id]))
 
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.central_scheme.scheme_name)
         self.assertContains(response, 'vendor/leaflet/leaflet.css')
         self.assertContains(response, 'vendor/leaflet/leaflet.js')
         self.assertNotContains(response, 'https://unpkg.com/leaflet')
-        self.assertContains(response, self.central_scheme.scheme_name)
         self.assertContains(response, self.central_scheme.scheme_type)
         self.assertContains(response, self.central_scheme.state)
         self.assertContains(response, self.central_scheme.department)
@@ -1618,6 +1618,15 @@ class SmartAssistVerificationTests(TestCase):
             'Your application for government scheme assistance has been '
             'submitted successfully.'
         ))
+        self.assertEqual(notification.delivery_status, 'pending')
+        self.assertFalse(notification.is_sent)
+        send_mail.assert_not_called()
+
+        process_pending_notifications()
+
+        notification.refresh_from_db()
+        self.assertEqual(notification.delivery_status, 'sent')
+        self.assertTrue(notification.is_sent)
         send_mail.assert_called_once()
         self.assertEqual(
             send_mail.call_args.kwargs['recipient_list'],
@@ -1980,10 +1989,10 @@ class SmartAssistVerificationTests(TestCase):
         response = self.client.get(reverse('india_map_schemes'))
 
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-overview-url="/api/india-map/overview/"', html=False)
         self.assertContains(response, 'vendor/leaflet/leaflet.css')
         self.assertContains(response, 'vendor/leaflet/leaflet.js')
         self.assertNotContains(response, 'https://unpkg.com/leaflet')
-        self.assertContains(response, 'data-overview-url="/api/india-map/overview/"', html=False)
         self.assertContains(response, 'data-site-language')
         self.assertContains(response, 'language-switcher.js')
         self.assertContains(response, 'select a language and press Listen on the specific scheme')

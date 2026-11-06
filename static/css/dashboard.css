@@ -1,0 +1,35 @@
+.india-flag {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 30px;
+    flex: 0 0 40px;
+    overflow: hidden;
+    border-radius: 3px;
+    background: linear-gradient(
+        to bottom,
+        #ff9933 0 33.333%,
+        #ffffff 33.333% 66.667%,
+        #138808 66.667% 100%
+    );
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.india-flag::after {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 10px;
+    height: 10px;
+    border: 1.5px solid #000080;
+    border-radius: 50%;
+    background:
+        radial-gradient(circle, #000080 0 1px, transparent 1.5px),
+        repeating-conic-gradient(
+            from 0deg,
+            #000080 0deg 4deg,
+            transparent 4deg 15deg
+        );
+    content: "";
+    transform: translate(-50%, -50%);
+}

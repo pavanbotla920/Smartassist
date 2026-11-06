@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="{% static 'css/language-switcher.css' %}">
   <link rel="stylesheet" href="{% static 'css/smartassist-portal.css' %}">
   <link rel="stylesheet" href="{% static 'css/india-map.css' %}">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+  <link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
 </head>
 <body class="india-map-page"
   data-overview-url="{% url 'india_map_overview_api' %}"
@@ -19,6 +19,7 @@
   data-geojson-url="{% static 'india_states.geojson' %}"
   data-map-unavailable="{% trans 'Data unavailable' %}"
   data-map-load-error="{% trans 'The map could not be loaded. Please refresh and try again.' %}"
+  data-map-library-error="{% trans 'The map library is unavailable. Please contact the administrator.' %}"
   data-map-schemes-label="{% trans 'schemes' %}"
   data-map-central-label="{% trans 'central' %}"
   data-map-state-label="{% trans 'state' %}"
@@ -87,7 +88,7 @@
     <section class="map-status" id="data-status" hidden></section>
   </main>
   <footer class="sa-portal-footer" role="contentinfo"><p>{% trans "SmartAssist Government Scheme Platform" %} · <a href="{% url 'scheme_awareness' %}">{% trans "Browse Schemes" %}</a> · <a href="{% url 'home' %}">{% trans "Home" %}</a></p></footer>
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
   <script src="{% static 'js/india-map.js' %}"></script>
   <script src="{% static 'js/language-switcher.js' %}"></script>
 </body>

@@ -9,9 +9,11 @@
     <title>{% block title %}{% trans "SmartAssist - Inclusive Government Scheme Platform" %}{% endblock %}</title>
 
     <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{% static 'vendor/bootstrap/bootstrap.min.css' %}" rel="stylesheet">
     <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'vendor/fontawesome/all.min.css' %}">
+    <!-- Chart.js for analytics -->
+    <script src="{% static 'vendor/chartjs/chart.umd.js' %}"></script>
     <!-- Custom CSS -->
     <style>
         .sa-flash-messages {
@@ -409,9 +411,7 @@
     </footer>
 
     <!-- Bootstrap 5 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Chart.js for analytics -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
     <script src="{% static 'js/language-switcher.js' %}"></script>
 
     <script>

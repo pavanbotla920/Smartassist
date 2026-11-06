@@ -7,8 +7,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% trans "SmartAssist - Agricultural Schemes Dashboard" %}</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="{% static 'vendor/chartjs/chart.umd.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'css/offline-fonts.css' %}">
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
     <style>
         * {
             margin: 0;
@@ -17,7 +18,7 @@
         }
 
         body {
-            font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
             background:
                 radial-gradient(circle at 10% 0%, rgba(34, 126, 255, 0.14), transparent 32%),
                 radial-gradient(circle at 100% 20%, rgba(26, 197, 137, 0.14), transparent 28%),
@@ -515,14 +516,6 @@
             display: flex;
             align-items: center;
             gap: 15px;
-        }
-
-        .gov-logo {
-            width: 40px;
-            height: 30px;
-            object-fit: cover;
-            border-radius: 3px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .section-header h3 {
@@ -1189,7 +1182,7 @@
 <!-- HEADER -->
 <div class="header">
     <div class="header-left">
-        <img src="{% static 'images/gov_emblem.png' %}" alt="Government Emblem" class="header-logo" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Emblem_of_India.svg/256px-Emblem_of_India.svg.png'">
+        <img src="{% static 'images/gov_emblem.png' %}" alt="Government Emblem" class="header-logo" onerror="this.onerror=null;this.style.display='none'">
         <h1>{% trans "SmartAssist Agriculture Dashboard" %}</h1>
         <img src="{% static 'images/gov_emblem.png' %}" alt="Govt Logo" class="header-logo-small" onerror="this.style.display='none'">
     </div>
@@ -1414,8 +1407,8 @@
         </div>
         <div class="hero-img-wrap">
             <div class="hero-img-glow" style="background:radial-gradient(#10b981,#06b6d4);"></div>
-            <img class="hero-img" src="/static/images/farmer_1.jpg" alt="PM Kisan Farmer"
-                 onerror="this.src='https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=500&q=80'">
+            <img class="hero-img" src="{% static 'images/farmer_1.jpg' %}" alt="PM Kisan Farmer"
+                 onerror="this.onerror=null;this.style.display='none'">
         </div>
     </div>
 
@@ -1437,8 +1430,8 @@
         </div>
         <div class="hero-img-wrap">
             <div class="hero-img-glow" style="background:radial-gradient(#6366f1,#8b5cf6);"></div>
-            <img class="hero-img" src="/static/images/farmer_2.jpg" alt="YASASVI Scholarship"
-                 onerror="this.src='https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=500&q=80'">
+            <img class="hero-img" src="{% static 'images/farmer_2.jpg' %}" alt="YASASVI Scholarship"
+                 onerror="this.onerror=null;this.style.display='none'">
         </div>
     </div>
 
@@ -1460,8 +1453,8 @@
         </div>
         <div class="hero-img-wrap">
             <div class="hero-img-glow" style="background:radial-gradient(#f59e0b,#ef4444);"></div>
-            <img class="hero-img" src="/static/images/farmer_3.jpg" alt="Suraksha Bima Family"
-                 onerror="this.src='https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=500&q=80'">
+            <img class="hero-img" src="{% static 'images/farmer_3.jpg' %}" alt="Suraksha Bima Family"
+                 onerror="this.onerror=null;this.style.display='none'">
         </div>
     </div>
 
@@ -1483,8 +1476,8 @@
         </div>
         <div class="hero-img-wrap">
             <div class="hero-img-glow" style="background:radial-gradient(#10b981,#84cc16);"></div>
-            <img class="hero-img" src="/static/images/farmer_5.jpg" alt="Farmer Crop Insurance"
-                 onerror="this.src='https://images.unsplash.com/photo-1472396961693-142e6e269027?w=1200&q=80'">
+            <img class="hero-img" src="{% static 'images/farmer_5.jpg' %}" alt="Farmer Crop Insurance"
+                 onerror="this.onerror=null;this.style.display='none'">
         </div>
     </div>
 
@@ -1506,8 +1499,8 @@
         </div>
         <div class="hero-img-wrap">
             <div class="hero-img-glow" style="background:radial-gradient(#ec4899,#8b5cf6);"></div>
-            <img class="hero-img" src="/static/images/farmer_6.jpg" alt="Women Farmer"
-                 onerror="this.src='https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=1200&q=80'">
+            <img class="hero-img" src="{% static 'images/farmer_6.jpg' %}" alt="Women Farmer"
+                 onerror="this.onerror=null;this.style.display='none'">
         </div>
     </div>
 
@@ -1529,8 +1522,8 @@
         </div>
         <div class="hero-img-wrap">
             <div class="hero-img-glow" style="background:radial-gradient(#0ea5e9,#22c55e);"></div>
-            <img class="hero-img" src="/static/images/farmer_7.jpg" alt="Digital Agriculture Support"
-                 onerror="this.src='https://images.unsplash.com/photo-1592982537447-7440770cbfc9?w=1200&q=80'">
+            <img class="hero-img" src="{% static 'images/farmer_7.jpg' %}" alt="Digital Agriculture Support"
+                 onerror="this.onerror=null;this.style.display='none'">
         </div>
     </div>
 
@@ -1553,7 +1546,7 @@
         <div class="hero-img-wrap">
             <div class="hero-img-glow" style="background:radial-gradient(#14b8a6,#0ea5e9);"></div>
             <img class="hero-img" src="/static/images/farmer_5.jpg" alt="Ayushman Bharat Central Scheme"
-                 onerror="this.src='https://images.unsplash.com/photo-1584515933487-779824d29309?w=1200&q=80'">
+                 onerror="this.onerror=null;this.style.display='none'">
         </div>
     </div>
 
@@ -1576,7 +1569,7 @@
         <div class="hero-img-wrap">
             <div class="hero-img-glow" style="background:radial-gradient(#f59e0b,#ef4444);"></div>
             <img class="hero-img" src="/static/images/farmer_7.jpg" alt="PM Awas Central Scheme"
-                 onerror="this.src='https://images.unsplash.com/photo-1460317442991-0ec209397118?w=1200&q=80'">
+                 onerror="this.onerror=null;this.style.display='none'">
         </div>
     </div>
 
@@ -1737,7 +1730,7 @@
     <div class="scheme-stats">
         <div class="section-header">
             <div class="header-content">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Flag_of_India.svg/320px-Flag_of_India.svg.png" alt="Government of India" class="gov-logo">
+                <span class="india-flag" role="img" aria-label="Flag of India"></span>
                 <h3>🏛️ {% trans "State-wise Agricultural Schemes Distribution" %}</h3>
             </div>
             <div class="header-actions">
@@ -1964,6 +1957,9 @@
     }
 
     // STATUS CHART
+    if (typeof Chart !== 'function') {
+        console.warn('Chart.js is unavailable; dashboard charts were skipped.');
+    } else {
     const statusCtx = document.getElementById('statusChart').getContext('2d');
     new Chart(statusCtx, {
         type: 'doughnut',
@@ -2105,6 +2101,7 @@
                 }
             }
         });
+    }
     }
 
     // Set state bar widths

@@ -8,14 +8,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="data:," />
   <title>{{ scheme.scheme_name }} - SmartAssist</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{% static 'css/offline-fonts.css' %}" />
   <link rel="stylesheet" href="{% static 'css/scheme-platform.css' %}" />
   <link rel="stylesheet" href="{% static 'css/language-switcher.css' %}" />
   <link rel="stylesheet" href="{% static 'css/smartassist-portal.css' %}" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}" />
+  <script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
   <style>
     .state-shape {
       fill: rgba(100, 200, 150, 0.15);
@@ -39,7 +37,7 @@
     }
     .state-label {
       pointer-events: none;
-      font-family: Poppins, sans-serif;
+      font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       fill: #f1f5f9;
       font-weight: 700;
       font-size: 0.65rem;

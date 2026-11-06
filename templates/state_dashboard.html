@@ -7,43 +7,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="data:," />
   <title>{{ state_name }} Analytics Dashboard - SmartAssist</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="{% static 'css/state-dashboard.css' %}" />
+  <script src="{% static 'vendor/chartjs/chart.umd.js' %}"></script>
   <link rel="stylesheet" href="{% static 'css/language-switcher.css' %}" />
   <link rel="stylesheet" href="{% static 'css/smartassist-portal.css' %}" />
-  <style>
-    body { font-family: 'Inter', sans-serif; background: #020617; color: #e2e8f0; }
-    .glass-card { background: rgba(15, 23, 42, 0.72); backdrop-filter: blur(18px); border: 1px solid rgba(255,255,255,0.08); }
-    .glow-border { box-shadow: 0 0 28px rgba(16, 185, 129, 0.22), inset 0 0 1px rgba(255,255,255,0.08); }
-    .neon-badge { background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.24); color: #8affd0; }
-    .scheme-card { transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease; }
-    .scheme-card:hover { transform: translateY(-6px); box-shadow: 0 28px 80px rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.36); }
-    .gradient-text { background: linear-gradient(90deg, #22d3ee, #84cc16, #14b8a6); -webkit-background-clip: text; color: transparent; }
-    .pulse-ring { border-radius: 9999px; animation: pulseRing 2.5s ease-out infinite; }
-    @keyframes pulseRing { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.28); } 70% { box-shadow: 0 0 0 28px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
-    .floating-blob { position: absolute; border-radius: 56%; filter: blur(48px); opacity: 0.55; }
-    .fade-in-up { animation: fadeUp 0.7s ease both; }
-    .audio-panel { position: fixed; right: 1.5rem; bottom: 1.5rem; z-index: 50; width: min(380px, calc(100% - 2rem)); max-width: 380px; }
-    .audio-button { min-width: 86px; }
-    .audio-wave { min-height: 40px; }
-    .wave-bar { display: inline-block; width: 5px; height: 14px; border-radius: 9999px; background: linear-gradient(180deg, #22d3ee 0%, #0f766e 100%); opacity: 0.48; transform-origin: bottom; animation: wavePulse 1.2s ease-in-out infinite; }
-    .wave-bar:nth-child(1) { animation-delay: 0.05s; }
-    .wave-bar:nth-child(2) { animation-delay: 0.18s; }
-    .wave-bar:nth-child(3) { animation-delay: 0.32s; }
-    .wave-bar:nth-child(4) { animation-delay: 0.46s; }
-    .wave-bar:nth-child(5) { animation-delay: 0.58s; }
-    .wave-bar.active { opacity: 1; animation: wavePulse 0.7s ease-in-out infinite; }
-    @keyframes wavePulse { 0%,100% { transform: scaleY(0.6); } 50% { transform: scaleY(1.8); } }
-    .audio-spinner { width: 22px; height: 22px; border: 2px solid rgba(148, 163, 184, 0.25); border-top-color: #22d3ee; border-radius: 9999px; animation: spin 0.95s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
-    .stat-counter { font-variant-numeric: tabular-nums; }
-    .chart-container { position: relative; height: 300px; width: 100%; }
-    @media (max-width: 768px) { .chart-container { height: 250px; } }
-  </style>
 </head>
 <body class="relative overflow-x-hidden"
       data-apply-base="{% url 'apply_assistance' %}"
@@ -120,6 +87,9 @@
         </div>
       </div>
     </section>
+    <p id="chart-error" class="mb-10 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-200" hidden>
+      {% trans "Charts are unavailable, but scheme data is still available below." %}
+    </p>
 
     <!-- Schemes Section -->
     <section class="mb-10">
@@ -219,6 +189,7 @@
       const schemeCardsEl = document.getElementById('scheme-cards');
       const categoryChartCtx = document.getElementById('categoryChart').getContext('2d');
       const centralBarChartCtx = document.getElementById('centralBarChart').getContext('2d');
+      const chartErrorEl = document.getElementById('chart-error');
 
       const audioPlayBtn = document.getElementById('audio-play');
       const audioPauseBtn = document.getElementById('audio-pause');
@@ -419,6 +390,10 @@
 
       const updateCharts = (analytics) => {
         if (!analytics) return;
+        if (typeof window.Chart !== 'function') {
+          chartErrorEl.hidden = false;
+          return;
+        }
 
         // Category Chart
         const categoryLabels = Object.keys(analytics.category_counts || {});

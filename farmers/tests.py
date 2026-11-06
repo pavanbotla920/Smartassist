@@ -4,6 +4,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.test import Client, RequestFactory, TestCase, override_settings
+from django.template.loader import get_template
 from django.urls import reverse, translate_url
 from django.utils import timezone
 from django.utils.translation import deactivate_all
@@ -1541,6 +1542,9 @@ class SmartAssistVerificationTests(TestCase):
         response = self.client.get(reverse('scheme_detail', args=[self.central_scheme.id]))
 
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'vendor/leaflet/leaflet.css')
+        self.assertContains(response, 'vendor/leaflet/leaflet.js')
+        self.assertNotContains(response, 'https://unpkg.com/leaflet')
         self.assertContains(response, self.central_scheme.scheme_name)
         self.assertContains(response, self.central_scheme.scheme_type)
         self.assertContains(response, self.central_scheme.state)
@@ -1976,6 +1980,9 @@ class SmartAssistVerificationTests(TestCase):
         response = self.client.get(reverse('india_map_schemes'))
 
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'vendor/leaflet/leaflet.css')
+        self.assertContains(response, 'vendor/leaflet/leaflet.js')
+        self.assertNotContains(response, 'https://unpkg.com/leaflet')
         self.assertContains(response, 'data-overview-url="/api/india-map/overview/"', html=False)
         self.assertContains(response, 'data-site-language')
         self.assertContains(response, 'language-switcher.js')
@@ -1995,6 +2002,53 @@ class SmartAssistVerificationTests(TestCase):
         self.assertContains(response, 'data-voice-language')
         self.assertContains(response, 'data-language-code="en"', html=False)
         self.assertContains(response, 'scheme-localization.js')
+        self.assertContains(response, 'css/state-dashboard.css')
+        self.assertContains(response, 'vendor/chartjs/chart.umd.js')
+        self.assertNotContains(response, 'cdn.tailwindcss.com')
+        self.assertNotContains(response, 'cdn.jsdelivr.net/npm/chart.js')
+        self.assertNotContains(response, 'fonts.googleapis.com')
+
+    def test_base_template_uses_local_offline_frontend_assets(self):
+        response = self.client.get(reverse('home'))
+
+        self.assertEqual(response.status_code, 200)
+        for asset in (
+            'vendor/bootstrap/bootstrap.min.css',
+            'vendor/bootstrap/bootstrap.bundle.min.js',
+            'vendor/chartjs/chart.umd.js',
+            'vendor/fontawesome/all.min.css',
+        ):
+            self.assertContains(response, asset)
+        for external_url in (
+            'cdn.jsdelivr.net/npm/bootstrap',
+            'cdn.jsdelivr.net/npm/chart.js',
+            'cdnjs.cloudflare.com/ajax/libs/font-awesome',
+        ):
+            self.assertNotContains(response, external_url)
+
+    def test_interactive_map_uses_compiled_local_stylesheet(self):
+        rendered = get_template('interactive_india_map.html').render({})
+
+        self.assertIn('css/interactive-india-map.css', rendered)
+        self.assertNotIn('cdn.tailwindcss.com', rendered)
+
+    def test_dashboard_and_recommendation_images_are_local(self):
+        self.client.force_login(self.user)
+        dashboard = self.client.get(reverse('dashboard'))
+        recommendation = self.client.get(reverse('ai_recommendation'))
+
+        self.assertEqual(dashboard.status_code, 200)
+        self.assertEqual(recommendation.status_code, 200)
+        for response in (dashboard, recommendation):
+            content = response.content.decode()
+            self.assertNotIn('images.unsplash.com', content)
+            self.assertNotIn('upload.wikimedia.org', content)
+        self.assertContains(dashboard, 'images/gov_emblem.png')
+        self.assertContains(dashboard, 'class="india-flag"')
+        self.assertContains(dashboard, 'aria-label="Flag of India"')
+        self.assertContains(dashboard, 'images/farmer_1.jpg')
+        self.assertContains(recommendation, 'images/farmer_1.jpg')
+        self.assertContains(recommendation, 'images/farmer_7.jpg')
 
     def test_language_preference_persists_for_anonymous_user_and_preserves_page_query(self):
         response = self.client.post(

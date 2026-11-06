@@ -491,6 +491,10 @@
 {% block extra_js %}
 <script>
     document.addEventListener("DOMContentLoaded", function() {
+        if (typeof Chart !== 'function') {
+            console.warn('Chart.js is unavailable; farmer dashboard chart was skipped.');
+            return;
+        }
         const ctx = document.getElementById('mixChart').getContext('2d');
         const statusData = JSON.parse('{{ status_data|escapejs }}');
         const statusLabels = ['Submitted', 'Under Review', 'Applied', 'Approved', 'Rejected'];

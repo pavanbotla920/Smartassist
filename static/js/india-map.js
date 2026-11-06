@@ -5,6 +5,7 @@
   const i18n = {
     unavailable: body.dataset.mapUnavailable || 'Data unavailable',
     loadError: body.dataset.mapLoadError || 'The map could not be loaded. Please refresh and try again.',
+    libraryError: body.dataset.mapLibraryError || 'The map library is unavailable. Please contact the administrator.',
     schemes: body.dataset.mapSchemesLabel || 'schemes',
     central: body.dataset.mapCentralLabel || 'central',
     state: body.dataset.mapStateLabel || 'state',
@@ -67,7 +68,17 @@
       $('active-state-count').textContent = format(data.active_states); $('overview-total').textContent = format(data.total_schemes); $('overview-central').textContent = format(data.central_schemes); $('overview-state').textContent = format(data.state_schemes);
     });
   }
+  function showMapError(message) {
+    els.loading.hidden = true;
+    els.error.hidden = false;
+    els.error.textContent = message;
+  }
   function init() {
+    if (!window.L) {
+      showMapError(i18n.libraryError);
+      loadOverview().catch(() => { $('active-state-count').textContent = '—'; $('overview-total').textContent = '—'; $('overview-central').textContent = '—'; $('overview-state').textContent = '—'; });
+      return;
+    }
     const map = L.map('india-map', { center:[22,79], zoom:5, minZoom:4, maxZoom:7, scrollWheelZoom:false, zoomControl:true });
     fetch(body.dataset.geojsonUrl).then((r) => { if (!r.ok) throw new Error('geojson'); return r.json(); }).then((data) => {
       if (!data.features?.length) throw new Error('empty geojson');
@@ -96,7 +107,7 @@
         });
       });
       map.fitBounds(layer.getBounds(), { padding:[18,18] }); els.loading.hidden = true; setTimeout(() => map.invalidateSize(), 180);
-    }).catch(() => { els.loading.hidden = true; els.error.hidden = false; els.error.textContent = i18n.loadError; });
+    }).catch(() => { showMapError(i18n.loadError); });
     loadOverview().catch(() => { $('active-state-count').textContent = '—'; $('overview-total').textContent = '—'; $('overview-central').textContent = '—'; $('overview-state').textContent = '—'; });
   }
   document.addEventListener('DOMContentLoaded', init);

@@ -1,11 +1,20 @@
-version: "3.8"
-
 services:
   web:
+    build: .
     image: smartassist-kisan:test-localization
     container_name: smartassist-compose-test
     restart: unless-stopped
     ports:
       - "8003:8000"
+    environment:
+      DJANGO_ENV: ${DJANGO_ENV:-development}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-False}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-}
+      DJANGO_CSRF_TRUSTED_ORIGINS: ${DJANGO_CSRF_TRUSTED_ORIGINS:-}
+      DJANGO_CACHE_URL: ${DJANGO_CACHE_URL:-}
+      EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
+      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     volumes:
-      - /home/pavan-botla/smartassist-backups/smartassist-compose-test.sqlite3:/app/db.sqlite3
+      - ${SMARTASSIST_DB_PATH:-./db.sqlite3}:/app/db.sqlite3

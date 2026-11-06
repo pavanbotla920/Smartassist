@@ -1,0 +1,7 @@
+:root {
+  --smartassist-sans: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+  font-family: var(--smartassist-sans);
+}

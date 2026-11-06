@@ -36,11 +36,12 @@
                                 <i class="fas fa-user"></i> {{ app.name }}
                             </small>
                         </div>
-                        <span class="badge rounded-pill px-3 py-2 {% if app.status == 'Approved' %}bg-success{% elif app.status == 'Rejected' %}bg-danger{% elif app.status == 'Applied' %}bg-primary{% else %}bg-warning text-dark{% endif %}">
-                            {% if app.status == 'Approved' %}✔ {% trans "Approved" %}
-                            {% elif app.status == 'Rejected' %}✖ {% trans "Rejected" %}
-                            {% elif app.status == 'Applied' %}📨 {% trans "Applied" %}
-                            {% else %}⏳ {% trans "Pending" %}
+                        <span class="badge rounded-pill px-3 py-2 {% if app.get_compatibility_status == 'Approved' %}bg-success{% elif app.get_compatibility_status == 'Rejected' %}bg-danger{% elif app.get_compatibility_status == 'Applied' %}bg-primary{% elif app.get_compatibility_status == 'Under Review' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                            {% if app.get_compatibility_status == 'Approved' %}✔ {% trans "Approved" %}
+                            {% elif app.get_compatibility_status == 'Rejected' %}✖ {% trans "Rejected" %}
+                            {% elif app.get_compatibility_status == 'Applied' %}📨 {% trans "Applied" %}
+                            {% elif app.get_compatibility_status == 'Under Review' %}🔎 {% trans "Under Review" %}
+                            {% else %}⏳ {% trans "Submitted" %}
                             {% endif %}
                         </span>
                     </div>
@@ -82,4 +83,3 @@
     {% endif %}
 </div>
 {% endblock %}
-

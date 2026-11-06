@@ -5,7 +5,9 @@ from django.conf.urls.i18n import i18n_patterns
 
 from farmers.views import (
     dashboard,
+    farmer_dashboard,
     recommend_schemes,
+    ai_recommendation,
     apply_scheme,
     my_applications,
     chatbot,
@@ -21,12 +23,17 @@ from farmers.views import (
     scheme_translation_api,
     register,
     profile,
+    settings_view,
+    notifications,
+    mark_notification_read,
+    mark_all_notifications_read,
     home,
     scheme_awareness,
     scheme_detail,
     apply_for_assistance,
     application_status,
     admin_dashboard,
+    export_applications,
     manage_schemes,
     update_application_status,
     apply_scheme_admin,
@@ -49,6 +56,7 @@ urlpatterns += i18n_patterns(
 
     # Dashboard
     path('dashboard/', dashboard, name='dashboard'),
+    path('farmer-dashboard/', farmer_dashboard, name='farmer_dashboard'),
 
     # Citizen Pages
     path('schemes/', scheme_awareness, name='scheme_awareness'),
@@ -58,6 +66,7 @@ urlpatterns += i18n_patterns(
 
     # Recommendation
     path('recommend/', recommend_schemes, name='recommend'),
+    path('ai-recommendation/', ai_recommendation, name='ai_recommendation'),
 
     # Apply scheme
     path('apply/<int:scheme_id>/', apply_scheme, name='apply'),
@@ -70,6 +79,18 @@ urlpatterns += i18n_patterns(
     path('logout/', logout_user, name='logout'),
     path('register/', register, name='register'),
     path('profile/', profile, name='profile'),
+    path('settings/', settings_view, name='settings'),
+    path('notifications/', notifications, name='notifications'),
+    path(
+        'notifications/<int:notification_id>/read/',
+        mark_notification_read,
+        name='mark_notification_read',
+    ),
+    path(
+        'notifications/read-all/',
+        mark_all_notifications_read,
+        name='mark_all_notifications_read',
+    ),
 
     # Password Reset
     path('password-reset/', auth_views.PasswordResetView.as_view(template_name='password_reset.html'), name='password_reset'),
@@ -79,6 +100,7 @@ urlpatterns += i18n_patterns(
 
     # Admin/Volunteer
     path('admin-dashboard/', admin_dashboard, name='admin_dashboard'),
+    path('admin-dashboard/export-applications/', export_applications, name='export_applications'),
     path('manage-schemes/', manage_schemes, name='manage_schemes'),
     path('manage-schemes/add/', add_scheme, name='add_scheme'),
 path('manage-schemes/edit/<int:scheme_id>/', edit_scheme, name='edit_scheme'),

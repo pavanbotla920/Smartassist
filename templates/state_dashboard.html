@@ -7,42 +7,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="data:," />
   <title>{{ state_name }} Analytics Dashboard - SmartAssist</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="{% static 'css/state-dashboard.css' %}" />
+  <script src="{% static 'vendor/chartjs/chart.umd.js' %}"></script>
   <link rel="stylesheet" href="{% static 'css/language-switcher.css' %}" />
-  <style>
-    body { font-family: 'Inter', sans-serif; background: #020617; color: #e2e8f0; }
-    .glass-card { background: rgba(15, 23, 42, 0.72); backdrop-filter: blur(18px); border: 1px solid rgba(255,255,255,0.08); }
-    .glow-border { box-shadow: 0 0 28px rgba(16, 185, 129, 0.22), inset 0 0 1px rgba(255,255,255,0.08); }
-    .neon-badge { background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.24); color: #8affd0; }
-    .scheme-card { transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease; }
-    .scheme-card:hover { transform: translateY(-6px); box-shadow: 0 28px 80px rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.36); }
-    .gradient-text { background: linear-gradient(90deg, #22d3ee, #84cc16, #14b8a6); -webkit-background-clip: text; color: transparent; }
-    .pulse-ring { border-radius: 9999px; animation: pulseRing 2.5s ease-out infinite; }
-    @keyframes pulseRing { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.28); } 70% { box-shadow: 0 0 0 28px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
-    .floating-blob { position: absolute; border-radius: 56%; filter: blur(48px); opacity: 0.55; }
-    .fade-in-up { animation: fadeUp 0.7s ease both; }
-    .audio-panel { position: fixed; right: 1.5rem; bottom: 1.5rem; z-index: 50; width: min(380px, calc(100% - 2rem)); max-width: 380px; }
-    .audio-button { min-width: 86px; }
-    .audio-wave { min-height: 40px; }
-    .wave-bar { display: inline-block; width: 5px; height: 14px; border-radius: 9999px; background: linear-gradient(180deg, #22d3ee 0%, #0f766e 100%); opacity: 0.48; transform-origin: bottom; animation: wavePulse 1.2s ease-in-out infinite; }
-    .wave-bar:nth-child(1) { animation-delay: 0.05s; }
-    .wave-bar:nth-child(2) { animation-delay: 0.18s; }
-    .wave-bar:nth-child(3) { animation-delay: 0.32s; }
-    .wave-bar:nth-child(4) { animation-delay: 0.46s; }
-    .wave-bar:nth-child(5) { animation-delay: 0.58s; }
-    .wave-bar.active { opacity: 1; animation: wavePulse 0.7s ease-in-out infinite; }
-    @keyframes wavePulse { 0%,100% { transform: scaleY(0.6); } 50% { transform: scaleY(1.8); } }
-    .audio-spinner { width: 22px; height: 22px; border: 2px solid rgba(148, 163, 184, 0.25); border-top-color: #22d3ee; border-radius: 9999px; animation: spin 0.95s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
-    .stat-counter { font-variant-numeric: tabular-nums; }
-    .chart-container { position: relative; height: 300px; width: 100%; }
-    @media (max-width: 768px) { .chart-container { height: 250px; } }
-  </style>
+  <link rel="stylesheet" href="{% static 'css/smartassist-portal.css' %}" />
 </head>
 <body class="relative overflow-x-hidden"
       data-apply-base="{% url 'apply_assistance' %}"
@@ -54,6 +22,18 @@
       data-speech-base-url="{% url 'scheme_voice_audio' scheme_id=0 %}"
       data-state-analytics-url="{% url 'india_map_state_analytics_api' state_name='__state__' %}"
       data-state-schemes-url="{% url 'schemes_api' state_name='__state__' %}">
+  <nav class="sa-portal-navbar" aria-label="{% trans 'Main navigation' %}">
+    <a class="sa-portal-brand" href="{% url 'home' %}">
+      <span class="sa-portal-logo" aria-hidden="true">SA</span>
+      <span>SmartAssist</span>
+    </a>
+    <div class="sa-portal-links">
+      <a href="{% url 'home' %}">{% trans "Home" %}</a>
+      <a href="{% url 'scheme_awareness' %}">{% trans "Schemes" %}</a>
+      <a href="{% url 'india_map_schemes' %}" aria-current="page">{% trans "India Map" %}</a>
+    </div>
+    {% include "partials/language_selector.html" %}
+  </nav>
   <div class="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.12),_transparent_33%),radial-gradient(circle_at_25%_40%,_rgba(56,189,248,0.14),_transparent_25%),linear-gradient(180deg,_rgba(4,8,27,0.95),_rgba(7,9,30,0.98))]"></div>
   <div class="floating-blob w-72 h-72 left-1/4 top-10 bg-cyan-400/20"></div>
   <div class="floating-blob w-80 h-80 right-20 top-44 bg-emerald-400/18"></div>
@@ -62,9 +42,6 @@
   <div class="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
     <!-- Header -->
     <header class="mb-10 grid gap-8 rounded-[2rem] border border-white/10 bg-slate-950/75 p-8 shadow-2xl shadow-cyan-500/10 backdrop-blur-xl">
-      <div class="flex justify-end">
-        {% include "partials/language_selector.html" %}
-      </div>
       <div class="space-y-6">
         <div class="inline-flex items-center gap-3 rounded-full bg-slate-900/70 px-4 py-2 text-sm text-cyan-200 ring-1 ring-cyan-500/20">
           <span class="h-2 w-2 rounded-full bg-cyan-300 animate-pulse"></span>
@@ -110,6 +87,9 @@
         </div>
       </div>
     </section>
+    <p id="chart-error" class="mb-10 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-200" hidden>
+      {% trans "Charts are unavailable, but scheme data is still available below." %}
+    </p>
 
     <!-- Schemes Section -->
     <section class="mb-10">
@@ -125,7 +105,7 @@
   </div>
 
   <!-- Audio Panel -->
-  <div id="audio-panel" class="audio-panel glass-card rounded-[2rem] border border-white/10 bg-slate-950/95 p-5 shadow-2xl shadow-cyan-500/20 backdrop-blur-xl">
+  <div id="audio-panel" data-voice-language class="audio-panel glass-card rounded-[2rem] border border-white/10 bg-slate-950/95 p-5 shadow-2xl shadow-cyan-500/20 backdrop-blur-xl">
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div>
         <p class="text-xs uppercase tracking-[0.32em] text-slate-400">{% trans "Natural voice assistant" %}</p>
@@ -159,6 +139,12 @@
   <script src="{% static 'js/scheme-voice.js' %}"></script>
   <script src="{% static 'js/language-switcher.js' %}"></script>
   <script src="{% static 'js/scheme-localization.js' %}"></script>
+  <footer class="sa-portal-footer" role="contentinfo">
+    <p>{% trans "SmartAssist Government Scheme Platform" %} ·
+      <a href="{% url 'scheme_awareness' %}">{% trans "Browse Schemes" %}</a> ·
+      <a href="{% url 'home' %}">{% trans "Home" %}</a>
+    </p>
+  </footer>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       const text = {
@@ -203,6 +189,7 @@
       const schemeCardsEl = document.getElementById('scheme-cards');
       const categoryChartCtx = document.getElementById('categoryChart').getContext('2d');
       const centralBarChartCtx = document.getElementById('centralBarChart').getContext('2d');
+      const chartErrorEl = document.getElementById('chart-error');
 
       const audioPlayBtn = document.getElementById('audio-play');
       const audioPauseBtn = document.getElementById('audio-pause');
@@ -267,6 +254,13 @@
         try {
           const played = await window.SmartAssistVoice.speak(scheme.id, languageCode, {
             volume: audioState.volume,
+            text: [
+              scheme.name,
+              scheme.description,
+              scheme.eligibility,
+              scheme.documents_required
+            ].filter(Boolean).join('. '),
+            translationUrl: document.body.dataset.schemeTranslationUrl,
             onStatus: (message) => {
               audioState.isPlaying = true;
               audioState.isPaused = false;
@@ -396,6 +390,10 @@
 
       const updateCharts = (analytics) => {
         if (!analytics) return;
+        if (typeof window.Chart !== 'function') {
+          chartErrorEl.hidden = false;
+          return;
+        }
 
         // Category Chart
         const categoryLabels = Object.keys(analytics.category_counts || {});
@@ -411,69 +409,129 @@
       };
 
       const renderSchemeCards = (schemes) => {
+        const textElement = (tag, className, value) => {
+          const element = document.createElement(tag);
+          if (className) element.className = className;
+          element.textContent = value == null ? '' : String(value);
+          return element;
+        };
+        const safeExternalUrl = (value) => {
+          if (typeof value !== 'string' || !value.trim()) return null;
+          try {
+            const url = new URL(value.trim(), window.location.origin);
+            return ['http:', 'https:'].includes(url.protocol) ? url.href : null;
+          } catch (error) {
+            return null;
+          }
+        };
         if (!schemes || !schemes.length) {
-          schemeCardsEl.innerHTML = `<div class="glass-card rounded-[2rem] p-8 text-center text-slate-300">${text.noSchemes}</div>`;
+          const empty = textElement(
+            'div',
+            'glass-card rounded-[2rem] p-8 text-center text-slate-300',
+            text.noSchemes,
+          );
+          schemeCardsEl.replaceChildren(empty);
           return;
         }
 
-        schemeCardsEl.innerHTML = '';
+        schemeCardsEl.replaceChildren();
         schemes.forEach((scheme, index) => {
           const card = document.createElement('article');
           card.className = 'scheme-card glass-card rounded-[2rem] border border-white/10 p-6 shadow-2xl shadow-cyan-500/10 fade-in-up';
-          card.innerHTML = `
-            <div class="flex flex-col gap-4">
-              <div class="flex flex-wrap items-start justify-between gap-4">
-                <span class="neon-badge rounded-full px-3 py-2 text-xs font-semibold uppercase tracking-[0.24em]">${scheme.category || text.general}</span>
-                <span class="text-sm text-slate-400">${scheme.state || stateName}</span>
-              </div>
-              <div>
-                <h3 class="text-xl font-semibold text-white" data-scheme-field="scheme_name">${scheme.name}</h3>
-                <p class="mt-3 text-sm leading-6 text-slate-300" data-scheme-field="description">${scheme.description || text.noDescription}</p>
-              </div>
-              <div class="grid gap-4 sm:grid-cols-2">
-                <div class="rounded-3xl border border-white/10 bg-slate-900/80 p-4 text-sm text-slate-300">
-                  <p class="font-semibold text-white">${text.eligibility}</p>
-                  <p class="mt-2" data-scheme-field="eligibility">${scheme.eligibility || text.notSpecified}</p>
-                </div>
-                <div class="rounded-3xl border border-white/10 bg-slate-900/80 p-4 text-sm text-slate-300">
-                  <p class="font-semibold text-white">${text.documents}</p>
-                  <p class="mt-2" data-scheme-field="documents_required">${scheme.documents_required || text.notSpecified}</p>
-                </div>
-              </div>
-              <div class="rounded-3xl border border-white/10 bg-slate-900/80 p-4 text-sm text-slate-300">
-                <p class="font-semibold text-white">${text.benefits}</p>
-                <p class="mt-2">${scheme.benefits || scheme.outcome || 'Provides support to eligible applicants.'}</p>
-              </div>
-              <p class="text-xs text-amber-200" data-translation-status role="status" hidden></p>
-              <div class="flex flex-col gap-4 pt-3">
-                <div class="grid gap-3 sm:grid-cols-2 items-end">
-                  <div class="flex flex-col gap-2">
-                    <label class="text-xs uppercase tracking-[0.28em] text-slate-400 font-semibold">${text.listenLanguage}</label>
-                    <select class="language-select w-full rounded-lg border border-white/20 bg-slate-900/60 px-3 py-2.5 text-sm text-slate-200 transition hover:border-cyan-400/50 focus:border-cyan-400 focus:outline-none" data-index="${index}" data-voice-language>
-                      <option value="en" ${document.body.dataset.languageCode === 'en' ? 'selected' : ''}>${text.languages.en}</option>
-                      <option value="hi" ${document.body.dataset.languageCode === 'hi' ? 'selected' : ''}>${text.languages.hi}</option>
-                      <option value="mr" ${document.body.dataset.languageCode === 'mr' ? 'selected' : ''}>${text.languages.mr}</option>
-                      <option value="te" ${document.body.dataset.languageCode === 'te' ? 'selected' : ''}>${text.languages.te}</option>
-                    </select>
-                  </div>
-                  <button type="button" class="listen-button w-full rounded-lg bg-gradient-to-r from-cyan-500 to-cyan-600 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:from-cyan-400 hover:to-cyan-500 active:scale-95 flex items-center justify-center gap-2" data-index="${index}" data-scheme-id="${scheme.id}">
-                    <span class="text-lg">🔊</span>
-                    <span>${text.listen}</span>
-                    <span class="audio-loading hidden">
-                      <span class="inline-block w-3 h-3 rounded-full bg-slate-950 animate-pulse"></span>
-                    </span>
-                  </button>
-                </div>
-                <div class="flex flex-wrap gap-3 items-center pt-2">
-                  <a href="${document.body.dataset.authenticated === 'true' ? `${document.body.dataset.applyBase}?scheme_id=${scheme.id}` : `${document.body.dataset.loginUrl}?next=${encodeURIComponent(`${document.body.dataset.applyBase}?scheme_id=${scheme.id}`)}`}" class="inline-flex items-center justify-center rounded-lg bg-emerald-500/20 border border-emerald-500/40 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-500/30">${text.applyNow}</a>
-                  ${scheme.official_website ? `<a href="${scheme.official_website}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-lg border border-slate-600 bg-slate-900/60 px-4 py-2.5 text-sm font-semibold text-slate-300 transition hover:border-slate-500">${text.officialSite}</a>` : `<span class="text-sm text-slate-400" aria-disabled="true">${text.officialUnavailable}</span>`}
-                </div>
-              </div>
-            </div>
-          `;
+          const content = document.createElement('div');
+          content.className = 'flex flex-col gap-4';
+          const summary = document.createElement('div');
+          summary.className = 'flex flex-wrap items-start justify-between gap-4';
+          summary.append(
+            textElement('span', 'neon-badge rounded-full px-3 py-2 text-xs font-semibold uppercase tracking-[0.24em]', scheme.category || text.general),
+            textElement('span', 'text-sm text-slate-400', scheme.state || stateName),
+          );
+          const details = document.createElement('div');
+          const heading = textElement('h3', 'text-xl font-semibold text-white', scheme.name);
+          heading.dataset.schemeField = 'scheme_name';
+          const description = textElement('p', 'mt-3 text-sm leading-6 text-slate-300', scheme.description || text.noDescription);
+          description.dataset.schemeField = 'description';
+          details.append(heading, description);
+          const eligibilityGrid = document.createElement('div');
+          eligibilityGrid.className = 'grid gap-4 sm:grid-cols-2';
+          const detailBox = (label, value, field) => {
+            const box = document.createElement('div');
+            box.className = 'rounded-3xl border border-white/10 bg-slate-900/80 p-4 text-sm text-slate-300';
+            box.append(textElement('p', 'font-semibold text-white', label));
+            const valueElement = textElement('p', 'mt-2', value);
+            if (field) valueElement.dataset.schemeField = field;
+            box.appendChild(valueElement);
+            return box;
+          };
+          eligibilityGrid.append(
+            detailBox(text.eligibility, scheme.eligibility || text.notSpecified, 'eligibility'),
+            detailBox(text.documents, scheme.documents_required || text.notSpecified, 'documents_required'),
+          );
+          const benefits = detailBox(
+            text.benefits,
+            scheme.benefits || scheme.outcome || 'Provides support to eligible applicants.',
+          );
+          const translationStatus = textElement('p', 'text-xs text-amber-200', '');
+          translationStatus.dataset.translationStatus = '';
+          translationStatus.setAttribute('role', 'status');
+          translationStatus.hidden = true;
+          const controls = document.createElement('div');
+          controls.className = 'flex flex-col gap-4 pt-3';
+          const controlGrid = document.createElement('div');
+          controlGrid.className = 'grid gap-3 sm:grid-cols-2 items-end';
+          const languageGroup = document.createElement('div');
+          languageGroup.className = 'flex flex-col gap-2';
+          languageGroup.appendChild(textElement('label', 'text-xs uppercase tracking-[0.28em] text-slate-400 font-semibold', text.listenLanguage));
+          const langSelect = document.createElement('select');
+          langSelect.className = 'language-select w-full rounded-lg border border-white/20 bg-slate-900/60 px-3 py-2.5 text-sm text-slate-200 transition hover:border-cyan-400/50 focus:border-cyan-400 focus:outline-none';
+          langSelect.dataset.index = index;
+          langSelect.dataset.voiceLanguage = '';
+          Object.entries(text.languages).forEach(([code, label]) => {
+            const option = textElement('option', null, label);
+            option.value = code;
+            option.selected = document.body.dataset.languageCode === code;
+            langSelect.appendChild(option);
+          });
+          languageGroup.appendChild(langSelect);
+          const listenBtn = document.createElement('button');
+          listenBtn.type = 'button';
+          listenBtn.className = 'listen-button w-full rounded-lg bg-gradient-to-r from-cyan-500 to-cyan-600 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:from-cyan-400 hover:to-cyan-500 active:scale-95 flex items-center justify-center gap-2';
+          listenBtn.dataset.index = index;
+          listenBtn.dataset.schemeId = scheme.id;
+          listenBtn.append(
+            textElement('span', 'text-lg', '🔊'),
+            textElement('span', null, text.listen),
+          );
+          const loading = textElement('span', 'audio-loading hidden', '');
+          loading.appendChild(textElement('span', 'inline-block w-3 h-3 rounded-full bg-slate-950 animate-pulse', ''));
+          listenBtn.appendChild(loading);
+          controlGrid.append(languageGroup, listenBtn);
+          const links = document.createElement('div');
+          links.className = 'flex flex-wrap gap-3 items-center pt-2';
+          const applyLink = document.createElement('a');
+          const applyPath = `${document.body.dataset.applyBase}?scheme_id=${encodeURIComponent(scheme.id)}`;
+          applyLink.href = document.body.dataset.authenticated === 'true'
+            ? applyPath
+            : `${document.body.dataset.loginUrl}?next=${encodeURIComponent(applyPath)}`;
+          applyLink.className = 'inline-flex items-center justify-center rounded-lg bg-emerald-500/20 border border-emerald-500/40 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-500/30';
+          applyLink.textContent = text.applyNow;
+          links.appendChild(applyLink);
+          const officialUrl = safeExternalUrl(scheme.official_website);
+          if (officialUrl) {
+            const officialLink = document.createElement('a');
+            officialLink.href = officialUrl;
+            officialLink.target = '_blank';
+            officialLink.rel = 'noopener noreferrer';
+            officialLink.className = 'inline-flex items-center justify-center rounded-lg border border-slate-600 bg-slate-900/60 px-4 py-2.5 text-sm font-semibold text-slate-300 transition hover:border-slate-500';
+            officialLink.textContent = text.officialSite;
+            links.appendChild(officialLink);
+          } else {
+            links.appendChild(textElement('span', 'text-sm text-slate-400', text.officialUnavailable));
+          }
+          controls.append(controlGrid, links);
+          content.append(summary, details, eligibilityGrid, benefits, translationStatus, controls);
+          card.appendChild(content);
 
-          const listenBtn = card.querySelector('.listen-button');
-          const langSelect = card.querySelector('.language-select');
           card.dataset.schemeId = scheme.id;
           card.dataset.schemeTranslationCard = '';
           card.dataset.translationFields = 'scheme_name,description,eligibility,documents_required';

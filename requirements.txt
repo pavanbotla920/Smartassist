@@ -3,6 +3,11 @@ aiohttp==3.14.4
 Django==6.0.3
 edge-tts==7.2.3
 Pillow==12.1.1
+python-dotenv==1.2.4
 sqlparse==0.5.5
 tzdata==2025.3
 selenium==4.51.0
+gunicorn==23.0.0
+redis==5.2.1
+whitenoise==6.9.0
+vosk==0.3.45

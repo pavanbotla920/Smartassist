@@ -3,232 +3,424 @@
 
 {% block title %}{% trans "Application Status - SmartAssist" %}{% endblock %}
 
+{% block extra_head %}
+<style>
+    .sa-status-page {
+        background: var(--sa-paper);
+        min-height: calc(100vh - 72px);
+        padding: 3rem 1rem 5rem;
+    }
+
+    .sa-status-header {
+        margin: 0 auto 2rem;
+        max-width: 760px;
+        text-align: center;
+    }
+
+    .sa-status-header h1 {
+        color: var(--sa-ink);
+        font-family: var(--sa-font-display);
+        font-size: clamp(2rem, 4vw, 2.75rem);
+        margin-bottom: 0.5rem;
+    }
+
+    .sa-status-header p {
+        color: var(--sa-muted);
+        font-size: 1.05rem;
+        margin-bottom: 0;
+    }
+
+    .sa-filter-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        justify-content: center;
+        margin-bottom: 2.5rem;
+    }
+
+    .sa-filter-btn {
+        background: var(--sa-card);
+        border: 1px solid var(--sa-line);
+        border-radius: 999px;
+        color: var(--sa-muted);
+        cursor: pointer;
+        font-weight: 700;
+        padding: 0.6rem 1.2rem;
+        transition: var(--sa-ease);
+    }
+
+    .sa-filter-btn:hover,
+    .sa-filter-btn:focus-visible {
+        border-color: var(--sa-gold);
+        color: var(--sa-ink);
+    }
+
+    .sa-filter-btn.active {
+        background: var(--sa-ink);
+        border-color: var(--sa-ink);
+        color: #fff;
+    }
+
+    .sa-app-card {
+        background: var(--sa-card);
+        border: 1px solid var(--sa-line);
+        border-radius: var(--sa-radius);
+        box-shadow: var(--sa-shadow);
+        height: 100%;
+        overflow: hidden;
+        transition: var(--sa-ease);
+    }
+
+    .sa-app-card:hover {
+        border-color: rgba(217, 168, 78, 0.4);
+        box-shadow: var(--sa-shadow-lg);
+    }
+
+    .sa-app-header,
+    .sa-app-footer {
+        align-items: flex-start;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        justify-content: space-between;
+    }
+
+    .sa-app-header {
+        background: rgba(250, 247, 239, 0.6);
+        border-bottom: 1px solid var(--sa-line);
+        padding: 1.25rem 1.5rem;
+    }
+
+    .sa-app-title {
+        color: var(--sa-ink);
+        font-size: 1.15rem;
+        font-weight: 800;
+        margin: 0;
+    }
+
+    .sa-status-badge {
+        align-items: center;
+        border-radius: 999px;
+        display: inline-flex;
+        font-size: 0.78rem;
+        font-weight: 800;
+        gap: 0.4rem;
+        letter-spacing: 0.3px;
+        padding: 0.4rem 0.8rem;
+        white-space: nowrap;
+    }
+
+    .sa-status-badge.submitted { background: rgba(139, 92, 246, 0.14); color: #6d28d9; }
+    .sa-status-badge.under-review { background: rgba(217, 168, 78, 0.18); color: var(--sa-gold-deep); }
+    .sa-status-badge.applied { background: rgba(59, 130, 246, 0.14); color: #1d4ed8; }
+    .sa-status-badge.approved { background: rgba(31, 169, 113, 0.16); color: #0e6b48; }
+    .sa-status-badge.rejected { background: rgba(220, 53, 69, 0.13); color: #b91c1c; }
+
+    .sa-app-body {
+        padding: 1.5rem;
+    }
+
+    .sa-data-grid {
+        display: grid;
+        gap: 1.2rem;
+        grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+        margin-bottom: 1.5rem;
+    }
+
+    .sa-data-item label {
+        color: var(--sa-muted);
+        display: block;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.2rem;
+        text-transform: uppercase;
+    }
+
+    .sa-data-item span {
+        color: var(--sa-text);
+        display: block;
+        font-size: 0.95rem;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+
+    .sa-reference {
+        background: var(--sa-paper);
+        border: 1px solid var(--sa-line);
+        border-radius: var(--sa-radius-sm);
+        color: var(--sa-muted);
+        padding: 0.75rem 1rem;
+    }
+
+    .sa-app-footer {
+        align-items: center;
+        background: var(--sa-card);
+        border-top: 1px solid var(--sa-line);
+        padding: 1rem 1.5rem;
+    }
+
+    .sa-app-footer small {
+        color: var(--sa-muted);
+        font-weight: 600;
+    }
+
+    .sa-timeline {
+        padding-left: 2rem;
+        position: relative;
+    }
+
+    .sa-timeline::before {
+        background: var(--sa-line);
+        bottom: 0;
+        content: "";
+        left: 0.6rem;
+        position: absolute;
+        top: 0;
+        width: 2px;
+    }
+
+    .sa-timeline-item {
+        margin-bottom: 1.25rem;
+        position: relative;
+    }
+
+    .sa-timeline-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .sa-timeline-marker {
+        background: var(--sa-gold);
+        border: 3px solid #fff;
+        border-radius: 50%;
+        box-shadow: 0 0 0 1px var(--sa-line);
+        height: 1.2rem;
+        left: -2rem;
+        position: absolute;
+        top: 0.2rem;
+        width: 1.2rem;
+    }
+
+    .sa-timeline-content {
+        background: var(--sa-paper);
+        border: 1px solid var(--sa-line);
+        border-radius: var(--sa-radius-sm);
+        padding: 1rem;
+    }
+
+    .sa-timeline-content h6 {
+        color: var(--sa-ink);
+        font-weight: 700;
+        margin: 0 0 0.3rem;
+    }
+
+    .sa-timeline-content p {
+        color: var(--sa-muted);
+        margin: 0;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container py-5">
-    <div class="row mb-4">
-        <div class="col">
-            <h1 class="display-5 fw-bold text-center mb-4">
-                <i class="fas fa-chart-line text-primary"></i>
-                {% trans "My Application Status" %}
-            </h1>
-            <p class="lead text-center text-muted">
-                {% trans "Track the progress of your scheme applications" %}
-            </p>
-        </div>
-    </div>
+<main class="sa-status-page">
+    <div class="container">
+        <header class="sa-status-header">
+            <h1><i class="fas fa-chart-line" aria-hidden="true"></i> {% trans "My Application Status" %}</h1>
+            <p>{% trans "Track the progress of your scheme applications" %}</p>
+        </header>
 
-    {% if applications %}
-        <div class="row">
-            {% for application in applications %}
-            <div class="col-lg-6 mb-4">
-                <div class="card shadow h-100">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-file-alt"></i>
-                            {% if application.scheme %}
-                                {{ application.scheme.scheme_name }}
-                            {% else %}
-                                {% trans "General Assistance Request" %}
-                            {% endif %}
-                        </h5>
-                        <span class="badge status-badge {{ application.get_status_class }}">
-                            {% if application.status == 'Submitted' %}
-                                <i class="fas fa-clock"></i> {% trans "Submitted" %}
-                            {% elif application.status == 'Under Review' %}
-                                <i class="fas fa-search"></i> {% trans "Under Review" %}
-                            {% elif application.status == 'Applied' %}
-                                <i class="fas fa-check-circle"></i> {% trans "Applied" %}
-                            {% elif application.status == 'Approved' %}
-                                <i class="fas fa-thumbs-up"></i> {% trans "Approved" %}
-                            {% elif application.status == 'Rejected' %}
-                                <i class="fas fa-times-circle"></i> {% trans "Rejected" %}
-                            {% endif %}
-                        </span>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-sm-6">
-                                <p class="mb-1"><strong>{% trans "Name:" %}</strong> {{ application.name }}</p>
-                                <p class="mb-1"><strong>{% trans "Age:" %}</strong> {{ application.age }}</p>
-                                <p class="mb-1"><strong>{% trans "Mobile:" %}</strong> {{ application.mobile }}</p>
-                            </div>
-                            <div class="col-sm-6">
-                                <p class="mb-1"><strong>{% trans "State:" %}</strong> {{ application.state }}</p>
-                                <p class="mb-1"><strong>{% trans "District:" %}</strong> {{ application.district }}</p>
-                                <p class="mb-1"><strong>{% trans "Category:" %}</strong> {{ application.category }}</p>
-                            </div>
-                        </div>
-
-                        {% if application.application_number %}
-                        <div class="mt-3 p-2 bg-light rounded">
-                            <small class="text-muted">
-                                <i class="fas fa-hashtag"></i>
-                                <strong>{% trans "Application Number:" %}</strong> {{ application.application_number }}
-                            </small>
-                        </div>
-                        {% endif %}
-
-                        {% if application.notes %}
-                        <div class="mt-3">
-                            <strong>{% trans "Notes:" %}</strong>
-                            <p class="mb-0 text-muted">{{ application.notes }}</p>
-                        </div>
-                        {% endif %}
-
-                        <div class="mt-3">
-                            <small class="text-muted">
-                                <i class="fas fa-calendar"></i>
-                                {% trans "Submitted on" %} {{ application.created_at|date:"M d, Y" }}
-                                {% if application.updated_at != application.created_at %}
-                                    • {% trans "Last updated" %} {{ application.updated_at|date:"M d, Y" }}
-                                {% endif %}
-                            </small>
-                        </div>
-                    </div>
-                    <div class="card-footer bg-light">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <small class="text-muted">
-                                {% if application.applied_by %}
-                                    {% trans "Applied by:" %} {{ application.applied_by.get_full_name|default:application.applied_by.username }}
-                                {% else %}
-                                    {% trans "Processing by volunteer" %}
-                                {% endif %}
-                            </small>
-                            <button class="btn btn-sm btn-outline-primary timeline-btn" data-application-id="{{ application.id }}" type="button">
-                                <i class="fas fa-history"></i> {% trans "Timeline" %}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="sa-filter-bar" role="group" aria-label="{% trans 'Filter applications by status' %}">
+            <button class="sa-filter-btn active" data-status="all" type="button" aria-pressed="true">
+                {% trans "All Applications" %}
+            </button>
+            {% for status_value, status_label in status_choices %}
+                <button class="sa-filter-btn" data-status="{{ status_value }}" type="button" aria-pressed="false">
+                    {{ status_label }}
+                </button>
             {% endfor %}
         </div>
 
-        <!-- Awareness Message -->
-        <div class="awareness-message mt-5">
-            <div class="row align-items-center">
-                <div class="col-lg-9">
-                    <h4 class="mb-2"><i class="fas fa-bullhorn"></i> {% trans "Community Impact" %}</h4>
-                    <p class="mb-0">{% trans "Congratulations on taking the first step! Once you receive benefits from any scheme, please help spread awareness by informing your family, friends, and community members about these government initiatives." %}</p>
-                </div>
-                <div class="col-lg-10 text-end">
-                    <i class="fas fa-users fa-3x opacity-75"></i>
-                </div>
-            </div>
-        </div>
-    {% else %}
-        <div class="text-center py-5">
-            <i class="fas fa-clipboard-list fa-4x text-muted mb-4"></i>
-            <h3 class="text-muted mb-3">{% trans "No Applications Yet" %}</h3>
-            <p class="text-muted mb-4">{% trans "You haven't submitted any applications for assistance yet." %}</p>
-            <a href="{% url 'apply_assistance' %}" class="btn btn-primary btn-lg">
-                <i class="fas fa-plus"></i> {% trans "Apply Now" %}
-            </a>
-        </div>
-    {% endif %}
-</div>
+        {% if applications %}
+            <div class="row g-4" id="applicationCards">
+                {% for application in applications %}
+                    <div class="col-lg-6 application-card" data-application-status="{{ application.get_compatibility_status }}">
+                        <article class="sa-app-card">
+                            <div class="sa-app-header">
+                                <h2 class="sa-app-title">
+                                    <i class="fas fa-file-alt" aria-hidden="true"></i>
+                                    {% if application.scheme %}{{ application.scheme.scheme_name }}{% else %}{% trans "General Assistance Request" %}{% endif %}
+                                </h2>
+                                <span class="sa-status-badge {{ application.get_compatibility_status|lower|cut:' '|add:'-' }}" aria-label="{% trans 'Current status' %}: {{ application.get_compatibility_status }}">
+                                    {% if application.get_compatibility_status == 'Submitted' %}<i class="fas fa-clock" aria-hidden="true"></i>
+                                    {% elif application.get_compatibility_status == 'Under Review' %}<i class="fas fa-search" aria-hidden="true"></i>
+                                    {% elif application.get_compatibility_status == 'Applied' %}<i class="fas fa-check-circle" aria-hidden="true"></i>
+                                    {% elif application.get_compatibility_status == 'Approved' %}<i class="fas fa-thumbs-up" aria-hidden="true"></i>
+                                    {% elif application.get_compatibility_status == 'Rejected' %}<i class="fas fa-times-circle" aria-hidden="true"></i>
+                                    {% endif %}
+                                    {% if application.get_compatibility_status == 'Submitted' %}{% trans "Submitted" %}
+                                    {% elif application.get_compatibility_status == 'Under Review' %}{% trans "Under Review" %}
+                                    {% elif application.get_compatibility_status == 'Applied' %}{% trans "Applied" %}
+                                    {% elif application.get_compatibility_status == 'Approved' %}{% trans "Approved" %}
+                                    {% elif application.get_compatibility_status == 'Rejected' %}{% trans "Rejected" %}
+                                    {% else %}{{ application.status }}{% endif %}
+                                </span>
+                            </div>
 
-<!-- Timeline Modal -->
-<div class="modal fade" id="timelineModal" tabindex="-1">
+                            <div class="sa-app-body">
+                                <div class="sa-data-grid">
+                                    <div class="sa-data-item"><label>{% trans "Applicant" %}</label><span>{{ application.name }}</span></div>
+                                    <div class="sa-data-item"><label>{% trans "Submitted on" %}</label><span>{{ application.created_at|date:"N d, Y" }}</span></div>
+                                    <div class="sa-data-item"><label>{% trans "State" %}</label><span>{{ application.state }}</span></div>
+                                    <div class="sa-data-item"><label>{% trans "District" %}</label><span>{{ application.district }}</span></div>
+                                    <div class="sa-data-item"><label>{% trans "Age" %}</label><span>{{ application.age }}</span></div>
+                                    <div class="sa-data-item"><label>{% trans "Mobile" %}</label><span>{{ application.mobile }}</span></div>
+                                    <div class="sa-data-item"><label>{% trans "Category" %}</label><span>{{ application.category }}</span></div>
+                                </div>
+
+                                {% if application.application_number %}
+                                    <div class="sa-reference">
+                                        <i class="fas fa-hashtag" aria-hidden="true"></i>
+                                        <strong>{% trans "Application number" %}:</strong> {{ application.application_number }}
+                                    </div>
+                                {% endif %}
+
+                                {% if application.farmer_message %}
+                                    <div class="mt-3">
+                                        <strong>{% trans "Message from SmartAssist Team" %}:</strong>
+                                        <p class="mb-0 text-muted">{{ application.farmer_message }}</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="sa-app-footer">
+                                <small>
+                                    <i class="fas fa-user-check" aria-hidden="true"></i>
+                                    {% trans "Assigned to" %}:
+                                    {% if application.applied_by %}
+                                        {{ application.applied_by.get_full_name|default:application.applied_by.username }}
+                                    {% else %}
+                                        {% trans "Not assigned yet" %}
+                                    {% endif %}
+                                </small>
+                                <button class="btn btn-outline-primary timeline-btn" data-application-status="{{ application.get_compatibility_status }}" data-submitted-date="{{ application.created_at|date:'N d, Y' }}" data-updated-date="{{ application.updated_at|date:'N d, Y' }}" type="button">
+                                    <i class="fas fa-history" aria-hidden="true"></i> {% trans "View Timeline" %}
+                                </button>
+                            </div>
+                        </article>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="py-5 text-center text-muted d-none" id="filteredApplicationsEmpty" role="status">
+                {% trans "No applications match this status." %}
+            </div>
+        {% else %}
+            <div class="py-5 text-center">
+                <i class="fas fa-clipboard-list fa-4x text-muted mb-4" aria-hidden="true"></i>
+                <h2 class="text-muted mb-3">{% trans "No Applications Yet" %}</h2>
+                <p class="text-muted mb-4">{% trans "You haven't submitted any applications for assistance yet." %}</p>
+                <a href="{% url 'apply_assistance' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus" aria-hidden="true"></i> {% trans "Apply Now" %}
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</main>
+
+<div class="modal fade" id="timelineModal" tabindex="-1" aria-labelledby="timelineModalTitle" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">{% trans "Application Timeline" %}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h2 class="modal-title fs-5" id="timelineModalTitle">{% trans "Application Timeline" %}</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
             </div>
-            <div class="modal-body" id="timelineContent">
-                <!-- Timeline content will be loaded here -->
-                <div class="timeline">
-                    <div class="timeline-item">
-                        <div class="timeline-marker bg-primary"></div>
-                        <div class="timeline-content">
-                            <h6>{% trans "Application Submitted" %}</h6>
-                            <p class="text-muted">{% trans "Your application has been received and is being reviewed." %}</p>
-                            <small class="text-muted">{% trans "Date will be shown here" %}</small>
-                        </div>
-                    </div>
-                    <!-- More timeline items -->
-                </div>
-            </div>
+            <div class="modal-body" id="timelineContent"></div>
         </div>
     </div>
 </div>
-
-<style>
-.status-submitted { background-color: #17a2b8; }
-.status-underreview { background-color: #ffc107; color: #000; }
-.status-applied { background-color: #007bff; }
-.status-approved { background-color: #28a745; }
-.status-rejected { background-color: #dc3545; }
-
-.timeline {
-    position: relative;
-    padding-left: 30px;
-}
-
-.timeline::before {
-    content: '';
-    position: absolute;
-    left: 15px;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: #e9ecef;
-}
-
-.timeline-item {
-    position: relative;
-    margin-bottom: 20px;
-}
-
-.timeline-marker {
-    position: absolute;
-    left: -22px;
-    top: 5px;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-}
-
-.timeline-content {
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 5px;
-}
-</style>
-
 {% endblock %}
 
 {% block extra_js %}
 <script>
-function viewTimeline(applicationId) {
-    // This would typically fetch timeline data via AJAX
-    document.getElementById('timelineContent').innerHTML = `
-        <div class="timeline">
-            <div class="timeline-item">
-                <div class="timeline-marker bg-primary"></div>
-                <div class="timeline-content">
-                    <h6>{% trans "Application Submitted" %}</h6>
-                    <p class="text-muted">{% trans "Your application has been received and is being reviewed by our volunteers." %}</p>
-                    <small class="text-muted">{% trans "Application date" %}</small>
-                </div>
-            </div>
-            <div class="timeline-item">
-                <div class="timeline-marker bg-warning"></div>
-                <div class="timeline-content">
-                    <h6>{% trans "Under Review" %}</h6>
-                    <p class="text-muted">{% trans "Our team is reviewing your eligibility for various schemes." %}</p>
-                    <small class="text-muted">{% trans "In progress" %}</small>
-                </div>
-            </div>
-        </div>
-    `;
-    new bootstrap.Modal(document.getElementById('timelineModal')).show();
-}
+document.addEventListener('DOMContentLoaded', function () {
+    const filterButtons = document.querySelectorAll('.sa-filter-btn');
+    const cards = document.querySelectorAll('.application-card');
+    const emptyState = document.getElementById('filteredApplicationsEmpty');
+    const timelineModal = document.getElementById('timelineModal');
+    const timelineContent = document.getElementById('timelineContent');
 
-document.querySelectorAll('.timeline-btn').forEach(function (button) {
-    button.addEventListener('click', function () {
-        viewTimeline(this.dataset.applicationId);
+    filterButtons.forEach(function (button) {
+        button.addEventListener('click', function () {
+            const selectedStatus = button.dataset.status;
+            let visibleCount = 0;
+
+            filterButtons.forEach(function (filterButton) {
+                const isActive = filterButton === button;
+                filterButton.classList.toggle('active', isActive);
+                filterButton.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+            });
+
+            cards.forEach(function (card) {
+                const matches = selectedStatus === 'all' || card.dataset.applicationStatus === selectedStatus;
+                card.classList.toggle('d-none', !matches);
+                if (matches) visibleCount += 1;
+            });
+
+            if (emptyState) {
+                emptyState.classList.toggle('d-none', visibleCount > 0);
+            }
+        });
+    });
+
+    if (!timelineModal || !timelineContent || typeof bootstrap === 'undefined') {
+        return;
+    }
+
+    document.querySelectorAll('.timeline-btn').forEach(function (button) {
+        button.addEventListener('click', function () {
+        timelineContent.replaceChildren();
+            const timeline = document.createElement('div');
+            timeline.className = 'sa-timeline';
+
+            const submitted = document.createElement('div');
+            submitted.className = 'sa-timeline-item';
+        const submittedContent = document.createElement('div');
+        submittedContent.className = 'sa-timeline-content';
+        submitted.append(
+            document.createElement('div'),
+            submittedContent,
+        );
+        submitted.firstElementChild.className = 'sa-timeline-marker';
+        const submittedHeading = document.createElement('h3');
+        submittedHeading.className = 'h6';
+        submittedHeading.textContent = '{% trans "Application Submitted" %}';
+        const submittedText = document.createElement('p');
+        submittedText.textContent = '{% trans "Your application was received by SmartAssist." %}';
+        const submittedDate = document.createElement('small');
+        submittedDate.className = 'text-muted';
+        submittedDate.textContent = '{% trans "Date" %}: ' + button.dataset.submittedDate;
+        submittedContent.append(submittedHeading, submittedText, submittedDate);
+        timeline.appendChild(submitted);
+
+        const current = document.createElement('div');
+        current.className = 'sa-timeline-item';
+        const currentContent = document.createElement('div');
+        currentContent.className = 'sa-timeline-content';
+        current.append(document.createElement('div'), currentContent);
+        current.firstElementChild.className = 'sa-timeline-marker';
+        const currentHeading = document.createElement('h3');
+        currentHeading.className = 'h6';
+        currentHeading.textContent = '{% trans "Current Status" %}';
+        const currentText = document.createElement('p');
+        currentText.textContent = '{% trans "Status recorded for this application" %}: ' + button.dataset.applicationStatus;
+        const updatedDate = document.createElement('small');
+        updatedDate.className = 'text-muted';
+        updatedDate.textContent = '{% trans "Last updated" %}: ' + button.dataset.updatedDate;
+        currentContent.append(currentHeading, currentText, updatedDate);
+        timeline.appendChild(current);
+
+            timelineContent.appendChild(timeline);
+            bootstrap.Modal.getOrCreateInstance(timelineModal).show();
+        });
     });
 });
 </script>

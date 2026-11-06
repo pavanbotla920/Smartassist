@@ -1,0 +1,650 @@
+/* =====================================================
+   SMARTASSIST GLOBAL THEME (GREEN / CREAM / GOLD)
+   ===================================================== */
+
+:root {
+    /* Core Palette */
+    --sa-ink: #0B2E24;
+    --sa-ink-2: #10382C;
+    --sa-emerald: #174C3B;
+    --sa-leaf: #067647;
+    --sa-gold: #DDAA49;
+    --sa-gold-deep: #B8862F;
+    --sa-gold-soft: #F8EBD1;
+    --sa-ivory: #E8F4ED;
+    --sa-paper: #FAF7EF;
+    --sa-card: #FFFFFF;
+    --sa-text: #173B30;
+    --sa-muted: #52665D;
+    --sa-muted-soft: #64736B;
+    --sa-line: #DDE3DC;
+
+    /* System */
+    --sa-radius: 16px;
+    --sa-radius-sm: 12px;
+    --sa-shadow: 0 14px 30px rgba(11,46,36,.10);
+    --sa-shadow-lg: 0 24px 48px rgba(11,46,36,.16);
+    --sa-ease: cubic-bezier(.22,.61,.36,1);
+
+    /* Fonts */
+    --sa-font-display: Georgia, 'Times New Roman', serif;
+    --sa-font-body: 'Segoe UI', system-ui, sans-serif;
+}
+
+body {
+    background: var(--sa-paper);
+    font-family: var(--sa-font-body);
+    color: var(--sa-text);
+}
+
+body.sa-dev-page {
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+body.sa-dev-page .card,
+body.sa-dev-page .dropdown-menu,
+body.sa-dev-page .table-responsive {
+    border-color: var(--sa-line);
+}
+
+body.sa-dev-page .card {
+    background: var(--sa-card);
+    color: var(--sa-text);
+    box-shadow: var(--sa-shadow);
+}
+
+body.sa-dev-page .form-control,
+body.sa-dev-page .form-select,
+body.sa-dev-page .input-group-text {
+    min-height: 2.75rem;
+    color: var(--sa-text);
+    background-color: #fff;
+    border-color: var(--sa-line);
+}
+
+body.sa-dev-page .form-control::placeholder {
+    color: var(--sa-muted-soft);
+    opacity: 1;
+}
+
+body.sa-dev-page .form-control:focus,
+body.sa-dev-page .form-select:focus {
+    border-color: var(--sa-gold-deep);
+    box-shadow: 0 0 0 0.2rem rgba(221, 170, 73, .22);
+}
+
+body.sa-dev-page .btn:focus-visible,
+body.sa-dev-page a:focus-visible,
+body.sa-dev-page button:focus-visible,
+body.sa-dev-page select:focus-visible {
+    outline: 3px solid rgba(221, 170, 73, .65);
+    outline-offset: 2px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--sa-font-display);
+    color: var(--sa-ink);
+}
+
+/* =====================================================
+   BUTTONS
+   ===================================================== */
+.sa-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    border: none;
+    border-radius: 999px;
+    padding: .72rem 1.35rem;
+    font-size: .95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform .22s var(--sa-ease), box-shadow .22s var(--sa-ease);
+    text-decoration: none;
+}
+.sa-btn:hover {
+    transform: translateY(-2px);
+    color: inherit;
+}
+.sa-btn-gold {
+    color: var(--sa-ink);
+    background: var(--sa-gold);
+    box-shadow: 0 10px 24px rgba(217,168,78,.35);
+}
+.sa-btn-gold:hover {
+    color: var(--sa-ink);
+    background: #e5b863;
+}
+.sa-btn-primary {
+    color: #fff;
+    background: var(--sa-ink);
+    box-shadow: 0 10px 24px rgba(11,46,36,.28);
+}
+.sa-btn-primary:hover {
+    color: #fff;
+    background: var(--sa-emerald);
+}
+.sa-btn-ghost-light {
+    color: #fff;
+    background: var(--sa-emerald);
+    border: 1.5px solid rgba(255,255,255,.45);
+}
+.sa-btn-ghost-light:hover {
+    color: #fff;
+    background: #1f604b;
+}
+
+/* =====================================================
+   SECTIONS & TYPOGRAPHY
+   ===================================================== */
+.sa-section {
+    padding: 4.5rem 0;
+    background: var(--sa-paper);
+}
+.sa-section--alt {
+    background: var(--sa-ivory);
+}
+.sa-section-head {
+    max-width: 640px;
+    margin: 0 auto 2.4rem;
+    text-align: center;
+}
+.sa-section-head h2 {
+    font-size: clamp(1.75rem, 3.4vw, 2.6rem);
+    font-weight: 600;
+    margin: .5rem 0 .6rem;
+}
+.sa-section-head p {
+    color: var(--sa-muted);
+    margin: 0;
+    font-size: 1.02rem;
+}
+
+/* =====================================================
+   KICKERS & CARDS
+   ===================================================== */
+.sa-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: .75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    color: var(--sa-leaf);
+}
+.sa-kicker::before {
+    content: '';
+    width: 26px;
+    height: 2px;
+    background: var(--sa-gold);
+    border-radius: 2px;
+}
+
+.sa-card {
+    position: relative;
+    background: var(--sa-card);
+    border: 1px solid var(--sa-line);
+    border-radius: var(--sa-radius);
+    padding: 1.35rem;
+    box-shadow: var(--sa-shadow);
+    transition: transform .24s var(--sa-ease), box-shadow .24s var(--sa-ease);
+}
+.sa-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--sa-shadow-lg);
+}
+.sa-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    color: var(--sa-ink);
+    background: var(--sa-gold-soft);
+    border: 1px solid rgba(217,168,78,.35);
+    margin-bottom: .9rem;
+}
+
+/* =====================================================
+   CHIPS & BADGES
+   ===================================================== */
+.sa-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    border-radius: 999px;
+    padding: .35rem .85rem;
+    font-size: .78rem;
+    font-weight: 700;
+    background: var(--sa-gold-soft);
+    color: var(--sa-ink);
+}
+
+/* =====================================================
+   BOOTSTRAP OVERRIDES (for Navbar)
+   ===================================================== */
+.navbar {
+    background-color: var(--sa-ink) !important;
+    padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid rgba(217,168,78,.35);
+}
+.navbar-brand, .navbar-brand i {
+    color: #fff !important;
+    font-family: var(--sa-font-display);
+    font-size: 1.4rem;
+}
+.navbar-brand i {
+    color: var(--sa-gold) !important;
+}
+.navbar-light .navbar-nav .nav-link {
+    color: rgba(255,255,255,.82) !important;
+    font-weight: 600;
+}
+.navbar-light .navbar-nav .nav-link:hover,
+.navbar-light .navbar-nav .nav-link.active {
+    color: #fff !important;
+}
+.navbar-toggler {
+    border-color: rgba(255,255,255,.2);
+}
+.navbar-toggler-icon {
+    filter: invert(1);
+}
+
+/* =====================================================
+   NAVBAR & FORMS OVERRIDE
+   ===================================================== */
+
+/* Fix "SmartAssist" text brightness */
+.navbar-brand {
+    color: #ffffff !important;
+    font-weight: 800;
+    font-size: 1.35rem;
+}
+.navbar-brand i {
+    color: var(--sa-gold) !important;
+}
+
+/* Force nav links to be white, not blue */
+.navbar-nav .nav-link {
+    color: rgba(255, 255, 255, 0.85) !important;
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link:focus {
+    color: #ffffff !important;
+}
+
+/* Fix Login/Register/Profile buttons */
+.navbar .btn-primary {
+    background-color: var(--sa-gold) !important;
+    border-color: var(--sa-gold) !important;
+    color: var(--sa-ink) !important;
+    font-weight: 700;
+    border-radius: 999px !important; /* Rounded pill shape */
+    padding: 0.4rem 1.2rem;
+}
+.navbar .btn-primary:hover {
+    background-color: #e5b863 !important;
+}
+
+.navbar .btn-outline-primary {
+    border-color: rgba(255, 255, 255, 0.4) !important;
+    color: #ffffff !important;
+    border-radius: 999px !important; /* Rounded pill shape */
+    padding: 0.4rem 1.2rem;
+    font-weight: 600;
+}
+.navbar .btn-outline-primary:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border-color: #ffffff !important;
+    color: #ffffff !important;
+}
+
+/* Make the Language selector look like a rounded rectangle */
+.site-language-select {
+    border-radius: 8px !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    padding: 0.4rem 2rem 0.4rem 0.8rem !important;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    /* Custom dropdown arrow to look good on dark green */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23ffffff' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 10px center !important;
+    appearance: none;
+    -webkit-appearance: none;
+}
+.site-language-select option {
+    background-color: var(--sa-ink);
+    color: #ffffff;
+}
+
+/* =====================================================
+   NAVBAR ACTIVE TAB INDICATOR (FORCE OVERRIDE)
+   ===================================================== */
+.navbar-nav .nav-link.active-tab {
+    background-color: var(--sa-gold) !important;
+    color: var(--sa-ink) !important;
+    font-weight: 800 !important;
+    border-radius: 999px !important;
+    padding: 0.4rem 1.2rem !important;
+    margin: 0 0.2rem !important;
+    box-shadow: 0 4px 12px rgba(217, 168, 78, 0.4);
+}
+
+/* Shared navigation: compact, high-contrast, and stable across page themes. */
+.sa-dev-page .sa-navbar {
+    min-height: 80px;
+    padding: .65rem 0;
+    border-bottom: 1px solid rgba(217, 168, 78, .35);
+    box-shadow: 0 4px 18px rgba(11, 46, 36, .16) !important;
+}
+
+.sa-navbar__container {
+    gap: 1rem;
+}
+
+.sa-dev-page .sa-navbar__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: .65rem;
+    flex: 0 0 auto;
+    color: #fff !important;
+    font-size: 1.25rem;
+    letter-spacing: -.02em;
+    white-space: nowrap;
+}
+
+.sa-navbar__logo {
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 44px;
+    border: 1px solid rgba(221, 170, 73, .7);
+    border-radius: 12px;
+    color: var(--sa-ink);
+    background: var(--sa-gold);
+    box-shadow: 0 5px 14px rgba(0, 0, 0, .18);
+    font-size: 1.15rem;
+}
+
+.sa-dev-page .sa-navbar__logo i {
+    color: var(--sa-ink) !important;
+}
+
+.sa-navbar__links {
+    align-items: center;
+    gap: .1rem;
+}
+
+.sa-dev-page .sa-navbar .nav-link {
+    position: relative;
+    border-radius: 8px;
+    color: rgba(255, 255, 255, .9) !important;
+    padding: .62rem .58rem;
+    font-size: .87rem;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: color .2s ease, background-color .2s ease;
+}
+
+.sa-dev-page .sa-navbar .nav-link::after {
+    content: "";
+    position: absolute;
+    right: .58rem;
+    bottom: .24rem;
+    left: .58rem;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--sa-gold);
+    transform: scaleX(0);
+    transition: transform .2s ease;
+}
+
+.sa-dev-page .sa-navbar .nav-link:hover,
+.sa-dev-page .sa-navbar .nav-link:focus-visible,
+.sa-dev-page .sa-navbar .nav-link.active {
+    color: var(--sa-gold) !important;
+    background: rgba(255, 255, 255, .08);
+}
+
+.sa-dev-page .sa-navbar .nav-link:hover::after,
+.sa-dev-page .sa-navbar .nav-link:focus-visible::after,
+.sa-dev-page .sa-navbar .nav-link.active::after {
+    transform: scaleX(1);
+}
+
+.sa-dev-page .sa-navbar__toggle {
+    border-color: rgba(255, 255, 255, .5);
+}
+
+.sa-dev-page .sa-navbar__toggle .navbar-toggler-icon {
+    filter: brightness(0) invert(1);
+}
+
+.sa-dev-page .sa-navbar .btn-primary,
+.sa-dev-page .sa-navbar__login {
+    color: var(--sa-ink) !important;
+    background: var(--sa-gold) !important;
+    border-color: var(--sa-gold) !important;
+    font-weight: 700;
+}
+
+.sa-dev-page .sa-navbar .btn-primary:hover,
+.sa-dev-page .sa-navbar .btn-primary:focus-visible,
+.sa-dev-page .sa-navbar__login:hover,
+.sa-dev-page .sa-navbar__login:focus-visible {
+    color: var(--sa-ink) !important;
+    background: #e9bd68 !important;
+    border-color: #e9bd68 !important;
+}
+
+.sa-dev-page .sa-navbar .btn-outline-primary,
+.sa-dev-page .sa-navbar__register {
+    color: #fff !important;
+    border-color: rgba(255, 255, 255, .55) !important;
+    font-weight: 700;
+}
+
+.sa-dev-page .sa-navbar .btn-outline-primary:hover,
+.sa-dev-page .sa-navbar .btn-outline-primary:focus-visible,
+.sa-dev-page .sa-navbar__register:hover,
+.sa-dev-page .sa-navbar__register:focus-visible {
+    color: var(--sa-ink) !important;
+    background: var(--sa-gold) !important;
+    border-color: var(--sa-gold) !important;
+}
+
+.sa-dev-page .sa-navbar .site-language-selector {
+    margin-left: 1rem;
+    flex: 0 0 auto;
+}
+
+.sa-dev-page .sa-navbar .site-language-label {
+    color: rgba(255, 255, 255, .8) !important;
+}
+
+.sa-dev-page .sa-navbar .site-language-selector .fa-globe {
+    color: var(--sa-gold);
+}
+
+.sa-dev-page .sa-navbar .site-language-select {
+    min-height: 38px;
+    color: var(--sa-ink) !important;
+}
+
+.sa-dev-page .sa-navbar__account {
+    flex: 0 0 auto;
+}
+
+.sa-dev-page .sa-navbar__account .dropdown-menu {
+    right: 0;
+    left: auto;
+    min-width: 12rem;
+    margin-top: .6rem;
+}
+
+@media (max-width: 1199.98px) {
+    .sa-dev-page .sa-navbar {
+        min-height: 72px;
+    }
+
+    .sa-dev-page .sa-navbar .navbar-collapse {
+        padding-top: .75rem;
+    }
+
+    .sa-dev-page .sa-navbar .site-language-selector {
+        margin: .75rem 0;
+    }
+
+    .sa-dev-page .sa-navbar .sa-navbar__login,
+    .sa-dev-page .sa-navbar .sa-navbar__register,
+    .sa-dev-page .sa-navbar__account {
+        margin: .25rem 0 0 !important;
+        width: 100%;
+    }
+
+    .sa-dev-page .sa-navbar__account .dropdown-toggle {
+        width: 100%;
+        text-align: left;
+    }
+}
+
+.navbar-nav .nav-link.active-tab:hover {
+    background-color: #e5b863 !important;
+    color: var(--sa-ink) !important;
+}
+
+/* Keep the shared footer readable when optional reveal JavaScript is blocked. */
+.sa-dev-page .gov-footer .footer-grid {
+    opacity: 1;
+    transform: none;
+}
+
+.sa-dev-page .gov-footer {
+    margin-top: 3rem;
+    color: #e8f4ed;
+    background: var(--sa-ink);
+    border-top: 2px solid var(--sa-gold);
+    box-shadow: none;
+}
+.sa-dev-page .gov-footer::before {
+    display: none;
+}
+.sa-dev-page .gov-footer .footer-grid {
+    padding: 2.25rem 1rem 1.5rem;
+}
+.sa-dev-page .gov-footer .footer-title,
+.sa-dev-page .gov-footer .footer-col h6 {
+    color: #fff;
+}
+.sa-dev-page .gov-footer .footer-subtext,
+.sa-dev-page .gov-footer .quick-links a {
+    color: #d6e7dd;
+}
+.sa-dev-page .gov-footer .quick-links a::before {
+    color: var(--sa-gold);
+}
+.sa-dev-page .gov-footer .gov-link-card {
+    color: #e8f4ed;
+    background: var(--sa-ink-2);
+    border-color: rgba(221,170,73,.35);
+}
+.sa-dev-page .gov-footer .gov-footer-bottom {
+    color: #c4d8cc;
+    border-top-color: rgba(221,170,73,.35);
+}
+@media (max-width: 600px) {
+    .sa-dev-page .gov-footer {
+        margin-top: 2rem;
+    }
+    .sa-dev-page .gov-footer .footer-grid {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+        padding: 1.5rem 1rem 1rem;
+    }
+    .sa-dev-page .gov-footer .footer-title {
+        font-size: 1.25rem;
+    }
+    .sa-dev-page .gov-footer .footer-subtext {
+        margin-bottom: .75rem;
+    }
+    .sa-dev-page .gov-footer .quick-links {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: .5rem .75rem;
+    }
+    .sa-dev-page .gov-footer .useful-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .sa-dev-page .gov-footer .gov-link-card {
+        flex-direction: column;
+        justify-content: center;
+        text-align: center;
+        min-height: 4.5rem;
+        padding: .6rem;
+    }
+    .sa-dev-page .gov-footer .gov-link-card span:last-child {
+        font-size: .75rem;
+    }
+}
+
+@media (max-width: 420px) {
+    .sa-dev-page .gov-footer .footer-grid {
+        gap: .85rem;
+        padding-block: 1.15rem .8rem;
+    }
+    .sa-dev-page .gov-footer .footer-socials a {
+        width: 34px;
+        height: 34px;
+    }
+    .sa-dev-page .gov-footer .quick-links a {
+        font-size: .84rem;
+    }
+    .sa-dev-page .gov-footer .gov-footer-bottom {
+        padding-block: .65rem .8rem;
+        font-size: .8rem;
+    }
+}
+
+/* =====================================================
+   NAVBAR FIXES (Sticky, Brand Visibility, Active Tab)
+   ===================================================== */
+.navbar {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1030 !important;
+    background-color: var(--sa-ink) !important;
+}
+
+.navbar-brand {
+    color: #ffffff !important; /* Forces white */
+    font-weight: 800 !important;
+    font-size: 1.4rem !important;
+    letter-spacing: -0.5px;
+}
+.navbar-brand i {
+    color: var(--sa-gold) !important; /* Forces gold icon */
+    margin-right: 5px;
+}
+
+.navbar-nav .nav-link.active-tab {
+    background-color: var(--sa-gold) !important;
+    color: var(--sa-ink) !important;
+    font-weight: 800 !important;
+    border-radius: 999px !important;
+    padding: 0.4rem 1.2rem !important;
+    margin: 0 0.2rem !important;
+    box-shadow: 0 4px 12px rgba(217, 168, 78, 0.4);
+}

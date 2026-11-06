@@ -124,7 +124,7 @@ farmers/
 ## 4. Templates, Static Assets, Translations, Datasets & Migrations
 
 ### 4.1 Templates (`templates/`)
-Templates use Django's template engine with Bootstrap 5 and custom CSS. All user-facing strings are wrapped with `{% trans %}` or `{% blocktrans %}` for internationalization.
+Templates use Django's template engine with Bootstrap 5 and custom CSS. All user-facing strings are wrapped with `&#123;% trans %&#125;` or `&#123;% blocktrans %&#125;` for internationalization.
 
 - **Layout & Shared**:
   - `base.html`: Common HTML shell, navigation bar, Bootstrap imports, and footer.
@@ -226,24 +226,48 @@ farmers/
   - Base Image: `python:3.12-slim` for minimal container size and security.
   - Working Directory: `/app`.
   - Installs requirements without caching: `pip install --no-cache-dir -r requirements.txt`.
-  - Runs database migrations followed by `python manage.py runserver 0.0.0.0:8000`.
+  - Runs `collectstatic` while building the image.
+  - Starts `runserver` by default or Gunicorn when `DJANGO_ENV=production`; database migrations are run explicitly rather than automatically at startup.
 - **`.dockerignore`**:
   - Excludes `.git`, `venv/`, `__pycache__/`, `*.sqlite3`, and `.env` files to prevent bloated or insecure container images.
 
 ### Running with Docker Locally
 ```bash
-# 1. Build the Docker image
-docker build -t smartassist-kisan .
+# Build the Compose image and start the local server.
+docker compose up --build
+# The existing local image name is smartassist-kisan:test-localization.
+# The application is available at http://127.0.0.1:8003.
+```
 
-# 2. Run the container
-docker run -p 8000:8000 smartassist-kisan
+Compose preserves the local SQLite database by bind-mounting `./db.sqlite3` to
+`/app/db.sqlite3`. Set `SMARTASSIST_DB_PATH` to use another local SQLite file.
+The default environment does not require `DJANGO_SECRET_KEY` and starts Django's
+development server. Starting the container does not apply migrations. To apply
+migrations explicitly, back up the intended database first and run:
+
+```bash
+docker compose run --rm \
+  -e DJANGO_DB_PATH=/app/db.sqlite3 \
+  web python manage.py migrate --noinput
+```
+
+The default volume maps the host database selected by `SMARTASSIST_DB_PATH` (or
+`./db.sqlite3` when unset) to `/app/db.sqlite3`. Confirm the selected path before
+running this command.
+
+To build the image without Compose:
+```bash
+docker build -t smartassist-kisan .
 ```
 
 ### DevOps Guidelines for Production
-1. **WSGI Server**: Replace `runserver` in production with a production-grade application server such as **Gunicorn** or **Uvicorn** (for ASGI).
-2. **Database**: Swap SQLite for a managed **PostgreSQL** instance in production by setting the `DATABASE_URL` environment variable.
-3. **Environment Secrets**: Never bake credentials into Docker images. Pass `SECRET_KEY`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, and `OPENAI_API_KEY` via `.env` files or container orchestration secrets (Docker Compose, Kubernetes, or AWS ECS).
-4. **Static Files**: Run `python manage.py collectstatic --noinput` during container build or deployment, and serve static assets via Nginx or a CDN.
+1. **WSGI Server**: Set `DJANGO_ENV=production` and provide `DJANGO_SECRET_KEY`; the container then starts Gunicorn.
+2. **Host security**: Provide comma-separated `DJANGO_ALLOWED_HOSTS` values and complete `DJANGO_CSRF_TRUSTED_ORIGINS` HTTP(S) origins. Production fails closed if either setting is missing, empty, or invalid.
+3. **Database**: The application currently uses SQLite. Keep the local development database (`db.sqlite3`) separate from the Jenkins CI database (`.ci-db.sqlite3`) and the explicitly persistent production database. Container startup does not run migrations. Back up the intended production database before running an explicit migration command against its configured path.
+4. **Environment Secrets**: Never bake credentials into Docker images. Inject `DJANGO_SECRET_KEY`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, and `OPENAI_API_KEY` through an approved secret store or deployment environment.
+5. **Static Files**: WhiteNoise serves the collected static files. `collectstatic` runs during the image build using compressed storage. The non-manifest backend keeps local test and development asset resolution working before a collection step.
+6. **HTTPS policy**: Configure `DJANGO_SECURE_SSL_REDIRECT` and `DJANGO_SECURE_HSTS_SECONDS` explicitly for production, with optional `DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS` and `DJANGO_SECURE_HSTS_PRELOAD` set to `false` unless the deployment has been reviewed. Do not trust forwarded-protocol headers without a confirmed reverse proxy.
+7. **Chatbot rate limiting**: Local development uses Django's local-memory cache. Production must set `DJANGO_CACHE_URL` to a reachable shared Redis service (for example, `redis://redis-host:6379/1`) so the 20-request-per-60-second limit is consistent across Gunicorn workers. Cache failures return a temporary-unavailable response instead of disabling the limit.
 
 ---
 

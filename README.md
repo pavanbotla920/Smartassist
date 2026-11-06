@@ -26,8 +26,32 @@ SmartAssist is a comprehensive, AI-driven web application designed to bridge the
 Follow these steps to run the project locally on your machine.
 
 ### 1. Prerequisites
-*   Python 3.10 or higher installed.
+*   Python 3.12 or higher installed.
 *   Git installed.
+
+For Jenkins on Ubuntu 24.04, install Python 3.12, `python3.12-venv`, and at
+least one of Chrome, Firefox, or Chromium for Selenium. The agent also needs
+outbound network access to install packages from `requirements.txt` and to let
+Selenium obtain its browser driver. Docker installation and Jenkins access to
+the Docker daemon are required only when the optional `BUILD_DOCKER_IMAGE`
+parameter is enabled. The regular CI pipeline can run its Django checks, tests,
+and Selenium stage without Docker. Inject `DJANGO_SECRET_KEY`,
+`DJANGO_ALLOWED_HOSTS`, and `DJANGO_CSRF_TRUSTED_ORIGINS` through Jenkins
+credentials or the agent's secure environment; do not commit them or print
+them in build logs.
+
+Production HTTPS policy is configured with `DJANGO_SECURE_SSL_REDIRECT`,
+`DJANGO_SECURE_HSTS_SECONDS`, `DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS`, and
+`DJANGO_SECURE_HSTS_PRELOAD`. Boolean values should be explicit (`true` or
+`false`); HSTS seconds must be a non-negative integer. HSTS subdomains and
+preload default to disabled. Do not configure forwarded-protocol trust unless
+the reverse proxy is known to set and protect the expected header.
+
+Chatbot rate limiting uses the local-memory cache for development. Production
+must provide a shared Redis service and set `DJANGO_CACHE_URL` (for example,
+`redis://redis-host:6379/1`) so limits are consistent across Gunicorn workers.
+The Redis service must be reachable from every application instance; cache
+connection failures reject chatbot requests rather than disabling protection.
 
 ### 2. Clone the Repository
 ```bash
@@ -58,6 +82,20 @@ Apply the Django migrations to set up the SQLite database:
 python manage.py makemigrations
 python manage.py migrate
 ```
+When using Docker, container startup does not run migrations automatically.
+Apply them explicitly against the intended database, for example:
+
+```bash
+docker compose run --rm \
+  -e DJANGO_DB_PATH=/app/db.sqlite3 \
+  web python manage.py migrate --noinput
+```
+
+The Compose volume maps the host database selected by `SMARTASSIST_DB_PATH`
+(or `./db.sqlite3` when it is unset) to `/app/db.sqlite3`. Back up the
+intended database and confirm the selected path before applying migrations.
+Local development normally uses `db.sqlite3`; Jenkins uses the isolated
+`.ci-db.sqlite3`; production must use an explicitly persistent database path.
 
 ### 6. Load Initial Scheme Data (Optional)
 If you have a `schemes.csv` file, you can load it into the database using the custom script:

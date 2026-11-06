@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Notifications - SmartAssist" %}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .sa-notifications-page {
+        min-height: calc(100vh - 72px);
+        padding: 2.5rem 1rem 5rem;
+        background: var(--sa-paper, #f8fafc);
+    }
+    .sa-notifications-shell {
+        max-width: 960px;
+        margin: 0 auto;
+    }
+    .sa-notifications-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .sa-notifications-title {
+        margin: 0;
+        color: var(--sa-ink);
+        font-family: var(--sa-font-display, inherit);
+        font-size: clamp(1.8rem, 4vw, 2.4rem);
+        font-weight: 800;
+    }
+    .sa-notifications-subtitle {
+        margin: .45rem 0 0;
+        color: var(--sa-muted);
+    }
+    .sa-notifications-list {
+        display: grid;
+        gap: .9rem;
+    }
+    .sa-notification-card {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+        padding: 1.25rem 1.4rem;
+        background: var(--sa-card, #fff);
+        border: 1px solid var(--sa-line, #e2e8f0);
+        border-radius: var(--sa-radius, 14px);
+        box-shadow: var(--sa-shadow, 0 8px 24px rgba(15, 23, 42, .06));
+    }
+    .sa-notification-card.unread {
+        border-left: 4px solid var(--sa-blue, #2563eb);
+        background: #f8fbff;
+    }
+    .sa-notification-icon {
+        display: grid;
+        flex: 0 0 42px;
+        width: 42px;
+        height: 42px;
+        place-items: center;
+        border-radius: 12px;
+        background: #dbeafe;
+        color: var(--sa-blue, #2563eb);
+    }
+    .sa-notification-content { flex: 1; min-width: 0; }
+    .sa-notification-heading {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+    .sa-notification-heading h2 {
+        margin: 0;
+        color: var(--sa-ink);
+        font-size: 1.05rem;
+        font-weight: 800;
+    }
+    .sa-notification-date {
+        flex: 0 0 auto;
+        color: var(--sa-muted);
+        font-size: .78rem;
+    }
+    .sa-notification-message {
+        margin: .55rem 0 .8rem;
+        color: var(--sa-text, #334155);
+        white-space: pre-line;
+    }
+    .sa-notification-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .55rem;
+        align-items: center;
+    }
+    .sa-notification-status {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        padding: .25rem .6rem;
+        border-radius: 999px;
+        font-size: .74rem;
+        font-weight: 750;
+    }
+    .sa-notification-status.sent { background: #dcfce7; color: #166534; }
+    .sa-notification-status.failed { background: #fee2e2; color: #991b1b; }
+    .sa-notification-status.unread { background: #dbeafe; color: #1d4ed8; }
+    .sa-notification-status.read { background: #f1f5f9; color: #64748b; }
+    .sa-notification-empty {
+        padding: 4rem 1.5rem;
+        text-align: center;
+        background: var(--sa-card, #fff);
+        border: 1px dashed var(--sa-line, #cbd5e1);
+        border-radius: var(--sa-radius, 14px);
+    }
+    .sa-notification-empty i {
+        margin-bottom: 1rem;
+        color: var(--sa-blue, #2563eb);
+        font-size: 2.5rem;
+    }
+    .sa-notification-empty h2 { color: var(--sa-ink); font-size: 1.25rem; }
+    .sa-notification-empty p { color: var(--sa-muted); margin-bottom: 0; }
+    @media (max-width: 640px) {
+        .sa-notifications-header { flex-direction: column; }
+        .sa-notification-card { padding: 1rem; }
+        .sa-notification-heading { display: block; }
+        .sa-notification-date { display: block; margin-top: .3rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sa-notifications-page">
+    <div class="sa-notifications-shell">
+        <header class="sa-notifications-header">
+            <div>
+                <h1 class="sa-notifications-title">{% trans "Notification Center" %}</h1>
+                <p class="sa-notifications-subtitle">{% trans "Updates about your applications and SmartAssist services." %}</p>
+            </div>
+            {% if unread_notification_count %}
+                <form method="post" action="{% url 'mark_all_notifications_read' %}">
+                    {% csrf_token %}
+                    <button class="sa-btn sa-btn-primary" type="submit">
+                        <i class="fas fa-check-double me-1" aria-hidden="true"></i>
+                        {% trans "Mark all as read" %}
+                    </button>
+                </form>
+            {% endif %}
+        </header>
+
+        {% if notifications %}
+            <div class="sa-notifications-list">
+                {% for notification in notifications %}
+                    <article class="sa-notification-card{% if not notification.is_read %} unread{% endif %}">
+                        <div class="sa-notification-icon" aria-hidden="true">
+                            <i class="fas {% if notification.notification_type == 'sms' %}fa-comment-sms{% else %}fa-envelope{% endif %}"></i>
+                        </div>
+                        <div class="sa-notification-content">
+                            <div class="sa-notification-heading">
+                                <h2>{{ notification.subject|default:"SmartAssist notification" }}</h2>
+                                <time class="sa-notification-date" datetime="{{ notification.sent_at|date:'c' }}">
+                                    {{ notification.sent_at|date:"d M Y, h:i A" }}
+                                </time>
+                            </div>
+                            <p class="sa-notification-message">{{ notification.message }}</p>
+                            {% if notification.application %}
+                                <div class="sa-notification-meta mb-2">
+                                    <span class="sa-notification-status read">
+                                        {% trans "Status" %}: {{ notification.application.get_compatibility_status }}
+                                    </span>
+                                    <span class="sa-notification-status read">
+                                        {% trans "Scheme" %}:
+                                        {% if notification.application.scheme %}
+                                            {{ notification.application.scheme.scheme_name }}
+                                        {% else %}
+                                            {% trans "General Assistance" %}
+                                        {% endif %}
+                                    </span>
+                                    <span class="sa-notification-status read">
+                                        {% trans "Reference" %}: {{ notification.application.application_number|default:notification.application.id }}
+                                    </span>
+                                </div>
+                            {% endif %}
+                            <div class="sa-notification-meta">
+                                {% if notification.notification_type == 'email' %}
+                                    {% if notification.delivery_status == 'sent' %}
+                                        {% if notification.delivered_at %}
+                                            <span class="sa-notification-status sent"><i class="fas fa-check-circle" aria-hidden="true"></i> {% trans "Email delivered" %}</span>
+                                        {% else %}
+                                            <span class="sa-notification-status sent"><i class="fas fa-check-circle" aria-hidden="true"></i> {% trans "Email marked as sent (historical)" %}</span>
+                                        {% endif %}
+                                    {% elif notification.delivery_status == 'pending' %}
+                                        <span class="sa-notification-status read"><i class="fas fa-clock" aria-hidden="true"></i> {% trans "Email pending" %}</span>
+                                    {% else %}
+                                        {% if notification.is_permanent_failure and not notification.last_attempt_at %}
+                                            <span class="sa-notification-status failed"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i> {% trans "Email not delivered (historical)" %}</span>
+                                        {% else %}
+                                            <span class="sa-notification-status failed"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i> {% trans "Email not delivered" %}</span>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endif %}
+                                {% if notification.is_read %}
+                                    <span class="sa-notification-status read"><i class="fas fa-check" aria-hidden="true"></i> {% trans "Read" %}</span>
+                                {% else %}
+                                    <span class="sa-notification-status unread">{% trans "Unread" %}</span>
+                                    <form method="post" action="{% url 'mark_notification_read' notification.id %}">
+                                        {% csrf_token %}
+                                        <button class="btn btn-sm btn-outline-primary" type="submit">{% trans "Mark as read" %}</button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+
+            {% if page_obj.has_other_pages %}
+                <nav class="mt-4" aria-label="{% trans 'Notification pages' %}">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">{% trans "Previous" %}</a></li>
+                        {% endif %}
+                        <li class="page-item active" aria-current="page"><span class="page-link">{{ page_obj.number }}</span></li>
+                        {% if page_obj.has_next %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">{% trans "Next" %}</a></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        {% else %}
+            <div class="sa-notification-empty">
+                <i class="fas fa-bell-slash" aria-hidden="true"></i>
+                <h2>{% trans "You're all caught up" %}</h2>
+                <p>{% trans "New updates about your applications will appear here." %}</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

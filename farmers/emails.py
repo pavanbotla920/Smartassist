@@ -2,89 +2,113 @@
 
 Design notes
 ------------
-Email is sent explicitly from the views, never from ``Model.save()``. Sending
-inside ``save()`` fires on fixtures, ``loaddata`` and migrations, hides network
-I/O inside a database write, and makes the test suite try to reach the real SMTP
-server. Keeping it explicit makes the behaviour obvious and testable.
+Email is queued explicitly from the views, never from ``Model.save()``.
+Delivery is performed by a management command or worker, so requests never
+wait for SMTP.
 
 ``notify()`` never raises: a mail failure is logged and must not roll back the
 status change or turn the admin's action into a 500.
 """
 import logging
 
-from django.conf import settings
-from django.core.mail import send_mail
+from django.core.mail import send_mail  # Backward-compatible test/import surface.
 
-from .models import Notification
+from .models import Notification, UserProfile
 
 logger = logging.getLogger(__name__)
 
 
-def notify(user, subject, message, email_to=None):
-    """Store an in-app Notification and attempt to email the recipient.
+def get_farmer_status_message(new_status, farmer_message=''):
+    return (
+        farmer_message.strip()
+        or f'Your application status is now {new_status}. '
+        'Please check your application dashboard for further details.'
+    )
 
-    The in-app record is always created; the email is best-effort. Prefers
-    ``email_to`` and falls back to the address on the account. Returns the
-    Notification instance.
-    """
+
+def notify(user, subject, message, email_to=None, application=None):
+    """Store an in-app notification and queue email delivery."""
     notification = Notification.objects.create(
         user=user,
+        application=application,
         notification_type='email',
         subject=subject,
         message=message,
+        email_recipient=(email_to or user.email or '').strip(),
+        is_legacy_notification=False,
     )
 
-    # Transient result flags so callers can report the outcome to the user.
+    # Preserve temporary attributes for existing callers.
     notification.email_sent = False
-    notification.email_error = None
 
     recipient = (email_to or user.email or '').strip()
+
+    email_notifications_enabled = UserProfile.objects.filter(
+        user=user,
+    ).values_list('email_notifications', flat=True).first()
+    if email_notifications_enabled is False:
+        notification.is_sent = False
+        notification.email_error = 'Email notifications are disabled in your settings.'
+        notification.last_error = notification.email_error
+        notification.delivery_status = 'failed'
+        notification.is_permanent_failure = True
+        notification.save(update_fields=[
+            'is_sent', 'email_error', 'last_error', 'delivery_status',
+            'is_permanent_failure',
+        ])
+        logger.info(
+            'Notification %s stored in-app only: email notifications disabled.',
+            notification.pk,
+        )
+        return notification
+
     if not recipient:
-        notification.email_error = 'No email address on file.'
+        error = 'No email address on file.'
+
+        notification.is_sent = False
+        notification.email_error = error
+        notification.last_error = error
+        notification.delivery_status = 'failed'
+        notification.is_permanent_failure = True
+        notification.save(update_fields=[
+            'is_sent', 'email_error', 'last_error', 'delivery_status',
+            'is_permanent_failure',
+        ])
+
         logger.info(
             'Notification %s stored in-app only: no email address on file.',
             notification.pk,
         )
         return notification
 
-    try:
-        send_mail(
-            subject=subject,
-            message=message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[recipient],
-            fail_silently=False,
-        )
-    except Exception as exc:
-        notification.email_error = str(exc) or type(exc).__name__
-        logger.exception(
-            'Failed to email notification %s to %s', notification.pk, recipient,
-        )
-    else:
-        notification.email_sent = True
-        logger.info('Emailed notification %s to %s', notification.pk, recipient)
+    notification.delivery_status = 'pending'
+    notification.is_sent = False
+    notification.save(update_fields=['is_sent', 'delivery_status'])
+    logger.info('Notification %s queued for delivery.', notification.pk)
 
     return notification
 
 
-def notify_application_status(application, new_status, notes=''):
+def notify_application_status(application, new_status, farmer_message=''):
     """Tell the applicant that their application status changed.
 
-    Prefers the address typed on the application, falling back to the address on
-    the account.
+    Prefers the registered account address, falling back to the address typed
+    on the application when the account address is missing.
     """
     scheme_name = (
         application.scheme.scheme_name if application.scheme else 'General Assistance'
     )
     subject = f'Application Status Updated: {new_status}'
+    message = get_farmer_status_message(new_status, farmer_message)
 
     lines = [
         f'Hello {application.name},',
         '',
         f'Your application for {scheme_name} has been updated to: {new_status}.',
+        '',
+        'Message from SmartAssist Team:',
+        message,
     ]
-    if notes:
-        lines += ['', f'Notes from our team: {notes}']
     lines += [
         '',
         f'Application reference: {application.application_number or application.id}',
@@ -99,5 +123,6 @@ def notify_application_status(application, new_status, notes=''):
         application.user,
         subject,
         '\n'.join(lines),
-        email_to=application.email,
+        email_to=application.user.email or application.email,
+        application=application,
     )

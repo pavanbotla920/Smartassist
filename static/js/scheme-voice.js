@@ -105,6 +105,54 @@
     return endpoint;
   }
 
+  async function getOfflineSpeechText(schemeId, languageCode, options) {
+    if (languageCode === 'en' && options.text) return options.text;
+
+    const translationUrl = options.translationUrl || document.body.dataset.schemeTranslationUrl;
+    if (!translationUrl) {
+      throw new Error('Offline translation is not configured for this scheme.');
+    }
+
+    const url = new URL(translationUrl, window.location.href);
+    url.searchParams.set('scheme_id', schemeId);
+    url.searchParams.set('lang', languageCode);
+    url.searchParams.set('offline', '1');
+    url.searchParams.set(
+      'fields',
+      'scheme_name,description,eligibility,documents_required'
+    );
+    const response = await fetch(url.toString(), {
+      headers: { Accept: 'application/json' },
+      credentials: 'same-origin'
+    });
+    const payload = await response.json();
+    if (payload.translation_status !== 'complete') {
+      throw new Error(
+        payload.message ||
+        'Offline translation is unavailable for this scheme. English text is preserved.'
+      );
+    }
+
+    const text = Object.values(payload.fields || {}).filter(
+      (value) => typeof value === 'string' && value.trim()
+    ).join('. ');
+    if (!text) throw new Error('Offline translation returned no scheme information.');
+    return text;
+  }
+
+  async function speakWithAvailableBrowserVoice(schemeId, languageCode, options, onStatus) {
+    const language = supportedLanguages[languageCode];
+    const text = await getOfflineSpeechText(schemeId, languageCode, options);
+    const voices = await getBrowserVoices(languageCode);
+    if (!hasLanguageVoice(voices, languageCode)) {
+      throw new Error(
+        `No ${language.name} voice is installed in this browser or on this device.`
+      );
+    }
+    await speakWithBrowserVoice(text, languageCode, voices, onStatus);
+    return true;
+  }
+
   function playAudio(blob, language, volume, onStatus, thisRequest) {
     return new Promise((resolve, reject) => {
       activeAudioUrl = URL.createObjectURL(blob);
@@ -162,12 +210,27 @@
     currentVolume = Math.min(1, Math.max(0, volume));
     notify(
       onStatus,
-      languageCode === 'en'
-        ? 'Preparing English audio for this scheme...'
-        : `Translating this scheme into ${language.name} and preparing audio...`
+      'Checking the offline browser voice...'
     );
 
     try {
+      try {
+        return await speakWithAvailableBrowserVoice(
+          schemeId,
+          languageCode,
+          options,
+          onStatus
+        );
+      } catch (offlineError) {
+        if (navigator.onLine === false) throw offlineError;
+        notify(
+          onStatus,
+          languageCode === 'en'
+            ? 'Online speech enhancement is being prepared...'
+            : `Online translation and speech are being prepared for ${language.name}...`
+        );
+      }
+
       const response = await fetch(speechEndpoint(schemeId, languageCode), {
         signal: controller.signal,
         headers: { Accept: 'audio/mpeg, application/json' }

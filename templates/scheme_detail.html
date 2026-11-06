@@ -8,13 +8,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="icon" href="data:," />
   <title>{{ scheme.scheme_name }} - SmartAssist</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{% static 'css/offline-fonts.css' %}" />
   <link rel="stylesheet" href="{% static 'css/scheme-platform.css' %}" />
   <link rel="stylesheet" href="{% static 'css/language-switcher.css' %}" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="{% static 'css/smartassist-portal.css' %}" />
+  <link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}" />
+  <script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
   <style>
     .state-shape {
       fill: rgba(100, 200, 150, 0.15);
@@ -38,7 +37,7 @@
     }
     .state-label {
       pointer-events: none;
-      font-family: Poppins, sans-serif;
+      font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       fill: #f1f5f9;
       font-weight: 700;
       font-size: 0.65rem;
@@ -85,7 +84,7 @@
 
 <nav class="sp-navbar" role="navigation" aria-label="{% trans 'Main navigation' %}">
   <a href="{% url 'home' %}" class="sp-navbar-brand" aria-label="{% trans 'SmartAssist Home' %}">
-    <div class="sp-nav-logo-icon" aria-hidden="true">🏛️</div>
+    <div class="sp-nav-logo-icon" aria-hidden="true">SA</div>
     <div class="sp-nav-logo-text">
       <span class="brand-name">SmartAssist</span>
       <span class="brand-sub">{% trans "Gov Scheme Portal" %}</span>
@@ -106,8 +105,22 @@
     {% else %}
       <a href="{% url 'login' %}" class="sp-btn-login">🔑 {% trans "Login" %}</a>
     {% endif %}
+    <button class="sp-hamburger" id="sp-hamburger" aria-label="{% trans 'Toggle menu' %}" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </nav>
+<div class="sp-mobile-nav" id="sp-mobile-nav" role="navigation" aria-label="{% trans 'Mobile navigation' %}">
+  <a href="{% url 'home' %}" class="sp-nav-link">🏠 {% trans "Home" %}</a>
+  <a href="{% url 'scheme_awareness' %}" class="sp-nav-link active">📋 {% trans "Schemes" %}</a>
+  <a href="{% url 'scheme_awareness' %}#categories" class="sp-nav-link">🏷️ {% trans "Categories" %}</a>
+  <a href="{% url 'scheme_awareness' %}#public-dashboard" class="sp-nav-link">📊 {% trans "Dashboard" %}</a>
+  {% if user.is_authenticated %}
+    <a href="{% url 'logout' %}" class="sp-nav-link">🚪 {% trans "Logout" %}</a>
+  {% else %}
+    <a href="{% url 'login' %}" class="sp-nav-link">🔑 {% trans "Login" %}</a>
+  {% endif %}
+</div>
 
 <main class="sp-detail-wrap">
   <div class="sp-breadcrumb">
@@ -136,13 +149,13 @@
 
     <div class="sp-detail-apply-row">
       {% if user.is_authenticated %}
-      <a href="{% url 'apply_assistance' %}?scheme_id={{ scheme.id }}" class="sp-btn-apply-lg">✅ {% trans "Apply Now" %}</a>
+      <a href="{% url 'apply_assistance' %}?scheme_id={{ scheme.id }}" class="sp-btn-apply-lg">{% trans "Apply Now" %}</a>
       {% else %}
-      <button class="sp-btn-apply-lg" data-apply-url="{% url 'apply_assistance' %}?scheme_id={{ scheme.id }}" onclick="handleApplyNow('{{ scheme.id }}', this.dataset.applyUrl)">🔒 {% trans "Apply Now" %}</button>
+      <button class="sp-btn-apply-lg" data-apply-url="{% url 'apply_assistance' %}?scheme_id={{ scheme.id }}" onclick="handleApplyNow('{{ scheme.id }}', this.dataset.applyUrl)">{% trans "Apply Now" %}</button>
       {% endif %}
 
       {% if scheme.official_website %}
-      <a href="{{ scheme.official_website }}" target="_blank" rel="noopener noreferrer" class="sp-btn-website">🌐 {% trans "Official Website" %}</a>
+      <a href="{{ scheme.official_website }}" target="_blank" rel="noopener noreferrer" class="sp-btn-website">{% trans "Official Website" %}</a>
       {% else %}
       <span class="sp-btn-website" aria-disabled="true">🌐 {% trans "Official website unavailable" %}</span>
       {% endif %}
@@ -170,7 +183,7 @@
         data-scheme-state="{{ scheme.state }}"
         data-scheme-department="{{ scheme.department|default:'' }}"
         aria-label="{% trans 'Listen to this scheme' %}"
-      >🔊 {% trans "Listen" %}</button>
+      >{% trans "Listen" %}</button>
       <span id="scheme-listen-status" class="sp-map-copy" role="status" aria-live="polite">{% trans "When requested, only the selected scheme’s public name, description, eligibility, and document details are sent to free online translation and speech services. No account or application data is sent. Verify eligibility with the official scheme source." %}</span>
     </div>
   </section>
@@ -219,7 +232,7 @@
   </section>
 
   <section class="sp-detail-section">
-    <h2 class="sp-section-title"><span class="section-icon icon-green">✅</span>{% trans "Eligibility" %}</h2>
+    <h2 class="sp-section-title"><span class="section-icon icon-green"><i class="fas fa-check-circle" aria-hidden="true"></i></span>{% trans "Eligibility" %}</h2>
     <div class="sp-eligibility-grid">
       <div class="sp-elig-item">
         <div class="sp-elig-label">{% trans "Minimum Age" %}</div>
@@ -250,6 +263,30 @@
       <span data-scheme-field="documents_required">{{ scheme.documents_required|default:_("Required documents vary by applicant profile. Please verify on the official website before applying.") }}</span>
     </div>
   </section>
+
+  <section class="sp-detail-section sp-detail-resources">
+    <div class="sp-resource-column">
+      <h2 class="sp-section-title"><span class="section-icon icon-green">✦</span>{% trans "Benefits" %}</h2>
+      <div class="sp-section-body" style="white-space:pre-line;">
+        <span data-scheme-field="benefits">{{ scheme.benefits|default:_("Benefits and support vary by applicant profile. Please verify the latest details with the official scheme source.") }}</span>
+      </div>
+    </div>
+    <div class="sp-resource-column">
+      <h2 class="sp-section-title"><span class="section-icon icon-blue">↗</span>{% trans "Application resources" %}</h2>
+      <div class="sp-resource-links">
+        {% if scheme.apply_link %}
+        <a href="{{ scheme.apply_link }}" target="_blank" rel="noopener noreferrer" class="sp-resource-link">{% trans "Open application portal" %} ↗</a>
+        {% endif %}
+        {% if scheme.official_website %}
+        <a href="{{ scheme.official_website }}" target="_blank" rel="noopener noreferrer" class="sp-resource-link">{% trans "Read official scheme guidance" %} ↗</a>
+        {% endif %}
+        {% if not scheme.apply_link and not scheme.official_website %}
+        <p class="sp-section-body">{% trans "Application guidance is not available yet. Please check back soon." %}</p>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
   <p class="scheme-translation-status" data-translation-status role="status" hidden></p>
 </main>
 
@@ -299,7 +336,16 @@
       const played = await window.SmartAssistVoice.speak(
         listenButton.dataset.schemeId,
         listenLanguage.value,
-        { onStatus: (message) => { listenStatus.textContent = message; } }
+        {
+          text: [
+            listenButton.dataset.schemeName,
+            listenButton.dataset.schemeDescription,
+            listenButton.dataset.schemeEligibility,
+            listenButton.dataset.schemeDocuments
+          ].filter(Boolean).join('. '),
+          translationUrl: document.body.dataset.schemeTranslationUrl,
+          onStatus: (message) => { listenStatus.textContent = message; }
+        }
       );
       if (played) listenStatus.textContent = 'Playback finished.';
     } catch (error) {
@@ -434,7 +480,7 @@
     try {
       currentState = stateName;
       panelTitle.textContent = stateName;
-      stateInfo.textContent = '✅ Loading schemes for ' + stateName;
+      stateInfo.textContent = 'Loading schemes for ' + stateName;
 
       // Show loading state
       cardsContainer.innerHTML = '<div class="sp-map-empty"><p>⏳ Loading schemes...</p></div>';
@@ -458,7 +504,7 @@
         });
       }
 
-      stateInfo.textContent = `✅ Found ${schemes.length} scheme${schemes.length !== 1 ? 's' : ''} for ${stateName}`;
+      stateInfo.textContent = `Found ${schemes.length} scheme${schemes.length !== 1 ? 's' : ''} for ${stateName}`;
 
     } catch (error) {
       console.error('Error fetching schemes:', error);

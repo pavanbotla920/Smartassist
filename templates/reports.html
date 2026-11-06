@@ -151,6 +151,9 @@
 
 {% block extra_js %}
 <script>
+if (typeof Chart !== 'function') {
+    console.warn('Chart.js is unavailable; reports charts were skipped.');
+} else {
 // Status Chart
 const statusCtx = document.getElementById('statusChart').getContext('2d');
 const statusData = {{ status_data|safe }};
@@ -209,7 +212,7 @@ const schemeCtx = document.getElementById('schemeChart').getContext('2d');
 const schemeData = {{ scheme_data|safe }};
 
 new Chart(schemeCtx, {
-    type: 'horizontalBar',
+    type: 'bar',
     data: {
         labels: schemeData.map(item => item.scheme__scheme_name),
         datasets: [{
@@ -220,6 +223,7 @@ new Chart(schemeCtx, {
     },
     options: {
         responsive: true,
+        indexAxis: 'y',
         scales: {
             x: {
                 beginAtZero: true
@@ -233,6 +237,7 @@ document.getElementById('totalCitizens').textContent = '1,250';
 document.getElementById('totalApproved').textContent = '380';
 document.getElementById('totalSchemes').textContent = '25';
 document.getElementById('totalVolunteers').textContent = '15';
+}
 
 function exportPDF() {
     alert('{% trans "PDF export functionality would be implemented here" %}');

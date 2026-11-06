@@ -1,23 +1,35 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Count, Q
+from django.db.models.functions import TruncMonth
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout as auth_logout
 from django.core.cache import cache
+from django.core.paginator import Paginator
 from django.http import HttpResponse, JsonResponse, Http404, StreamingHttpResponse
 from django.views.decorators.http import require_GET, require_POST
 from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
 from django.utils.translation import gettext as _, check_for_language
+from django.views.i18n import set_language as django_set_language
+from django.utils import timezone
 from django.urls import reverse, translate_url
 from django.conf import settings as conf_settings
-from django.utils.http import url_has_allowed_host_and_scheme
 from urllib.parse import urlencode, urlparse
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
+from datetime import timedelta
 from .models import ApplicationRequest, Scheme, Notification, UserProfile
-from .emails import notify_application_status
+from .emails import get_farmer_status_message, notify, notify_application_status
 from .location_data import get_location_json, get_state_choices
 from .forms import UserRegisterForm, UserUpdateForm, UserProfileForm, CitizenApplicationForm, SchemeForm
+from .offline_translation import lookup_local_translation
+from .transcription import (
+    InvalidAudioError,
+    ModelUnavailableError,
+    RecognitionError,
+    UnsupportedLanguageError,
+    transcribe_audio as transcribe_local_audio,
+)
 import csv
 import asyncio
 import json
@@ -34,6 +46,88 @@ from edge_tts.exceptions import EdgeTTSException
 
 
 logger = logging.getLogger(__name__)
+
+CHATBOT_MESSAGE_MAX_LENGTH = 4000
+CHATBOT_REQUEST_MAX_LENGTH = 16 * 1024
+CHATBOT_RATE_LIMIT = 20
+CHATBOT_RATE_WINDOW = 60
+AUDIO_MAX_BYTES = 10 * 1024 * 1024
+AUDIO_MAX_DURATION_SECONDS = 5 * 60
+AUDIO_ALLOWED_EXTENSIONS = {'.aif', '.aiff', '.flac', '.m4a', '.mp3', '.ogg', '.wav', '.webm'}
+AUDIO_ALLOWED_CONTENT_TYPES = {
+    'audio/aac',
+    'audio/flac',
+    'audio/m4a',
+    'audio/mp4',
+    'audio/mpeg',
+    'audio/ogg',
+    'audio/wav',
+    'audio/webm',
+    'audio/x-aiff',
+    'audio/x-wav',
+    'application/ogg',
+}
+
+
+class RateLimitUnavailable(Exception):
+    """The configured cache backend could not enforce the request limit."""
+
+
+def _client_request_key(request, prefix):
+    identity = request.user.pk if request.user.is_authenticated else (
+        request.META.get('REMOTE_ADDR') or 'unknown'
+    )
+    return f'{prefix}:{hashlib.sha256(str(identity).encode()).hexdigest()}'
+
+
+def _rate_limit_request(request, prefix, limit, window):
+    key = _client_request_key(request, prefix)
+    try:
+        if cache.add(key, 1, timeout=window):
+            return True
+        count = cache.incr(key)
+    except ValueError:
+        try:
+            cache.set(key, 1, timeout=window)
+        except Exception as exc:
+            raise RateLimitUnavailable from exc
+        return True
+    except Exception as exc:
+        raise RateLimitUnavailable from exc
+    return count <= limit
+
+
+def _chatbot_request_error(request):
+    content_length = request.META.get('CONTENT_LENGTH')
+    try:
+        if content_length and int(content_length) > CHATBOT_REQUEST_MAX_LENGTH:
+            return 'Chatbot requests must be 16KB or smaller.'
+    except (TypeError, ValueError):
+        return 'Invalid chatbot request.'
+
+    message = request.GET.get('message', '')
+    if len(message) > CHATBOT_MESSAGE_MAX_LENGTH:
+        return 'Messages must be 4000 characters or fewer.'
+    try:
+        allowed = _rate_limit_request(
+            request, 'chatbot-rate', CHATBOT_RATE_LIMIT, CHATBOT_RATE_WINDOW
+        )
+    except RateLimitUnavailable:
+        return 'Chatbot is temporarily unavailable. Please try again shortly.', 503
+    if not allowed:
+        return 'Too many chatbot requests. Please wait a minute and try again.', 429
+    return None
+
+
+def _canonical_status_counts(status_rows):
+    counts = {}
+    for item in status_rows:
+        status = ApplicationRequest.LEGACY_STATUS_ALIASES.get(
+            item['status'],
+            item['status'],
+        )
+        counts[status] = counts.get(status, 0) + item['count']
+    return counts
 
 
 # -----------------------------
@@ -80,14 +174,145 @@ def profile(request):
         user_form = UserUpdateForm(instance=request.user)
         profile_form = UserProfileForm(instance=user_profile)
 
+    completion_fields = (
+        # Account fields (2)
+        request.user.username,
+        request.user.email,
+
+        # Original profile fields (8)
+        user_profile.phone,
+        user_profile.age,
+        user_profile.gender,
+        user_profile.education,
+        user_profile.income_range,
+        user_profile.category,
+        user_profile.state,
+        user_profile.district,
+
+        # Approved farmer profile fields (12)
+        user_profile.taluka,
+        user_profile.village_panchayat,
+        user_profile.rural_urban,
+        user_profile.pin_code,
+        user_profile.family_size,
+        user_profile.occupation,
+        user_profile.landholding_size,
+        user_profile.ownership_type,
+        user_profile.crops_grown,
+        user_profile.livestock_assets,
+        user_profile.farmer_type,
+        user_profile.ration_card_type,
+    )
+    profile_completion = round(
+        sum(value not in (None, '') for value in completion_fields)
+        / len(completion_fields)
+        * 100
+    )
+
     context = {
         'user_form': user_form,
         'profile_form': profile_form,
         'location_json': get_location_json(),
         'state_choices': get_state_choices(),
         'state_values': [value for value, _ in get_state_choices()],
+        'profile_completion': profile_completion,
     }
     return render(request, 'profile.html', context)
+
+
+@login_required
+def settings_view(request):
+    """Display and save per-user interface, notification, and voice settings."""
+    user_profile, created_profile = UserProfile.objects.get_or_create(user=request.user)
+    defaults = {
+        'language': 'en',
+        'appearance': 'light',
+        'font_size': 'normal',
+        'email_notifications': True,
+        'sms_alerts': False,
+        'voice_language': 'auto',
+        'autoplay_responses': True,
+    }
+    settings_data = {
+        key: request.session.get(
+            f'settings_{key}',
+            user_profile.email_notifications if key == 'email_notifications' else value,
+        )
+        for key, value in defaults.items()
+    }
+
+    if request.method == 'POST':
+        allowed = {
+            'language': {code for code, _ in conf_settings.LANGUAGES},
+            'appearance': {'light', 'dark'},
+            'font_size': {'small', 'normal', 'large'},
+            'voice_language': {'auto', 'en', 'hi', 'mr', 'te'},
+        }
+        for key, values in allowed.items():
+            value = request.POST.get(key)
+            if value in values:
+                settings_data[key] = value
+
+        for key in ('email_notifications', 'sms_alerts', 'autoplay_responses'):
+            settings_data[key] = request.POST.get(key) == 'on'
+
+        user_profile.email_notifications = settings_data['email_notifications']
+        user_profile.save(update_fields=['email_notifications'])
+        for key, value in settings_data.items():
+            request.session[f'settings_{key}'] = value
+        request.session.modified = True
+        messages.success(request, _('Your settings have been saved.'))
+
+        if settings_data['language'] != request.LANGUAGE_CODE:
+            return django_set_language(request)
+        return redirect('settings')
+
+    return render(request, 'settings.html', {
+        'settings_data': settings_data,
+        'language_choices': conf_settings.LANGUAGES,
+    })
+
+
+@login_required
+def notifications(request):
+    """Display the authenticated user's notification history."""
+    notification_list = Notification.objects.filter(
+        user=request.user,
+    ).select_related('application__scheme').order_by('-sent_at', '-pk')
+    paginator = Paginator(notification_list, 10)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    return render(request, 'notifications.html', {
+        'notifications': page_obj,
+        'page_obj': page_obj,
+    })
+
+
+@login_required
+@require_POST
+def mark_notification_read(request, notification_id):
+    """Mark one of the authenticated user's notifications as read."""
+    notification = get_object_or_404(
+        Notification,
+        pk=notification_id,
+        user=request.user,
+    )
+    if not notification.is_read:
+        notification.is_read = True
+        notification.read_at = timezone.now()
+        notification.save(update_fields=['is_read', 'read_at'])
+    return redirect('notifications')
+
+
+@login_required
+@require_POST
+def mark_all_notifications_read(request):
+    """Mark all unread notifications belonging to the current user as read."""
+    Notification.objects.filter(
+        user=request.user,
+        is_read=False,
+    ).update(is_read=True, read_at=timezone.now())
+    return redirect('notifications')
 
 
 # -----------------------------
@@ -95,7 +320,15 @@ def profile(request):
 # -----------------------------
 def home(request):
     """Home page with project overview"""
-    return render(request, 'home.html')
+    user_profile = getattr(request.user, 'userprofile', None)
+    dashboard_name = (
+        'admin_dashboard'
+        if getattr(user_profile, 'role', None) in {'admin', 'volunteer'}
+        else 'dashboard'
+    )
+    return render(request, 'home.html', {
+        'dashboard_url': reverse(dashboard_name),
+    })
 
 
 def scheme_awareness(request):
@@ -111,15 +344,24 @@ def scheme_awareness(request):
         type_filter = {'central': 'Central', 'state': 'State'}.get(type_filter.lower(), type_filter)
 
     if search_query:
-        schemes = schemes.filter(
-            Q(scheme_name__icontains=search_query)
-            | Q(description__icontains=search_query)
-            | Q(category__icontains=search_query)
-            | Q(department__icontains=search_query)
+        searchable_fields = (
+            'scheme_name', 'description', 'category', 'department',
+            'benefits', 'eligibility', 'state', 'scheme_type',
         )
+        search_terms = re.findall(r'\w+', search_query, flags=re.UNICODE)
+        for term in search_terms:
+            term_filter = Q()
+            for field in searchable_fields:
+                term_filter |= Q(**{f'{field}__icontains': term})
+            schemes = schemes.filter(term_filter)
 
     if state_filter:
-        schemes = schemes.filter(state__iexact=state_filter)
+        # Central schemes are national schemes (stored with state="India")
+        # and are available to farmers in every selected state.
+        state_scope = Q(state__iexact=state_filter)
+        if type_filter in ('', 'Central'):
+            state_scope |= Q(scheme_type='Central')
+        schemes = schemes.filter(state_scope)
 
     if category_filter:
         schemes = schemes.filter(category__iexact=category_filter)
@@ -142,6 +384,10 @@ def scheme_awareness(request):
         .distinct()
         .order_by('category')
     )
+    selected_state = next(
+        (state for state in states if state.casefold() == state_filter.casefold()),
+        state_filter,
+    )
 
     context = {
         'schemes': schemes.order_by('scheme_name'),
@@ -151,7 +397,7 @@ def scheme_awareness(request):
         'states': states,
         'categories': categories,
         'search_query': search_query,
-        'state_filter': state_filter,
+        'state_filter': selected_state,
         'category_filter': category_filter,
         'type_filter': type_filter,
     }
@@ -319,19 +565,71 @@ def scheme_translation_api(request):
     if language == 'en':
         return JsonResponse({'language': language, 'fields': fields})
 
+    local_fields = {}
+    unavailable_fields = []
+    for field, value in fields.items():
+        if not value.strip():
+            local_fields[field] = ''
+            continue
+        local_translation = lookup_local_translation(value, language)
+        if local_translation.available:
+            local_fields[field] = local_translation.text
+        else:
+            unavailable_fields.append(field)
+
     cache_fingerprint = hashlib.sha256(
         json.dumps(fields, ensure_ascii=False, sort_keys=True).encode('utf-8')
     ).hexdigest()
     cache_key = f'scheme_translation:{scheme.pk}:{language}:{cache_fingerprint}'
+    offline_only = request.GET.get('offline', '').strip().lower() in {
+        '1', 'true', 'yes', 'on'
+    }
+    if offline_only:
+        if unavailable_fields:
+            return JsonResponse({
+                'language': language,
+                'original_language': 'en',
+                'fields': local_fields,
+                'unavailable_fields': unavailable_fields,
+                'translation_status': 'partial' if local_fields else 'unavailable',
+                'source': 'local',
+                'message': (
+                    'Some scheme information is not available in the local '
+                    'offline translation catalog. English text is preserved.'
+                ),
+            })
+        return JsonResponse({
+            'language': language,
+            'original_language': 'en',
+            'fields': local_fields,
+            'unavailable_fields': [],
+            'translation_status': 'complete',
+            'source': 'local',
+        })
+
+    if not unavailable_fields:
+        response_data = {
+            'language': language,
+            'original_language': 'en',
+            'fields': local_fields,
+            'unavailable_fields': [],
+            'translation_status': 'complete',
+            'source': 'local',
+        }
+        cache.set(cache_key, response_data, timeout=24 * 60 * 60)
+        return JsonResponse(response_data)
+
     cached_translation = cache.get(cache_key)
     if cached_translation is not None:
         return JsonResponse(cached_translation)
 
     try:
-        translated_fields = {
-            field: _translate_text(value, language) if value.strip() else ''
-            for field, value in fields.items()
-        }
+        translated_fields = dict(local_fields)
+        translated_fields.update({
+            field: _translate_text(fields[field], language)
+            for field in unavailable_fields
+            if fields[field].strip()
+        })
     except VoiceServiceError as exc:
         logger.warning(
             'Scheme translation failed for scheme_id=%s language=%s: %s',
@@ -352,6 +650,9 @@ def scheme_translation_api(request):
         'language': language,
         'original_language': 'en',
         'fields': translated_fields,
+        'unavailable_fields': [],
+        'translation_status': 'complete',
+        'source': 'online',
     }
     cache.set(cache_key, response_data, timeout=24 * 60 * 60)
     return JsonResponse(response_data)
@@ -464,6 +765,16 @@ def scheme_voice_audio(request, scheme_id):
     return response
 
 
+# Active statuses block a second citizen submission for the same scheme.
+ACTIVE_APPLICATION_STATUSES = {
+    'Submitted',
+    'Applied',
+    'Under Review',
+    'Approved',
+    'Pending',
+}
+
+
 @login_required
 def apply_for_assistance(request):
     """Citizen application form"""
@@ -473,6 +784,31 @@ def apply_for_assistance(request):
 
     if request.method == 'POST':
         form = CitizenApplicationForm(request.POST)
+        if form.is_valid() and scheme and not (
+            scheme.min_age <= form.cleaned_data['age'] <= scheme.max_age
+        ):
+            form.add_error(
+                'age',
+                _(
+                    'This scheme accepts applicants between %(min_age)s and '
+                    '%(max_age)s years old.'
+                ) % {
+                    'min_age': scheme.min_age,
+                    'max_age': scheme.max_age,
+                },
+            )
+        if form.is_valid() and scheme and ApplicationRequest.objects.filter(
+            user=request.user,
+            scheme=scheme,
+            status__in=ACTIVE_APPLICATION_STATUSES,
+        ).exists():
+            form.add_error(
+                None,
+                _(
+                    'You already have an active application for this scheme. '
+                    'You may reapply after a rejected application.'
+                ),
+            )
         if form.is_valid():
             application = form.save(commit=False)
             application.user = request.user
@@ -481,13 +817,14 @@ def apply_for_assistance(request):
             application.save()
 
             scheme_name = scheme.scheme_name if scheme else _('government scheme assistance')
-            Notification.objects.create(
-                user=request.user,
-                notification_type='email',
-                subject=_('Application Submitted'),
-                message=_('Your application for %(scheme)s has been submitted successfully.') % {
+            notify(
+                request.user,
+                _('Application Submitted'),
+                _('Your application for %(scheme)s has been submitted successfully.') % {
                     'scheme': scheme_name,
                 },
+                email_to=application.email,
+                application=application,
             )
 
             if scheme:
@@ -523,8 +860,13 @@ def apply_for_assistance(request):
 @login_required
 def application_status(request):
     """Track application status"""
-    applications = ApplicationRequest.objects.filter(user=request.user)
-    return render(request, 'application_status.html', {'applications': applications})
+    applications = ApplicationRequest.objects.filter(
+        user=request.user,
+    ).select_related('scheme')
+    return render(request, 'application_status.html', {
+        'applications': applications,
+        'status_choices': ApplicationRequest.STATUS_CHOICES,
+    })
 
 
 # -----------------------------
@@ -532,38 +874,250 @@ def application_status(request):
 # -----------------------------
 @login_required
 def admin_dashboard(request):
-    """Admin/Volunteer dashboard"""
-    user_profile = UserProfile.objects.get(user=request.user)
+    """Admin/Volunteer dashboard with platform analytics."""
+    user_profile = get_object_or_404(UserProfile, user=request.user)
+
     if user_profile.role not in ['volunteer', 'admin']:
         return redirect('dashboard')
 
-    # Get all applications
-    applications = ApplicationRequest.objects.all().order_by('-created_at')
+    # Applications: newest first
+    applications = ApplicationRequest.objects.select_related(
+        'user', 'scheme'
+    ).order_by('-created_at')
 
-    # Statistics
+    # Application statistics
     total_applications = applications.count()
-    pending = applications.filter(status='Submitted').count()
-    under_review = applications.filter(status='Under Review').count()
-    applied = applications.filter(status='Applied').count()
-    approved = applications.filter(status='Approved').count()
-    rejected = applications.filter(status='Rejected').count()
+    status_totals = {}
+    for item in applications.values('status').annotate(total=Count('id')):
+        status = ApplicationRequest.LEGACY_STATUS_ALIASES.get(
+            item['status'],
+            item['status'],
+        )
+        status_totals[status] = status_totals.get(status, 0) + item['total']
+    status_counts = {
+        status: status_totals.get(status, 0)
+        for status, _ in ApplicationRequest.STATUS_CHOICES
+    }
+
+    # Scheme statistics
+    all_schemes = Scheme.objects.all()
+    total_schemes = all_schemes.count()
+    central_schemes = all_schemes.filter(scheme_type='Central').count()
+    state_schemes = all_schemes.filter(scheme_type='State').count()
+
+    # Farmer registration trends
+    now = timezone.now()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    month_start = today_start.replace(day=1)
+
+    def subtract_months(date_value, months):
+        month_index = date_value.year * 12 + date_value.month - 1 - months
+        year, month_index = divmod(month_index, 12)
+        return date_value.replace(year=year, month=month_index + 1, day=1)
+
+    week_start = today_start - timedelta(days=today_start.weekday())
+    six_months_ago = subtract_months(month_start, 6)
+    year_start = subtract_months(month_start, 12)
+
+    total_farmers = UserProfile.objects.filter(role='citizen').count()
+    notification_queue_counts = {
+        status: Notification.objects.filter(
+            notification_type='email',
+            delivery_status=status,
+        ).count()
+        for status in ('pending', 'sent', 'failed')
+    }
+    notification_queue_counts['sent_historical'] = Notification.objects.filter(
+        notification_type='email',
+        delivery_status='sent',
+        delivered_at__isnull=True,
+    ).count()
+    notification_queue_counts['sent_verified'] = Notification.objects.filter(
+        notification_type='email',
+        delivery_status='sent',
+        delivered_at__isnull=False,
+    ).count()
+    farmers_week = UserProfile.objects.filter(
+        role='citizen', user__date_joined__gte=week_start
+    ).count()
+    farmers_month = UserProfile.objects.filter(
+        role='citizen', user__date_joined__gte=month_start
+    ).count()
+    farmers_six_months = UserProfile.objects.filter(
+        role='citizen', user__date_joined__gte=six_months_ago
+    ).count()
+    farmers_year = UserProfile.objects.filter(
+        role='citizen', user__date_joined__gte=year_start
+    ).count()
+
+    trend_months = []
+    trend_counts = []
+    for months_ago in range(5, -1, -1):
+        start_date = subtract_months(month_start, months_ago)
+        end_date = subtract_months(month_start, months_ago - 1)
+        trend_months.append(start_date.strftime('%b'))
+        trend_counts.append(UserProfile.objects.filter(
+            role='citizen',
+            user__date_joined__gte=start_date,
+            user__date_joined__lt=end_date,
+        ).count())
+
+    application_trends = (
+        ApplicationRequest.objects
+        .filter(created_at__gte=six_months_ago)
+        .annotate(month=TruncMonth('created_at'))
+        .values('month')
+        .annotate(total=Count('id'))
+        .order_by('month')
+    )
+    application_trend_totals = {
+        (
+            item['month'].date()
+            if hasattr(item['month'], 'date')
+            else item['month']
+        ).replace(day=1): item['total']
+        for item in application_trends
+    }
+    application_trend_months = []
+    application_trend_counts = []
+    for months_ago in range(5, -1, -1):
+        month = subtract_months(month_start, months_ago).date()
+        application_trend_months.append(month.strftime('%b %Y'))
+        application_trend_counts.append(application_trend_totals.get(month, 0))
+
+    # Recently added schemes. The current model has no expiry or engagement
+    # fields, so those Dev-only concepts are not fabricated here.
+    recent_schemes = all_schemes.order_by('-created_at')[:6]
+    most_applied_schemes = (
+        ApplicationRequest.objects
+        .filter(scheme__isnull=False)
+        .values('scheme_id', 'scheme__scheme_name')
+        .annotate(total=Count('id'))
+        .order_by('-total', 'scheme__scheme_name')
+    )
+
+    # District-wise application statistics
+    district_data = list(
+        applications
+        .exclude(district__isnull=True)
+        .exclude(district__exact='')
+        .values('district', 'state')
+        .annotate(total=Count('id'))
+        .order_by('-total')[:10]
+    )
+
+    # Normalize district labels for display in the dashboard chart.
+    for item in district_data:
+        district = (item.get('district') or '').strip()
+
+        if not district or district.lower() == 'unknown':
+            item['district'] = 'Unknown'
+        else:
+            item['district'] = district.title()
+
+    # State-wise application statistics for charts
+    state_distribution = list(
+        UserProfile.objects.filter(role='citizen')
+        .exclude(state__isnull=True)
+        .exclude(state__exact='')
+        .values('state')
+        .annotate(total=Count('id'))
+        .order_by('-total')
+        [:8]
+    )
+
+    state_labels = json.dumps([
+        item['state']
+        for item in state_distribution
+    ])
+
+    state_data = json.dumps([
+        item['total']
+        for item in state_distribution
+    ])
 
     context = {
-        'applications': applications[:10],  # Recent 10
+        # Existing dashboard variables
+        'applications': applications[:10],
         'total_applications': total_applications,
-        'pending': pending,
-        'under_review': under_review,
-        'applied': applied,
-        'approved': approved,
-        'rejected': rejected,
+        'pending': status_counts['Submitted'],
+        'under_review': status_counts['Under Review'],
+        'applied': status_counts['Applied'],
+        'approved': status_counts['Approved'],
+        'rejected': status_counts['Rejected'],
+        'status_counts': status_counts,
+        'notification_queue_counts': notification_queue_counts,
+
+        # Additional analytics
+        'total_schemes': total_schemes,
+        'central_schemes': central_schemes,
+        'state_schemes': state_schemes,
+        'recent_schemes': recent_schemes,
+        'most_applied_schemes': most_applied_schemes,
+        'district_data': district_data,
+        'state_labels': state_labels,
+        'state_data': state_data,
+        'total_farmers': total_farmers,
+        'farmers_week': farmers_week,
+        'farmers_month': farmers_month,
+        'farmers_six_months': farmers_six_months,
+        'farmers_year': farmers_year,
+        'trend_months': json.dumps(trend_months),
+        'trend_counts': json.dumps(trend_counts),
+        'application_trend_months': json.dumps(application_trend_months),
+        'application_trend_counts': json.dumps(application_trend_counts),
+
+        # No expiry-date field exists in the current Scheme model.
+        'expiring_schemes': [],
     }
+
     return render(request, 'admin_dashboard.html', context)
+
+
+@login_required
+@require_GET
+def export_applications(request):
+    """Export application records for authorized dashboard users."""
+    user_profile = get_object_or_404(UserProfile, user=request.user)
+    if user_profile.role not in ['volunteer', 'admin']:
+        return redirect('dashboard')
+
+    content_type = 'text/csv'
+    filename = 'applications.csv'
+    response = HttpResponse(content_type=content_type)
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    writer = csv.writer(response)
+    writer.writerow([
+        'Application ID',
+        'Applicant',
+        'Scheme',
+        'Status',
+        'State',
+        'District',
+        'Application Date',
+    ])
+
+    applications = ApplicationRequest.objects.select_related('scheme').order_by(
+        '-created_at'
+    )
+    for application in applications:
+        writer.writerow([
+            application.application_number or application.id,
+            application.name,
+            application.scheme.scheme_name if application.scheme else '',
+            application.status,
+            application.state,
+            application.district,
+            application.created_at.isoformat(),
+        ])
+
+    return response
 
 
 @login_required
 def manage_schemes(request):
     """Manage government schemes"""
-    user_profile = UserProfile.objects.get(user=request.user)
+    user_profile = get_object_or_404(UserProfile, user=request.user)
     if user_profile.role not in ['volunteer', 'admin']:
         return redirect('dashboard')
 
@@ -576,7 +1130,7 @@ def manage_schemes(request):
     else:
         form = SchemeForm()
 
-    schemes = Scheme.objects.all()
+    schemes = Scheme.objects.all().order_by('-created_at')
     return render(request, 'manage_schemes.html', {'form': form, 'schemes': schemes})
 
 
@@ -591,14 +1145,30 @@ def update_application_status(request, app_id):
 
     if request.method == 'POST':
         new_status = request.POST.get('status')
-        notes = request.POST.get('notes')
+        notes = (request.POST.get('notes') or '').strip()
+        farmer_message = get_farmer_status_message(
+            new_status,
+            request.POST.get('farmer_message') or '',
+        )
+        valid_statuses = {status for status, _ in ApplicationRequest.STATUS_CHOICES}
+        if new_status not in valid_statuses:
+            messages.error(request, _('Please select a valid application status.'))
+            return redirect('admin_dashboard')
+
         application.status = new_status
         application.notes = notes
+        application.farmer_message = farmer_message
         application.applied_by = request.user
-        application.save()
+        application.save(update_fields=[
+            'status',
+            'notes',
+            'farmer_message',
+            'applied_by',
+            'updated_at',
+        ])
 
         # Create an in-app notification and attempt to send an email
-        notify_application_status(application, new_status, notes or '')
+        notify_application_status(application, new_status, farmer_message)
 
         messages.success(request, _('Application status updated!'))
         return redirect('admin_dashboard')
@@ -614,6 +1184,7 @@ def update_application_status(request, app_id):
 
 
 @login_required
+@require_POST
 def apply_scheme_admin(request, app_id, scheme_id):
     """Apply for scheme on behalf of citizen"""
     user_profile = get_object_or_404(UserProfile, user=request.user)
@@ -623,6 +1194,16 @@ def apply_scheme_admin(request, app_id, scheme_id):
     application = get_object_or_404(ApplicationRequest, id=app_id)
     scheme = get_object_or_404(Scheme, id=scheme_id)
 
+    if application.scheme_id == scheme.id and application.status in {
+        'Applied',
+        'Under Review',
+        'Approved',
+    }:
+        messages.info(request, _('This application has already been applied for this scheme.'))
+        return redirect('admin_dashboard')
+
+    # Rejected applications may be submitted again for the same scheme.
+    # This preserves the existing reapplication workflow.
     # Update application
     application.scheme = scheme
     application.status = 'Applied'
@@ -630,12 +1211,12 @@ def apply_scheme_admin(request, app_id, scheme_id):
     application.application_number = f"APP-{application.id}-{scheme.id}"
     application.save()
 
-    # Send notification
-    Notification.objects.create(
-        user=application.user,
-        notification_type='email',
-        subject=_('Scheme Applied'),
-        message=_(f'We have applied for {scheme.scheme_name} on your behalf.')
+    notify(
+        application.user,
+        _('Scheme Applied'),
+        _(f'We have applied for {scheme.scheme_name} on your behalf.'),
+        email_to=application.email,
+        application=application,
     )
 
     messages.success(request, _('Scheme applied successfully!'))
@@ -681,79 +1262,69 @@ def reports(request):
     return render(request, 'reports.html', context)
 
 
-# -----------------------------
-# LANGUAGE SWITCHER
-# -----------------------------
 def set_language(request):
-    """Set user language preference and redirect to language-prefixed URL."""
-    lang_code = request.GET.get('lang') or request.POST.get('lang') or 'en'
-    valid_codes = {code for code, _ in conf_settings.LANGUAGES}
-    if lang_code not in valid_codes:
-        lang_code = 'en'
-
-    # Prefer explicit next target, otherwise fall back to referrer.
-    next_url = request.GET.get('next') or request.POST.get('next') or request.META.get('HTTP_REFERER', '/')
-
-    # Prevent open redirects.
-    if not url_has_allowed_host_and_scheme(
-        url=next_url,
-        allowed_hosts={request.get_host()},
-        require_https=request.is_secure(),
-    ):
-        next_url = '/'
-
-    parsed = urlparse(next_url)
-    path_only = parsed.path or '/'
-    query = f'?{parsed.query}' if parsed.query else ''
-    fragment = f'#{parsed.fragment}' if parsed.fragment else ''
-
-    # Strip any existing language prefix so we never double-prefix.
-    all_lang_codes = [code for code, _ in conf_settings.LANGUAGES if code != 'en']
-    for code in all_lang_codes:
-        if path_only.startswith(f'/{code}/'):
-            path_only = path_only[len(code) + 1:]  # strip /code, keep leading /
-            break
-        if path_only == f'/{code}':
-            path_only = '/'
-            break
-
-    # Build language-prefixed path directly.
-    # English uses no prefix (prefix_default_language=False in i18n_patterns).
-    if lang_code == 'en':
-        next_path = path_only + query + fragment
-    else:
-        next_path = f'/{lang_code}{path_only}' + query + fragment
-
-    response = redirect(next_path)
-    
-    # Store language in session so LocaleMiddleware can find it immediately
-    if hasattr(request, 'session'):
-        request.session['_language'] = lang_code
-        request.session.modified = True
-    
-    # Also set language cookie for persistence
-    response.set_cookie(
-        conf_settings.LANGUAGE_COOKIE_NAME,
-        lang_code,
-        max_age=getattr(conf_settings, 'LANGUAGE_COOKIE_AGE', 365 * 24 * 60 * 60),
-        path=getattr(conf_settings, 'LANGUAGE_COOKIE_PATH', '/'),
-        secure=getattr(conf_settings, 'LANGUAGE_COOKIE_SECURE', False),
-        httponly=getattr(conf_settings, 'LANGUAGE_COOKIE_HTTPONLY', False),
-        samesite=getattr(conf_settings, 'LANGUAGE_COOKIE_SAMESITE', 'Lax'),
-    )
-    return response
+    """Allow only configured languages while delegating switching to Django."""
+    if request.method == 'POST':
+        supported_codes = {code for code, _ in conf_settings.LANGUAGES}
+        if request.POST.get('language') not in supported_codes:
+            request.POST = request.POST.copy()
+            request.POST['language'] = ''
+    return django_set_language(request)
 
 
 # -----------------------------
 # DASHBOARD
 # -----------------------------
 @login_required
+def farmer_dashboard(request):
+    """Personalized dashboard for citizen/farmer accounts."""
+    user_profile, _ = UserProfile.objects.get_or_create(user=request.user)
+
+    if user_profile.role in ['admin', 'volunteer']:
+        return redirect('admin_dashboard')
+
+    user_applications = ApplicationRequest.objects.filter(
+        user=request.user,
+    ).select_related('scheme')
+    total_applications = user_applications.count()
+    approved_applications = user_applications.filter(status='Approved').count()
+    pending_review = user_applications.filter(
+        status__in=['Pending', 'Submitted', 'Under Review'],
+    ).count()
+
+    status_data = [
+        {'status': status, 'count': count}
+        for status, count in _canonical_status_counts(
+            user_applications.values('status').annotate(count=Count('id'))
+        ).items()
+    ]
+    notifications = Notification.objects.filter(user=request.user).order_by('-sent_at')[:3]
+    recommended_schemes = Scheme.objects.all().order_by('-created_at')[:3]
+
+    context = {
+        'user_profile': user_profile,
+        'total_applications': total_applications,
+        'approved_applications': approved_applications,
+        'pending_review': pending_review,
+        'available_schemes': Scheme.objects.count(),
+        'recent_applications': user_applications[:5],
+        'notifications': notifications,
+        'status_data': json.dumps(status_data),
+        'recommended_schemes': recommended_schemes,
+    }
+    return render(request, 'farmer_dashboard.html', context)
+
+
+@login_required
 def dashboard(request):
 
     # 📊 APPLICATION STATISTICS (USER SPECIFIC)
     total_applications = ApplicationRequest.objects.filter(user=request.user).count()
     approved_apps = ApplicationRequest.objects.filter(user=request.user, status='Approved').count()
-    pending_apps = ApplicationRequest.objects.filter(user=request.user, status='Pending').count()
+    pending_apps = ApplicationRequest.objects.filter(
+        user=request.user,
+        status__in=['Pending', 'Submitted', 'Under Review'],
+    ).count()
     rejected_apps = ApplicationRequest.objects.filter(user=request.user, status='Rejected').count()
 
     # 📊 SCHEME STATISTICS (GLOBAL, since schemes are public)
@@ -785,10 +1356,14 @@ def dashboard(request):
     )
 
     # 📊 APPLICATION STATUS DATA (USER SPECIFIC)
-    status_data = list(
-        ApplicationRequest.objects.filter(user=request.user).values('status')
-        .annotate(count=Count('status'))
-    )
+    status_data = [
+        {'status': status, 'count': count}
+        for status, count in _canonical_status_counts(
+            ApplicationRequest.objects.filter(user=request.user)
+            .values('status')
+            .annotate(count=Count('status'))
+        ).items()
+    ]
 
     # 📊 APPLICATIONS BY STATE (USER SPECIFIC)
     state_data = list(
@@ -1025,20 +1600,59 @@ def state_schemes_public_api(request, state_name):
 # -----------------------------
 # AI RECOMMENDATION
 # -----------------------------
+def _scheme_allows_state(scheme, state):
+    """Return whether a scheme may be considered for the requested state.
+
+    A missing farmer state skips geographic filtering because location is
+    optional in the recommendation forms. A missing scheme state is malformed
+    data and is never treated as a match.
+    """
+    state = (state or '').strip().casefold()
+    scheme_state = (scheme.state or '').strip().casefold()
+    if not scheme_state:
+        return False
+    if not state:
+        return True
+    if scheme.scheme_type == 'Central' or scheme_state in {'india', 'all'}:
+        return True
+    return scheme_state == state
+
+
+def _scheme_allows_category(scheme, category):
+    """Return whether a scheme may be considered for the requested category."""
+    category = (category or '').strip().casefold()
+    if not category:
+        return True
+
+    scheme_category = (scheme.category or '').strip().casefold()
+    return not scheme_category or scheme_category == 'all' or scheme_category == category
+
+
 @login_required
 def recommend_schemes(request):
     schemes = []
     form_data = {}
 
     if request.method == 'POST':
+        age_value = (request.POST.get('age') or '').strip()
+        income_value = (request.POST.get('income') or '').strip()
+        validation_error = None
         try:
-            age = max(int(request.POST.get('age') or 0), 0)
+            age = int(age_value)
+            if age < 0:
+                raise ValueError
         except (TypeError, ValueError):
             age = 0
+            validation_error = _('Please enter a valid non-negative age.')
         try:
-            income = max(int(request.POST.get('income') or 0), 0)
+            income = int(income_value)
+            if income < 0:
+                raise ValueError
         except (TypeError, ValueError):
             income = 0
+            validation_error = validation_error or _(
+                'Please enter a valid non-negative annual income.'
+            )
         category = (request.POST.get('category') or '').strip()
         state = (request.POST.get('state') or '').strip()
 
@@ -1052,28 +1666,32 @@ def recommend_schemes(request):
         all_schemes = Scheme.objects.all()
         results = []
 
-        for scheme in all_schemes:
+        for scheme in all_schemes if validation_error is None else []:
+            if not _scheme_allows_state(scheme, state):
+                continue
+            if not _scheme_allows_category(scheme, category):
+                continue
+            if not scheme.min_age <= age <= scheme.max_age:
+                continue
+            if income > scheme.income_limit:
+                continue
+
             score = 0
             reasons = []
 
-            if age and scheme.min_age <= age <= scheme.max_age:
-                score += 40
-                reasons.append("Age eligible")
+            score += 30
+            reasons.append("Age eligible")
 
-            if not income or income <= scheme.income_limit:
-                score += 30
-                if income:
-                    reasons.append("Income eligible")
+            score += 30
+            reasons.append("Income eligible")
 
-            if not category or scheme.category == "All" or scheme.category.lower() == category.lower():
+            if category:
                 score += 20
-                if category:
-                    reasons.append("Category match")
+                reasons.append("Category match")
 
-            if not state or state.lower() in (scheme.state or '').lower():
-                score += 10
-                if state:
-                    reasons.append("State match")
+            if state and scheme.scheme_type != 'Central' and (scheme.state or '').casefold() != 'india':
+                score += 20
+                reasons.append("Location match")
 
             scheme_official = _format_link(scheme.official_website)
             scheme_apply = _format_link(scheme.apply_link) or scheme_official
@@ -1089,11 +1707,144 @@ def recommend_schemes(request):
         # SORT BY SCORE
         results = sorted(results, key=lambda x: x['score'], reverse=True)
 
-        schemes = results[:5]   # TOP 5
+        schemes = [result for result in results if result['score'] >= 40][:5]
 
     return render(request, 'recommend.html', {
         'schemes': schemes,
-        'form_data': form_data
+        'form_data': form_data,
+        'validation_error': validation_error if request.method == 'POST' else None,
+    })
+
+
+@login_required
+def ai_recommendation(request):
+    """Render the original profile-based AI recommendation experience."""
+    schemes = []
+    form_data = {
+        'age': '',
+        'income': '',
+        'category': 'General',
+        'state': '',
+        'education': '',
+        'filter_state': '',
+        'filter_category': 'All',
+        'search': '',
+    }
+
+    if request.method == 'POST':
+        age_value = (request.POST.get('age') or '').strip()
+        income_value = (request.POST.get('income') or '').strip()
+        validation_error = None
+        try:
+            age = int(age_value)
+            if age < 0:
+                raise ValueError
+        except (TypeError, ValueError):
+            age = 0
+            validation_error = _('Please enter a valid non-negative age.')
+        try:
+            income = int(income_value)
+            if income < 0:
+                raise ValueError
+        except (TypeError, ValueError):
+            income = 0
+            validation_error = validation_error or _(
+                'Please enter a valid non-negative annual income.'
+            )
+
+        form_data.update({
+            'age': age,
+            'income': income,
+            'category': (request.POST.get('category') or 'General').strip(),
+            'state': (request.POST.get('state') or '').strip(),
+            'education': (request.POST.get('education') or '').strip(),
+            'filter_state': (request.POST.get('filter_state') or '').strip(),
+            'filter_category': (request.POST.get('filter_category') or 'All').strip(),
+            'search': (request.POST.get('search') or '').strip(),
+        })
+
+        for scheme in Scheme.objects.all() if validation_error is None else []:
+            if not _scheme_allows_state(scheme, form_data['state']):
+                continue
+            if not _scheme_allows_category(scheme, form_data['category']):
+                continue
+            if not scheme.min_age <= age <= scheme.max_age:
+                continue
+            if income > scheme.income_limit:
+                continue
+
+            age_score = 40
+            income_score = 30
+            category_score = 20 if form_data['category'] else 0
+            location_score = 10 if (
+                form_data['state']
+                and scheme.scheme_type != 'Central'
+                and (scheme.state or '').casefold() != 'india'
+            ) else 0
+
+            if form_data['filter_state'] and not _scheme_allows_state(scheme, form_data['filter_state']):
+                continue
+            if (
+                form_data['filter_category'] != 'All'
+                and not _scheme_allows_category(scheme, form_data['filter_category'])
+            ):
+                continue
+            if form_data['search']:
+                searchable = ' '.join((
+                    scheme.scheme_name,
+                    scheme.department,
+                    scheme.eligibility or '',
+                    scheme.documents_required or '',
+                )).lower()
+                if form_data['search'].lower() not in searchable:
+                    continue
+
+            score = age_score + income_score + category_score + location_score
+            reasons = []
+            if age_score:
+                reasons.append('Age eligible')
+            if income_score:
+                reasons.append('Income eligible')
+            if category_score:
+                reasons.append('Category match')
+            if location_score and form_data['state']:
+                reasons.append('Location match')
+
+            schemes.append({
+                'scheme': scheme,
+                'score': score,
+                'reasons': reasons,
+                'breakdown': {
+                    'eligibility': age_score + income_score,
+                    'location': location_score,
+                    'category': category_score,
+                },
+                'official_url': _format_link(scheme.official_website),
+                'apply_url': _format_link(scheme.apply_link) or _format_link(scheme.official_website),
+            })
+
+        schemes = sorted(schemes, key=lambda item: item['score'], reverse=True)[:5]
+
+    states = list(
+        Scheme.objects.exclude(state__isnull=True)
+        .exclude(state__exact='')
+        .values_list('state', flat=True)
+        .distinct()
+        .order_by('state')
+    )
+    categories = list(
+        Scheme.objects.exclude(category__isnull=True)
+        .exclude(category__exact='')
+        .values_list('category', flat=True)
+        .distinct()
+        .order_by('category')
+    )
+    return render(request, 'ai_recommendation.html', {
+        'schemes': schemes,
+        'form_data': form_data,
+        'validation_error': validation_error if request.method == 'POST' else None,
+        'states': states,
+        'categories': categories,
     })
 
 
@@ -1152,6 +1903,8 @@ def _normalize_lang_code(raw_lang):
         return 'mr'
     if lang in ['en', 'en-in', 'english']:
         return 'en'
+    if lang in ['te', 'te-in', 'telugu']:
+        return 'te'
     return 'auto'
 
 
@@ -1210,7 +1963,7 @@ def _localize_text(key, lang='en'):
     return messages.get(key, {}).get(lang, messages.get(key, {}).get('en', ''))
 
 
-def _transcribe_audio_with_openai(audio_file):
+def _transcribe_audio_with_openai(audio_file, language='auto'):
     """Return transcript text using Whisper when API key is configured."""
     api_key = getattr(settings, 'OPENAI_API_KEY', None)
     if not api_key or openai is None:
@@ -1221,10 +1974,14 @@ def _transcribe_audio_with_openai(audio_file):
     if client:
         try:
             content_type = getattr(audio_file, 'content_type', None) or 'audio/webm'
-            transcript = client.audio.transcriptions.create(
-                model='whisper-1',
-                file=(getattr(audio_file, 'name', 'voice.webm'), audio_file, content_type),
-            )
+            transcription_options = {
+                'model': 'whisper-1',
+                'file': (getattr(audio_file, 'name', 'voice.webm'), audio_file, content_type),
+            }
+            normalized_language = _normalize_lang_code(language)
+            if normalized_language != 'auto':
+                transcription_options['language'] = normalized_language
+            transcript = client.audio.transcriptions.create(**transcription_options)
             text = getattr(transcript, 'text', '') or ''
             if text:
                 return text.strip()
@@ -1236,11 +1993,88 @@ def _transcribe_audio_with_openai(audio_file):
 
     # Legacy SDK path
     try:
-        transcript = openai.Audio.transcribe('whisper-1', audio_file)
+        normalized_language = _normalize_lang_code(language)
+        transcription_options = {}
+        if normalized_language != 'auto':
+            transcription_options['language'] = normalized_language
+        transcript = openai.Audio.transcribe(
+            'whisper-1',
+            audio_file,
+            **transcription_options,
+        )
         text = transcript.get('text', '') if isinstance(transcript, dict) else ''
         return (text or '').strip()
     except Exception:
         return ''
+
+
+def _ffmpeg_binary():
+        try:
+            import imageio_ffmpeg
+            return imageio_ffmpeg.get_ffmpeg_exe()
+        except Exception:
+            return 'ffmpeg'
+
+
+def _validate_audio_content(audio_file):
+        """Validate an uploaded audio stream before passing it to a provider."""
+        suffix = os.path.splitext(getattr(audio_file, 'name', 'voice.webm'))[1].lower() or '.webm'
+        tmp_path = None
+        try:
+            temporary_file = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
+            tmp_path = temporary_file.name
+            try:
+                audio_file.seek(0)
+                temporary_file.write(audio_file.read())
+                temporary_file.flush()
+            finally:
+                temporary_file.close()
+
+            validation = subprocess.run(
+                [
+                    _ffmpeg_binary(),
+                    '-hide_banner',
+                    '-i',
+                    tmp_path,
+                    '-map',
+                    '0:a:0',
+                    '-f',
+                    'null',
+                    '-',
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                timeout=15,
+            )
+            duration_match = re.search(
+                rb'Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)',
+                validation.stderr,
+            )
+            if validation.returncode != 0 or duration_match is None:
+                return 'The uploaded file is not a valid audio recording.'
+            duration = (
+                int(duration_match.group(1)) * 3600
+                + int(duration_match.group(2)) * 60
+                + float(duration_match.group(3))
+            )
+            if duration > AUDIO_MAX_DURATION_SECONDS:
+                return 'Audio recordings must be 5 minutes or shorter.'
+            return ''
+        except subprocess.TimeoutExpired:
+            return 'Audio validation took too long. Please use a shorter recording.'
+        except Exception:
+            return 'Unable to validate the uploaded audio recording.'
+        finally:
+            try:
+                audio_file.seek(0)
+            except Exception:
+                pass
+            if tmp_path:
+                try:
+                    os.remove(tmp_path)
+                except FileNotFoundError:
+                    pass
 
 
 def _transcribe_audio_without_openai(audio_file, language='auto'):
@@ -1251,8 +2085,7 @@ def _transcribe_audio_without_openai(audio_file, language='auto'):
         return '', 'SpeechRecognition library not installed on server.'
 
     try:
-        import imageio_ffmpeg
-        ffmpeg_bin = imageio_ffmpeg.get_ffmpeg_exe()
+        ffmpeg_bin = _ffmpeg_binary()
     except Exception:
         ffmpeg_bin = 'ffmpeg'
 
@@ -1261,21 +2094,59 @@ def _transcribe_audio_without_openai(audio_file, language='auto'):
         'hi': 'hi-IN',
         'mr': 'mr-IN',
         'en': 'en-IN',
+        'te': 'te-IN',
         'auto': 'hi-IN',
     }[requested_lang]
 
     recognizer = sr.Recognizer()
-    suffix = os.path.splitext(getattr(audio_file, 'name', 'voice.webm'))[1] or '.webm'
+    suffix = os.path.splitext(getattr(audio_file, 'name', 'voice.webm'))[1].lower() or '.webm'
 
-    tmp_in = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
-    tmp_in.write(audio_file.read())
-    tmp_in.flush()
-    tmp_in_path = tmp_in.name
-    tmp_in.close()
-
-    tmp_wav_path = tempfile.NamedTemporaryFile(delete=False, suffix='.wav').name
-
+    tmp_in_path = None
+    tmp_wav_path = None
     try:
+        tmp_in = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
+        tmp_in_path = tmp_in.name
+        try:
+            tmp_in.write(audio_file.read())
+            tmp_in.flush()
+        finally:
+            tmp_in.close()
+
+        tmp_wav = tempfile.NamedTemporaryFile(delete=False, suffix='.wav')
+        tmp_wav_path = tmp_wav.name
+        tmp_wav.close()
+
+        validation = subprocess.run(
+            [
+                ffmpeg_bin,
+                '-hide_banner',
+                '-i',
+                tmp_in_path,
+                '-map',
+                '0:a:0',
+                '-f',
+                'null',
+                '-',
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+            timeout=15,
+        )
+        duration_match = re.search(
+            rb'Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)',
+            validation.stderr,
+        )
+        if validation.returncode != 0 or duration_match is None:
+            return '', 'The uploaded file is not a valid audio recording.'
+        duration = (
+            int(duration_match.group(1)) * 3600
+            + int(duration_match.group(2)) * 60
+            + float(duration_match.group(3))
+        )
+        if duration > AUDIO_MAX_DURATION_SECONDS:
+            return '', 'Audio recordings must be 5 minutes or shorter.'
+
         input_ext = suffix.lower()
         source_path = tmp_in_path
 
@@ -1285,7 +2156,13 @@ def _transcribe_audio_without_openai(audio_file, language='auto'):
                 ffmpeg_bin, '-y', '-i', tmp_in_path,
                 '-ac', '1', '-ar', '16000', '-f', 'wav', tmp_wav_path
             ]
-            proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+            proc = subprocess.run(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+                timeout=30,
+            )
             if proc.returncode != 0:
                 return '', 'Audio conversion failed on server. Please try again with a clear 5-6 second recording.'
             source_path = tmp_wav_path
@@ -1297,6 +2174,8 @@ def _transcribe_audio_without_openai(audio_file, language='auto'):
         return (text or '').strip(), ''
     except sr.UnknownValueError:
         return '', 'Could not understand the recorded audio. Please speak clearly and retry.'
+    except subprocess.TimeoutExpired:
+        return '', 'Audio conversion took too long. Please use a shorter recording.'
     except sr.RequestError:
         return '', 'Speech service is unavailable from server right now. Please try again in a minute.'
     except Exception:
@@ -1308,6 +2187,109 @@ def _transcribe_audio_without_openai(audio_file, language='auto'):
                     os.remove(path)
             except Exception:
                 pass
+
+
+def _transcription_provider():
+    provider = os.getenv('TRANSCRIPTION_PROVIDER', 'auto').strip().lower()
+    if provider in {'auto', 'local', 'openai', 'google'}:
+        return provider
+    return ''
+
+
+def _reset_audio_file(audio_file):
+    try:
+        audio_file.seek(0)
+    except Exception:
+        pass
+
+
+def _local_transcription_error(exc):
+    if isinstance(exc, UnsupportedLanguageError):
+        return str(exc), 400
+    if isinstance(exc, InvalidAudioError):
+        return str(exc), 400
+    if isinstance(exc, ModelUnavailableError):
+        return 'The requested offline transcription model is unavailable.', 503
+    if isinstance(exc, RecognitionError):
+        return 'Offline transcription could not recognize the audio.', 502
+    return 'Offline transcription failed.', 502
+
+
+def _transcribe_with_selected_provider(audio_file, language):
+    provider = _transcription_provider()
+    if not provider:
+        return None, {
+            'error': 'TRANSCRIPTION_PROVIDER must be auto, local, openai, or google.'
+        }, 500
+
+    normalized_language = _normalize_lang_code(language)
+    local_language = normalized_language in {'hi', 'te'}
+    local_error = None
+
+    if provider == 'local' and not local_language:
+        return None, {
+            'error': (
+                'Offline transcription is supported only for Hindi and Telugu. '
+                'No local Marathi model is configured.'
+            )
+        }, 400
+
+    if provider in {'local', 'auto'} and (provider == 'local' or local_language):
+        _reset_audio_file(audio_file)
+        try:
+            transcript = transcribe_local_audio(
+                audio_file,
+                language=normalized_language,
+            )
+            if transcript:
+                return transcript, {
+                    'provider': 'vosk',
+                    'offline': True,
+                    'language': normalized_language,
+                }, 200
+        except (
+            InvalidAudioError,
+            ModelUnavailableError,
+            RecognitionError,
+            UnsupportedLanguageError,
+        ) as exc:
+            local_error = exc
+            if provider == 'local':
+                error, status = _local_transcription_error(exc)
+                return None, {'error': error}, status
+
+    if provider in {'auto', 'openai'}:
+        _reset_audio_file(audio_file)
+        transcript = _transcribe_audio_with_openai(audio_file, language=language)
+        if transcript:
+            return transcript, {
+                'provider': 'openai',
+                'offline': False,
+                'language': normalized_language,
+            }, 200
+        if provider == 'openai':
+            return None, {
+                'error': 'OpenAI transcription is unavailable.'
+            }, 502
+
+    _reset_audio_file(audio_file)
+    transcript, fallback_error = _transcribe_audio_without_openai(
+        audio_file,
+        language=language,
+    )
+    if transcript:
+        return transcript, {
+            'provider': 'google',
+            'offline': False,
+            'language': normalized_language,
+        }, 200
+
+    if local_error and normalized_language in {'hi', 'te'}:
+        error, _ = _local_transcription_error(local_error)
+        fallback_error = fallback_error or error
+    return None, {
+        'error': fallback_error or 'Unable to transcribe audio.'
+    }, 502
 
 
 def _extract_profile_from_message(message):
@@ -1420,23 +2402,29 @@ def transcribe_voice(request):
     if not audio_file:
         return JsonResponse({'error': 'Audio file is required.'}, status=400)
 
-    if audio_file.size > 10 * 1024 * 1024:
+    extension = os.path.splitext(audio_file.name or '')[1].lower()
+    content_type = (audio_file.content_type or '').lower()
+    if extension not in AUDIO_ALLOWED_EXTENSIONS or content_type not in AUDIO_ALLOWED_CONTENT_TYPES:
+        return JsonResponse(
+            {'error': 'Unsupported audio format. Upload a supported audio recording.'},
+            status=400,
+        )
+
+    if audio_file.size > AUDIO_MAX_BYTES:
         return JsonResponse({'error': 'Audio file too large. Please keep it under 10MB.'}, status=400)
 
-    transcript = _transcribe_audio_with_openai(audio_file)
-    if not transcript:
-        try:
-            audio_file.seek(0)
-        except Exception:
-            pass
-        transcript, fallback_error = _transcribe_audio_without_openai(audio_file, language=language)
+    validation_error = _validate_audio_content(audio_file)
+    if validation_error:
+        return JsonResponse({'error': validation_error}, status=400)
 
+    transcript, response_data, status = _transcribe_with_selected_provider(
+        audio_file,
+        language,
+    )
     if not transcript:
-        return JsonResponse({
-            'error': fallback_error or 'Unable to transcribe audio. Configure OPENAI_API_KEY or install fallback STT dependencies.'
-        }, status=502)
+        return JsonResponse(response_data, status=status)
 
-    return JsonResponse({'transcript': transcript})
+    return JsonResponse({'transcript': transcript, **response_data})
 
 
 def _stream_text_chunks(text):
@@ -1484,6 +2472,14 @@ def _build_openai_messages(message, response_lang):
 
 
 def chatbot(request):
+    request_error = _chatbot_request_error(request)
+    if request_error:
+        error, status = request_error if isinstance(request_error, tuple) else (
+            request_error,
+            413 if '4000' in request_error or '16KB' in request_error else 429,
+        )
+        return JsonResponse({'error': error}, status=status)
+
     message = request.GET.get('message', '').strip()
     mode = request.GET.get('mode', 'auto').lower()
     requested_lang = request.GET.get('lang', 'auto')
@@ -1513,7 +2509,7 @@ def chatbot(request):
             except Exception:
                 reply = get_local_response()
         else:
-            reply = "OpenAI API key is not configured. Please switch to Local mode." 
+            reply = "The AI service is unavailable. Please switch to Local mode."
     else:
         # auto mode: prefer OpenAI if available
         client = _get_openai_client()
@@ -1537,6 +2533,18 @@ def chatbot(request):
 
 
 def chatbot_stream(request):
+    request_error = _chatbot_request_error(request)
+    if request_error:
+        error, status = request_error if isinstance(request_error, tuple) else (
+            request_error,
+            413 if '4000' in request_error or '16KB' in request_error else 429,
+        )
+        response = JsonResponse(
+            {'error': error},
+            status=status,
+        )
+        return response
+
     message = request.GET.get('message', '').strip()
     mode = request.GET.get('mode', 'auto').lower()
     requested_lang = request.GET.get('lang', 'auto')

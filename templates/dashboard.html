@@ -7,8 +7,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% trans "SmartAssist - Agricultural Schemes Dashboard" %}</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="{% static 'vendor/chartjs/chart.umd.js' %}"></script>
+    <link rel="stylesheet" href="{% static 'css/offline-fonts.css' %}">
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
     <style>
         * {
             margin: 0;
@@ -17,7 +18,7 @@
         }
 
         body {
-            font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
             background:
                 radial-gradient(circle at 10% 0%, rgba(34, 126, 255, 0.14), transparent 32%),
                 radial-gradient(circle at 100% 20%, rgba(26, 197, 137, 0.14), transparent 28%),
@@ -515,14 +516,6 @@
             display: flex;
             align-items: center;
             gap: 15px;
-        }
-
-        .gov-logo {
-            width: 40px;
-            height: 30px;
-            object-fit: cover;
-            border-radius: 3px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .section-header h3 {
@@ -1189,7 +1182,7 @@
 <!-- HEADER -->
 <div class="header">
     <div class="header-left">
-        <img src="{% static 'images/gov_emblem.png' %}" alt="Government Emblem" class="header-logo" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Emblem_of_India.svg/256px-Emblem_of_India.svg.png'">
+        <img src="{% static 'images/gov_emblem.png' %}" alt="Government Emblem" class="header-logo" onerror="this.onerror=null;this.style.display='none'">
         <h1>{% trans "SmartAssist Agriculture Dashboard" %}</h1>
         <img src="{% static 'images/gov_emblem.png' %}" alt="Govt Logo" class="header-logo-small" onerror="this.style.display='none'">
     </div>
@@ -1198,11 +1191,12 @@
             <div>{% trans "Welcome" %}, <strong>{{ user.username }}</strong></div>
             <div style="font-size: 12px; margin-top: 5px;">{% trans "Government Schemes Portal" %}</div>
         </div>
-        <a href="{% url 'recommend' %}" class="nav-btn">🤖 {% trans "AI Recommendations" %}</a>
-        <a href="{% url 'my_apps' %}" class="nav-btn">📋 {% trans "My Applications" %}</a>
+        <a href="{% url 'recommend' %}" class="nav-btn">{% trans "Eligibility" %}</a>
+        <a href="{% url 'ai_recommendation' %}" class="nav-btn">{% trans "AI Recommendations" %}</a>
+        <a href="{% url 'my_apps' %}" class="nav-btn">{% trans "My Applications" %}</a>
         <form method="post" action="{% url 'logout' %}" style="margin: 0;">
             {% csrf_token %}
-            <button type="submit" class="nav-btn danger" style="border: none;">🚪 {% trans "Logout" %}</button>
+            <button type="submit" class="nav-btn danger" style="border: none;">{% trans "Logout" %}</button>
         </form>
     </div>
 </div>
@@ -1408,13 +1402,13 @@
             </div>
             <div class="hero-btn-row">
                 <a href="{% url 'scheme_awareness' %}?q=PM+Kisan" class="hero-btn primary">Check Eligibility ➜</a>
-                <a href="{% url 'recommend' %}" class="hero-btn outline">AI Recommend</a>
+                <a href="{% url 'ai_recommendation' %}" class="hero-btn outline">AI Recommend</a>
             </div>
         </div>
         <div class="hero-img-wrap">
             <div class="hero-img-glow" style="background:radial-gradient(#10b981,#06b6d4);"></div>
-            <img class="hero-img" src="/static/images/farmer_1.jpg" alt="PM Kisan Farmer"
-                 onerror="this.src='https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=500&q=80'">
+            <img class="hero-img" src="{% static 'images/farmer_1.jpg' %}" alt="PM Kisan Farmer"
+                 onerror="this.onerror=null;this.style.display='none'">
         </div>
     </div>
 
@@ -1436,8 +1430,8 @@
         </div>
         <div class="hero-img-wrap">
             <div class="hero-img-glow" style="background:radial-gradient(#6366f1,#8b5cf6);"></div>
-            <img class="hero-img" src="/static/images/farmer_2.jpg" alt="YASASVI Scholarship"
-                 onerror="this.src='https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=500&q=80'">
+            <img class="hero-img" src="{% static 'images/farmer_2.jpg' %}" alt="YASASVI Scholarship"
+                 onerror="this.onerror=null;this.style.display='none'">
         </div>
     </div>
 
@@ -1459,8 +1453,8 @@
         </div>
         <div class="hero-img-wrap">
             <div class="hero-img-glow" style="background:radial-gradient(#f59e0b,#ef4444);"></div>
-            <img class="hero-img" src="/static/images/farmer_3.jpg" alt="Suraksha Bima Family"
-                 onerror="this.src='https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=500&q=80'">
+            <img class="hero-img" src="{% static 'images/farmer_3.jpg' %}" alt="Suraksha Bima Family"
+                 onerror="this.onerror=null;this.style.display='none'">
         </div>
     </div>
 
@@ -1482,8 +1476,8 @@
         </div>
         <div class="hero-img-wrap">
             <div class="hero-img-glow" style="background:radial-gradient(#10b981,#84cc16);"></div>
-            <img class="hero-img" src="/static/images/farmer_5.jpg" alt="Farmer Crop Insurance"
-                 onerror="this.src='https://images.unsplash.com/photo-1472396961693-142e6e269027?w=1200&q=80'">
+            <img class="hero-img" src="{% static 'images/farmer_5.jpg' %}" alt="Farmer Crop Insurance"
+                 onerror="this.onerror=null;this.style.display='none'">
         </div>
     </div>
 
@@ -1505,8 +1499,8 @@
         </div>
         <div class="hero-img-wrap">
             <div class="hero-img-glow" style="background:radial-gradient(#ec4899,#8b5cf6);"></div>
-            <img class="hero-img" src="/static/images/farmer_6.jpg" alt="Women Farmer"
-                 onerror="this.src='https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=1200&q=80'">
+            <img class="hero-img" src="{% static 'images/farmer_6.jpg' %}" alt="Women Farmer"
+                 onerror="this.onerror=null;this.style.display='none'">
         </div>
     </div>
 
@@ -1522,14 +1516,14 @@
                 <span class="hero-badge">Easy Apply</span>
             </div>
             <div class="hero-btn-row">
-                <a href="{% url 'recommend' %}" class="hero-btn primary">{% trans "Try AI Recommendations" %} ➜</a>
+                <a href="{% url 'ai_recommendation' %}" class="hero-btn primary">{% trans "Try AI Recommendations" %} ➜</a>
                 <a href="{% url 'scheme_awareness' %}" class="hero-btn outline">{% trans "Browse All Schemes" %}</a>
             </div>
         </div>
         <div class="hero-img-wrap">
             <div class="hero-img-glow" style="background:radial-gradient(#0ea5e9,#22c55e);"></div>
-            <img class="hero-img" src="/static/images/farmer_7.jpg" alt="Digital Agriculture Support"
-                 onerror="this.src='https://images.unsplash.com/photo-1592982537447-7440770cbfc9?w=1200&q=80'">
+            <img class="hero-img" src="{% static 'images/farmer_7.jpg' %}" alt="Digital Agriculture Support"
+                 onerror="this.onerror=null;this.style.display='none'">
         </div>
     </div>
 
@@ -1552,7 +1546,7 @@
         <div class="hero-img-wrap">
             <div class="hero-img-glow" style="background:radial-gradient(#14b8a6,#0ea5e9);"></div>
             <img class="hero-img" src="/static/images/farmer_5.jpg" alt="Ayushman Bharat Central Scheme"
-                 onerror="this.src='https://images.unsplash.com/photo-1584515933487-779824d29309?w=1200&q=80'">
+                 onerror="this.onerror=null;this.style.display='none'">
         </div>
     </div>
 
@@ -1569,13 +1563,13 @@
             </div>
             <div class="hero-btn-row">
                 <a href="{% url 'scheme_awareness' %}?type=Central&q=Awas" class="hero-btn primary">{% trans "View Central Schemes" %} ➜</a>
-                <a href="{% url 'recommend' %}" class="hero-btn outline">{% trans "AI Recommend" %}</a>
+                <a href="{% url 'ai_recommendation' %}" class="hero-btn outline">{% trans "AI Recommend" %}</a>
             </div>
         </div>
         <div class="hero-img-wrap">
             <div class="hero-img-glow" style="background:radial-gradient(#f59e0b,#ef4444);"></div>
             <img class="hero-img" src="/static/images/farmer_7.jpg" alt="PM Awas Central Scheme"
-                 onerror="this.src='https://images.unsplash.com/photo-1460317442991-0ec209397118?w=1200&q=80'">
+                 onerror="this.onerror=null;this.style.display='none'">
         </div>
     </div>
 
@@ -1586,7 +1580,7 @@
 
     <!-- CTA STRIP -->
     <div class="hero-cta-strip">
-        <a href="{% url 'recommend' %}" class="hero-cta-main">🔍 {% trans "Find Schemes For You" %}</a>
+        <a href="{% url 'ai_recommendation' %}" class="hero-cta-main">🔍 {% trans "Find Schemes For You" %}</a>
         <div class="hero-hashtags">
             <span>#GovernmentSchemes</span><span>#SchemesForYou</span><span>#SmartAssist</span>
         </div>
@@ -1723,7 +1717,7 @@
             </a>
             <div class="stat-item">
                 <div class="stat-number">{{ approved_apps }}</div>
-                <div class="stat-label">✅ {% trans "Approved Applications" %}</div>
+                <div class="stat-label">{% trans "Approved Applications" %}</div>
             </div>
             <div class="stat-item">
                 <div class="stat-number">{{ pending_apps }}</div>
@@ -1736,7 +1730,7 @@
     <div class="scheme-stats">
         <div class="section-header">
             <div class="header-content">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Flag_of_India.svg/320px-Flag_of_India.svg.png" alt="Government of India" class="gov-logo">
+                <span class="india-flag" role="img" aria-label="Flag of India"></span>
                 <h3>🏛️ {% trans "State-wise Agricultural Schemes Distribution" %}</h3>
             </div>
             <div class="header-actions">
@@ -1963,6 +1957,9 @@
     }
 
     // STATUS CHART
+    if (typeof Chart !== 'function') {
+        console.warn('Chart.js is unavailable; dashboard charts were skipped.');
+    } else {
     const statusCtx = document.getElementById('statusChart').getContext('2d');
     new Chart(statusCtx, {
         type: 'doughnut',
@@ -2105,6 +2102,7 @@
             }
         });
     }
+    }
 
     // Set state bar widths
     document.querySelectorAll('.progress-fill').forEach(fill => {
@@ -2115,31 +2113,48 @@
     });
 
     // Interactive functions
+    function dashboardElement(tag, className, text) {
+        const element = document.createElement(tag);
+        if (className) element.className = className;
+        if (text !== undefined) element.textContent = text;
+        return element;
+    }
+
     function showStateDetails(stateName, schemeCount, percentage) {
         document.getElementById('modalTitle').textContent = `📍 ${stateName} - ${dashboardI18n.schemeDetails}`;
-        document.getElementById('modalBody').innerHTML = `
-            <div style="text-align: center; margin-bottom: 20px;">
-                <div style="font-size: 48px; margin-bottom: 10px;">🇮🇳</div>
-                <h4 style="color: #1a365d; margin-bottom: 15px;">${stateName}</h4>
-            </div>
-            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                    <span style="font-weight: 600;">${dashboardI18n.totalSchemes}:</span>
-                    <span style="color: #2d5a8c; font-weight: 700;">${schemeCount}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                    <span style="font-weight: 600;">${dashboardI18n.coverageLevel}:</span>
-                    <span style="color: #28a745; font-weight: 700;">${percentage}% ${dashboardI18n.ofMaximum}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="font-weight: 600;">${dashboardI18n.governmentLevel}:</span>
-                    <span style="color: #17a2b8; font-weight: 700;">${dashboardI18n.centralAndState}</span>
-                </div>
-            </div>
-            <p style="color: #6c757d; font-size: 14px;">
-                ${dashboardI18n.viewAllSchemes} — ${stateName}
-            </p>
-        `;
+        const modalBody = document.getElementById('modalBody');
+        const heading = dashboardElement('div');
+        heading.style.cssText = 'text-align: center; margin-bottom: 20px;';
+        const flag = dashboardElement('div', null, '🇮🇳');
+        flag.style.cssText = 'font-size: 48px; margin-bottom: 10px;';
+        const stateHeading = dashboardElement('h4', null, stateName);
+        stateHeading.style.cssText = 'color: #1a365d; margin-bottom: 15px;';
+        heading.append(flag, stateHeading);
+
+        const summary = dashboardElement('div');
+        summary.style.cssText = 'background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;';
+        const summaryRow = (label, value, color) => {
+            const row = dashboardElement('div');
+            row.style.cssText = 'display: flex; justify-content: space-between; margin-bottom: 10px;';
+            const labelElement = dashboardElement('span', null, `${label}:`);
+            labelElement.style.fontWeight = '600';
+            const valueElement = dashboardElement('span', null, value);
+            valueElement.style.cssText = `color: ${color}; font-weight: 700;`;
+            row.append(labelElement, valueElement);
+            return row;
+        };
+        summary.append(
+            summaryRow(dashboardI18n.totalSchemes, schemeCount, '#2d5a8c'),
+            summaryRow(dashboardI18n.coverageLevel, `${percentage}% ${dashboardI18n.ofMaximum}`, '#28a745'),
+            summaryRow(dashboardI18n.governmentLevel, dashboardI18n.centralAndState, '#17a2b8'),
+        );
+        const description = dashboardElement(
+            'p',
+            null,
+            `${dashboardI18n.viewAllSchemes} — ${stateName}`,
+        );
+        description.style.cssText = 'color: #6c757d; font-size: 14px;';
+        modalBody.replaceChildren(heading, summary, description);
         document.getElementById('stateModal').style.display = 'block';
     }
 
@@ -2190,7 +2205,9 @@
         const schemeList = document.getElementById('state-scheme-list');
 
         detailTitle.textContent = `📋 ${stateName} - ${dashboardI18n.viewAllSchemes}`;
-        schemeList.innerHTML = `<p>${dashboardI18n.loadingSchemes} ${stateName}...</p>`;
+        schemeList.replaceChildren(
+            dashboardElement('p', null, `${dashboardI18n.loadingSchemes} ${stateName}...`),
+        );
         detailPanel.style.display = 'block';
 
         const apiUrl = '/api/state-schemes/' + encodeURIComponent(stateName.replace(/\s+/g, '-')) + '/';
@@ -2204,30 +2221,49 @@
             })
             .then(data => {
                 if (!data.schemes || data.schemes.length === 0) {
-                    schemeList.innerHTML = `<p>${dashboardI18n.noSchemesForState} ${stateName}.</p>`;
+                    schemeList.replaceChildren(
+                        dashboardElement('p', null, `${dashboardI18n.noSchemesForState} ${stateName}.`),
+                    );
                     return;
                 }
 
-                schemeList.innerHTML = data.schemes.map(s => {
+                schemeList.replaceChildren(...data.schemes.map(s => {
                     const officialUrl = normalizeUrl(s.official_website);
                     const applyUrl = normalizeUrl(s.apply_link || s.official_website);
-                    console.log('Scheme URL', s.scheme_name, { rawOfficial: s.official_website, rawApply: s.apply_link, officialUrl, applyUrl });
-                    return `
-                        <div class="state-scheme-item">
-                            <h5>${s.scheme_name}</h5>
-                            <small>${dashboardI18n.department}: ${s.department} • ${dashboardI18n.type}: ${s.scheme_type}</small>
-                            <p>${s.description || dashboardI18n.noDescription}</p>
-                            <div style="margin-top:5px;">
-                                ${officialUrl ? `<a href="${officialUrl}" target="_blank" rel="noopener">${dashboardI18n.officialWebsite}</a>` : `<span style="color:#dc3545; font-weight:600;">${dashboardI18n.officialUnavailable}</span>`}
-                                ·
-                                ${applyUrl ? `<a href="${applyUrl}" target="_blank" rel="noopener">${dashboardI18n.applyNow}</a>` : `<span style="color:#dc3545; font-weight:600;">${dashboardI18n.applyNow} ${dashboardI18n.unavailableSuffix}</span>`}
-                            </div>
-                        </div>
-                    `;
-                }).join('');
+                    const item = dashboardElement('div', 'state-scheme-item');
+                    item.append(
+                        dashboardElement('h5', null, s.scheme_name || ''),
+                        dashboardElement(
+                            'small',
+                            null,
+                            `${dashboardI18n.department}: ${s.department || ''} • ${dashboardI18n.type}: ${s.scheme_type || ''}`,
+                        ),
+                        dashboardElement('p', null, s.description || dashboardI18n.noDescription),
+                    );
+                    const links = dashboardElement('div');
+                    links.style.marginTop = '5px';
+                    const addLink = (url, label, fallback) => {
+                        if (links.childNodes.length) links.append(' · ');
+                        if (url) {
+                            const link = dashboardElement('a', null, label);
+                            link.href = url;
+                            link.target = '_blank';
+                            link.rel = 'noopener';
+                            links.appendChild(link);
+                        } else {
+                            const unavailable = dashboardElement('span', null, fallback);
+                            unavailable.style.cssText = 'color:#dc3545; font-weight:600;';
+                            links.appendChild(unavailable);
+                        }
+                    };
+                    addLink(officialUrl, dashboardI18n.officialWebsite, dashboardI18n.officialUnavailable);
+                    addLink(applyUrl, dashboardI18n.applyNow, `${dashboardI18n.applyNow} ${dashboardI18n.unavailableSuffix}`);
+                    item.appendChild(links);
+                    return item;
+                }));
             })
             .catch(err => {
-                schemeList.innerHTML = `<p>${dashboardI18n.loadError}</p>`;
+                schemeList.replaceChildren(dashboardElement('p', null, dashboardI18n.loadError));
             });
     }
 

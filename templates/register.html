@@ -3,11 +3,28 @@
 
 {% block title %}{% trans "Register - SmartAssist" %}{% endblock %}
 
+{% block extra_head %}
+<style>
+    .sa-auth-shell { min-height: calc(100vh - 180px); display: grid; place-items: center; padding: 3rem 1rem; background: var(--sa-paper); }
+    .sa-auth-card { width: min(100%, 560px); border: 1px solid var(--sa-line); border-radius: var(--sa-radius-lg); box-shadow: var(--sa-shadow-lg); overflow: hidden; }
+    .sa-auth-card .card-header { background: var(--sa-ink) !important; border: 0; padding: 1.5rem; }
+    .sa-auth-card .card-header h4 { color: #fff; font-family: var(--sa-font-display); }
+    .sa-auth-card .card-body, .sa-auth-card .card-footer { background: var(--sa-card); }
+    .sa-auth-card .btn-success { background: var(--sa-emerald); border-color: var(--sa-emerald); }
+    .sa-auth-card .btn-success:hover { background: var(--sa-leaf); border-color: var(--sa-leaf); }
+    .sa-auth-card form p { margin-bottom: 1rem; }
+    .sa-auth-card form label { color: var(--sa-muted); font-weight: 700; }
+    .sa-auth-card form input { width: 100%; padding: .7rem .8rem; border: 1px solid var(--sa-line); border-radius: var(--sa-radius-sm); }
+    .sa-auth-card form input:focus { outline: 0; border-color: var(--sa-leaf); box-shadow: 0 0 0 3px rgba(31,169,113,.16); }
+    .sa-auth-card .is-invalid { border-color: #dc3545; }
+    .sa-auth-card .field-error { color: #b42318; font-size: .875rem; margin-top: .35rem; }
+    .sa-auth-card .errorlist { color: #b42318; font-size: .875rem; margin: .35rem 0 0; padding-left: 1.25rem; }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            <div class="card shadow">
+<div class="sa-auth-shell">
+            <div class="card sa-auth-card">
                 <div class="card-header bg-success text-white text-center">
                     <h4 class="mb-0">
                         <i class="fas fa-user-plus"></i>
@@ -15,9 +32,23 @@
                     </h4>
                 </div>
                 <div class="card-body">
-                    <form method="POST">
+                    {% if form.errors %}
+                        <div class="alert alert-danger py-2" role="alert">
+                            <i class="fas fa-circle-exclamation"></i>
+                            {% trans "Please correct the errors below before registering." %}
+                        </div>
+                    {% endif %}
+                    <div id="register-validation-warning" class="alert alert-warning py-2 d-none" role="alert">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        {% trans "Please complete all required fields before registering." %}
+                    </div>
+                    <form method="POST" id="register-form" novalidate>
                         {% csrf_token %}
                         {{ form.as_p }}
+                        <div id="password-mismatch-error" class="field-error d-none" role="alert">
+                            <i class="fas fa-circle-exclamation"></i>
+                            {% trans "Passwords do not match." %}
+                        </div>
 
                         <div class="d-grid">
                             <button type="submit" class="btn btn-success">
@@ -34,27 +65,47 @@
                     </p>
                 </div>
             </div>
-        </div>
-    </div>
 </div>
+<script>
+    const registerForm = document.getElementById('register-form');
+    const passwordField = document.getElementById('id_password1');
+    const confirmPasswordField = document.getElementById('id_password2');
+    const passwordMismatchError = document.getElementById('password-mismatch-error');
 
-<style>
-form p {
-    margin-bottom: 1rem;
-}
+    function validatePasswordMatch() {
+        const mismatch = confirmPasswordField.value && passwordField.value !== confirmPasswordField.value;
+        confirmPasswordField.classList.toggle('is-invalid', mismatch);
+        passwordMismatchError.classList.toggle('d-none', !mismatch);
+        return !mismatch;
+    }
 
-form label {
-    font-weight: 500;
-    color: #495057;
-}
+    [passwordField, confirmPasswordField].forEach(function (field) {
+        field.addEventListener('input', validatePasswordMatch);
+    });
 
-form input[type="text"],
-form input[type="email"],
-form input[type="password"] {
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid #ced4da;
-    border-radius: 0.375rem;
-}
-</style>
+    registerForm.addEventListener('submit', function (event) {
+        const requiredFields = Array.from(this.querySelectorAll('input[required]'));
+        const emptyFields = requiredFields.filter(function (field) {
+            return !field.value.trim();
+        });
+        const warning = document.getElementById('register-validation-warning');
+        const passwordsMatch = validatePasswordMatch();
+
+        requiredFields.forEach(function (field) {
+            if (field !== confirmPasswordField || !confirmPasswordField.value) {
+                field.classList.toggle('is-invalid', !field.value.trim());
+            }
+        });
+
+        if (emptyFields.length || !passwordsMatch) {
+            event.preventDefault();
+            if (emptyFields.length) {
+                warning.classList.remove('d-none');
+                emptyFields[0].focus();
+            } else {
+                confirmPasswordField.focus();
+            }
+        }
+    });
+</script>
 {% endblock %}

@@ -3,6 +3,7 @@ venv/
 env/
 ENV/
 .venv
+.venv/
 
 # Python
 __pycache__/
@@ -30,6 +31,17 @@ db.sqlite3*
 !/static/images/
 !/static/images/**
 !/static/india_states.geojson
+!/static/vendor/
+!/static/vendor/bootstrap/
+!/static/vendor/bootstrap/**
+!/static/vendor/chartjs/
+!/static/vendor/chartjs/**
+!/static/vendor/fontawesome/
+!/static/vendor/fontawesome/**
+!/static/vendor/leaflet/
+!/static/vendor/leaflet/**
+!/static/vendor/webfonts/
+!/static/vendor/webfonts/**
 
 # IDE
 .vscode/
@@ -44,3 +56,10 @@ Thumbs.db
 # Environment variables
 .env
 .env.local
+.env.*
+!.env.example
+!.env.sample
+
+# Python tooling caches
+.pytest_cache/
+.mypy_cache/

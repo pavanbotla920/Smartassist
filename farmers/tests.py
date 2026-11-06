@@ -1160,6 +1160,51 @@ class SmartAssistVerificationTests(TestCase):
         self.assertEqual(status_response.status_code, 200)
         self.assertContains(status_response, 'New status')
 
+    def test_admin_login_redirects_to_existing_custom_dashboard(self):
+        profile = UserProfile.objects.get(user=self.user)
+        self.user.set_password('Admin!River42')
+        self.user.save(update_fields=['password'])
+        profile.refresh_from_db()
+        profile.role = 'admin'
+        profile.save(update_fields=['role'])
+        self.assertEqual(profile.role, 'admin')
+
+        response = self.client.post(
+            reverse('login'),
+            {'username': self.user.username, 'password': 'Admin!River42'},
+        )
+
+        self.assertRedirects(response, reverse('admin_dashboard'), fetch_redirect_response=False)
+        dashboard_response = self.client.get(reverse('admin_dashboard'))
+        self.assertEqual(dashboard_response.status_code, 200)
+        self.assertContains(dashboard_response, 'Admin Dashboard')
+        self.assertContains(dashboard_response, 'Add / Manage Schemes')
+        self.assertContains(dashboard_response, 'Generate Report')
+
+    def test_superuser_login_redirects_to_existing_custom_dashboard(self):
+        self.user.is_superuser = True
+        self.user.save(update_fields=['is_superuser'])
+        self.user.set_password('Superuser!River42')
+        self.user.save(update_fields=['password'])
+
+        response = self.client.post(
+            reverse('login'),
+            {'username': self.user.username, 'password': 'Superuser!River42'},
+        )
+
+        self.assertRedirects(response, reverse('admin_dashboard'), fetch_redirect_response=False)
+
+    def test_citizen_login_redirects_to_farmer_dashboard(self):
+        self.user.set_password('Farmer!River42')
+        self.user.save(update_fields=['password'])
+
+        response = self.client.post(
+            reverse('login'),
+            {'username': self.user.username, 'password': 'Farmer!River42'},
+        )
+
+        self.assertRedirects(response, reverse('farmer_dashboard'), fetch_redirect_response=False)
+
     def test_admin_dashboard_authorizes_staff_roles_and_rejects_citizens(self):
         self.client.force_login(self.user)
         citizen_response = self.client.get(reverse('admin_dashboard'))

@@ -1,6 +1,5 @@
 from django.contrib import admin
 from django.urls import path
-from django.contrib.auth import views as auth_views
 from django.conf.urls.i18n import i18n_patterns
 
 from farmers.views import (
@@ -43,6 +42,7 @@ from farmers.views import (
     add_scheme,
     edit_scheme,
     delete_scheme,
+    RoleBasedLoginView,
 )
 
 urlpatterns = [
@@ -75,7 +75,7 @@ urlpatterns += i18n_patterns(
     path('my-applications/', my_applications, name='my_apps'),
 
     # Auth
-    path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
+    path('login/', RoleBasedLoginView.as_view(), name='login'),
     path('logout/', logout_user, name='logout'),
     path('register/', register, name='register'),
     path('profile/', profile, name='profile'),

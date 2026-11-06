@@ -2,10 +2,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Count, Q
 from django.db.models.functions import TruncMonth
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import login as auth_login
 from django.contrib.auth import logout as auth_logout
+from django.contrib.auth.views import LoginView
 from django.core.cache import cache
 from django.core.paginator import Paginator
-from django.http import HttpResponse, JsonResponse, Http404, StreamingHttpResponse
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse, Http404, StreamingHttpResponse
 from django.views.decorators.http import require_GET, require_POST
 from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
@@ -71,6 +73,33 @@ AUDIO_ALLOWED_CONTENT_TYPES = {
 
 class RateLimitUnavailable(Exception):
     """The configured cache backend could not enforce the request limit."""
+
+
+class RoleBasedLoginView(LoginView):
+    """Send each authenticated role to its existing dashboard."""
+
+    template_name = 'login.html'
+
+    @staticmethod
+    def _dashboard_url(user):
+        if user.is_superuser:
+            return reverse('admin_dashboard')
+
+        user_role = UserProfile.objects.filter(user_id=user.pk).values_list(
+            'role',
+            flat=True,
+        ).first()
+        if user_role in {'admin', 'volunteer'}:
+            return reverse('admin_dashboard')
+        return reverse('farmer_dashboard')
+
+    def form_valid(self, form):
+        user = form.get_user()
+        auth_login(self.request, user)
+        dashboard_url = self._dashboard_url(user)
+        if dashboard_url == reverse('admin_dashboard'):
+            return HttpResponseRedirect(dashboard_url)
+        return HttpResponseRedirect(self.get_redirect_url() or dashboard_url)
 
 
 def _client_request_key(request, prefix):
@@ -875,9 +904,12 @@ def application_status(request):
 @login_required
 def admin_dashboard(request):
     """Admin/Volunteer dashboard with platform analytics."""
-    user_profile = get_object_or_404(UserProfile, user=request.user)
+    user_profile = UserProfile.objects.filter(user=request.user).first()
 
-    if user_profile.role not in ['volunteer', 'admin']:
+    if not request.user.is_superuser and (
+        user_profile is None
+        or user_profile.role not in ['volunteer', 'admin']
+    ):
         return redirect('dashboard')
 
     # Applications: newest first
